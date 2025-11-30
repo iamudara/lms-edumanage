@@ -17,11 +17,19 @@ export const showLoginPage = (req, res) => {
     return redirectToDashboard(req, res);
   }
 
+  // Get flash messages
+  const error = req.session.error_msg || null;
+  const info = req.session.info_msg || null;
+
+  // Clear flash messages after retrieving
+  req.session.error_msg = null;
+  req.session.info_msg = null;
+
   // Render login page
   res.render('auth/login', {
     title: 'Login - LMS EduManage',
-    error: req.session.error_msg || null,
-    info: req.session.info_msg || null,
+    error,
+    info,
   });
 };
 
