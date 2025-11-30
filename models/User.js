@@ -1,4 +1,5 @@
 import { DataTypes } from 'sequelize';
+import bcrypt from 'bcrypt';
 
 export default (sequelize) => {
   const User = sequelize.define(
@@ -23,8 +24,49 @@ export default (sequelize) => {
       tableName: "users",
       timestamps: true,
       underscored: true,
+      hooks: {
+        /**
+         * Hash password before creating user
+         */
+        beforeCreate: async (user) => {
+          if (user.password) {
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(user.password, salt);
+          }
+        },
+        /**
+         * Hash password before updating user (if password changed)
+         */
+        beforeUpdate: async (user) => {
+          if (user.changed('password')) {
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(user.password, salt);
+          }
+        },
+      },
     }
   );
+
+  /**
+   * Instance method to compare password
+   * Used during authentication
+   * @param {string} candidatePassword - Password to compare
+   * @returns {Promise<boolean>} - True if password matches
+   */
+  User.prototype.comparePassword = async function(candidatePassword) {
+    return await bcrypt.compare(candidatePassword, this.password);
+  };
+
+  /**
+   * Class method to hash password
+   * Used when creating/updating users programmatically
+   * @param {string} password - Plain text password
+   * @returns {Promise<string>} - Hashed password
+   */
+  User.hashPassword = async function(password) {
+    const salt = await bcrypt.genSalt(10);
+    return await bcrypt.hash(password, salt);
+  };
 
   return User;
 };
