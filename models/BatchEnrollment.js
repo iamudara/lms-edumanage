@@ -1,6 +1,6 @@
-const { DataTypes } = require('sequelize');
+import { DataTypes } from 'sequelize';
 
-module.exports = (sequelize) => {
+export default (sequelize) => {
   const BatchEnrollment = sequelize.define('BatchEnrollment', {
     id: {
       type: DataTypes.INTEGER,
@@ -26,7 +26,14 @@ module.exports = (sequelize) => {
   }, {
     tableName: 'batch_enrollments',
     timestamps: true,
-    underscored: true
+    underscored: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ['batch_id', 'course_id'],
+        name: 'unique_batch_course'
+      }
+    ]
   });
 
   return BatchEnrollment;

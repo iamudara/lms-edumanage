@@ -7,7 +7,7 @@
  * Check if user is authenticated
  * Used to protect all routes that require login
  */
-exports.isAuthenticated = (req, res, next) => {
+export const isAuthenticated = (req, res, next) => {
   if (req.isAuthenticated()) {
     return next();
   }
@@ -18,7 +18,7 @@ exports.isAuthenticated = (req, res, next) => {
  * Check if user has admin role
  * Used to protect admin-only routes (AdminJS, user management, bulk operations)
  */
-exports.isAdmin = (req, res, next) => {
+export const isAdmin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     return next();
   }
@@ -29,7 +29,7 @@ exports.isAdmin = (req, res, next) => {
  * Check if user has teacher role
  * Used to protect teacher-only routes (course creation, grading, materials)
  */
-exports.isTeacher = (req, res, next) => {
+export const isTeacher = (req, res, next) => {
   if (req.user && req.user.role === 'teacher') {
     return next();
   }
@@ -40,7 +40,7 @@ exports.isTeacher = (req, res, next) => {
  * Check if user has student role
  * Used to protect student-only routes (submissions, viewing grades)
  */
-exports.isStudent = (req, res, next) => {
+export const isStudent = (req, res, next) => {
   if (req.user && req.user.role === 'student') {
     return next();
   }
@@ -51,7 +51,7 @@ exports.isStudent = (req, res, next) => {
  * Check if user is teacher OR admin
  * Useful for routes that both roles can access
  */
-exports.isTeacherOrAdmin = (req, res, next) => {
+export const isTeacherOrAdmin = (req, res, next) => {
   if (req.user && (req.user.role === 'teacher' || req.user.role === 'admin')) {
     return next();
   }
@@ -62,7 +62,7 @@ exports.isTeacherOrAdmin = (req, res, next) => {
  * Check if user is NOT a specific role
  * Useful for preventing certain roles from accessing routes
  */
-exports.isNotStudent = (req, res, next) => {
+export const isNotStudent = (req, res, next) => {
   if (req.user && req.user.role !== 'student') {
     return next();
   }

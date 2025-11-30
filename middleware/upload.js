@@ -3,9 +3,9 @@
  * Handles file uploads for materials and assignment submissions
  */
 
-const multer = require('multer');
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const cloudinary = require('../config/cloudinary');
+import multer from 'multer';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import cloudinary from '../config/cloudinary.js';
 
 /**
  * Cloudinary Storage Configuration for Materials (PDFs, Documents, Presentations)
@@ -122,7 +122,9 @@ const handleUpload = (uploadMiddleware) => {
 /**
  * Export upload middleware with error handling
  */
-module.exports = {
+export { uploadMaterial, uploadSubmission };
+
+export default {
   uploadMaterial: handleUpload(uploadMaterial),
   uploadSubmission: handleUpload(uploadSubmission)
 };

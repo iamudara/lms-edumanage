@@ -109,7 +109,7 @@ const handleJWTExpiredError = () => ({
 /**
  * Global Error Handler
  */
-module.exports = (err, req, res, next) => {
+const errorHandler = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
 
@@ -143,7 +143,7 @@ module.exports = (err, req, res, next) => {
 /**
  * Custom Error Class for Operational Errors
  */
-class AppError extends Error {
+export class AppError extends Error {
   constructor(message, statusCode) {
     super(message);
     
@@ -155,4 +155,4 @@ class AppError extends Error {
   }
 }
 
-module.exports.AppError = AppError;
+export default errorHandler;

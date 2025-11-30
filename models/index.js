@@ -1,14 +1,14 @@
-const sequelize = require('../config/database');
+import sequelize from '../config/database.js';
 
 // Import model factory functions
-const UserModel = require('./User');
-const BatchModel = require('./Batch');
-const CourseModel = require('./Course');
-const BatchEnrollmentModel = require('./BatchEnrollment');
-const MaterialModel = require('./Material');
-const AssignmentModel = require('./Assignment');
-const SubmissionModel = require('./Submission');
-const GradeModel = require('./Grade');
+import UserModel from './User.js';
+import BatchModel from './Batch.js';
+import CourseModel from './Course.js';
+import BatchEnrollmentModel from './BatchEnrollment.js';
+import MaterialModel from './Material.js';
+import AssignmentModel from './Assignment.js';
+import SubmissionModel from './Submission.js';
+import GradeModel from './Grade.js';
 
 // Initialize models
 const User = UserModel(sequelize);
@@ -153,7 +153,7 @@ const syncDatabase = async () => {
 };
 
 // Export models and sync function
-module.exports = {
+export {
   sequelize,
   User,
   Batch,
