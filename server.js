@@ -195,9 +195,9 @@ import errorHandler from './middleware/errorHandler.js';
 
 // Import route modules
 import authRoutes from './routes/auth.js';
-// const adminRoutes = require('./routes/admin');
-// const teacherRoutes = require('./routes/teacher');
-// const studentRoutes = require('./routes/student');
+import adminRoutes from './routes/admin.js';
+import teacherRoutes from './routes/teacher.js';
+import studentRoutes from './routes/student.js';
 
 // 11. Register routes (ORDER CRITICAL - specific routes BEFORE AdminJS)
 // Root route
@@ -223,15 +223,14 @@ app.get('/', (req, res) => {
 app.use('/auth', authRoutes);
 
 // Custom admin routes (MUST come BEFORE AdminJS route)
-// app.use('/admin/dashboard', isAuthenticated, isAdmin, adminRoutes.dashboard);
-// app.use('/admin/tools', isAuthenticated, isAdmin, adminRoutes.tools);
+app.use('/admin', isAuthenticated, isAdmin, adminRoutes);
 
 // AdminJS route (MUST be LAST admin route - catches all /admin/*)
 app.use('/admin', isAuthenticated, isAdmin, adminRouter);
 
 // Other role-based routes
-// app.use('/teacher', isAuthenticated, isTeacher, teacherRoutes);
-// app.use('/student', isAuthenticated, isStudent, studentRoutes);
+app.use('/teacher', isAuthenticated, isTeacher, teacherRoutes);
+app.use('/student', isAuthenticated, isStudent, studentRoutes);
 
 // 404 handler
 app.use((req, res) => {
