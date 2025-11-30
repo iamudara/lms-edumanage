@@ -1,0 +1,108 @@
+<div class="navbar bg-base-100 shadow-lg">
+    <div class="navbar-start">
+        <div class="dropdown">
+            <label tabindex="0" class="btn btn-ghost lg:hidden">
+                <i class="fas fa-bars text-xl"></i>
+            </label>
+            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+                <% if (user.role === 'admin') { %>
+                    <li><a href="/admin/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                    <li><a href="/admin/tools"><i class="fas fa-tools"></i> Bulk Operations</a></li>
+                    <li><a href="/admin"><i class="fas fa-cog"></i> AdminJS Panel</a></li>
+                <% } else if (user.role === 'teacher') { %>
+                    <li><a href="/teacher/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                    <li><a href="/teacher/courses"><i class="fas fa-book"></i> My Courses</a></li>
+                    <li><a href="/teacher/courses/create"><i class="fas fa-plus-circle"></i> New Course</a></li>
+                <% } else if (user.role === 'student') { %>
+                    <li><a href="/student/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                    <li><a href="/student/courses"><i class="fas fa-book"></i> My Courses</a></li>
+                    <li><a href="/student/submissions"><i class="fas fa-file-alt"></i> Submissions</a></li>
+                    <li><a href="/student/grades"><i class="fas fa-graduation-cap"></i> Grades</a></li>
+                <% } %>
+            </ul>
+        </div>
+        <a href="/" class="btn btn-ghost normal-case text-xl">
+            <i class="fas fa-graduation-cap text-primary"></i>
+            <span class="ml-2">LMS EduManage</span>
+        </a>
+    </div>
+    
+    <div class="navbar-center hidden lg:flex">
+        <ul class="menu menu-horizontal px-1">
+            <% if (user.role === 'admin') { %>
+                <li><a href="/admin/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="/admin/tools"><i class="fas fa-tools"></i> Bulk Operations</a></li>
+                <li><a href="/admin"><i class="fas fa-cog"></i> AdminJS Panel</a></li>
+            <% } else if (user.role === 'teacher') { %>
+                <li><a href="/teacher/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li>
+                    <details>
+                        <summary><i class="fas fa-book"></i> Courses</summary>
+                        <ul class="p-2 bg-base-100 z-[1]">
+                            <li><a href="/teacher/courses"><i class="fas fa-list"></i> All Courses</a></li>
+                            <li><a href="/teacher/courses/create"><i class="fas fa-plus-circle"></i> New Course</a></li>
+                        </ul>
+                    </details>
+                </li>
+            <% } else if (user.role === 'student') { %>
+                <li><a href="/student/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                <li><a href="/student/courses"><i class="fas fa-book"></i> My Courses</a></li>
+                <li><a href="/student/submissions"><i class="fas fa-file-alt"></i> Submissions</a></li>
+                <li><a href="/student/grades"><i class="fas fa-graduation-cap"></i> Grades</a></li>
+            <% } %>
+        </ul>
+    </div>
+    
+    <div class="navbar-end">
+        <!-- Theme Switcher -->
+        <div class="dropdown dropdown-end mr-2">
+            <label tabindex="0" class="btn btn-ghost btn-circle">
+                <i class="fas fa-palette text-xl"></i>
+            </label>
+            <ul tabindex="0" class="menu dropdown-content z-[1] p-2 shadow bg-base-100 rounded-box w-52 mt-4">
+                <li><a onclick="changeTheme('corporate')"><i class="fas fa-briefcase"></i> Corporate</a></li>
+                <li><a onclick="changeTheme('light')"><i class="fas fa-sun"></i> Light</a></li>
+                <li><a onclick="changeTheme('dark')"><i class="fas fa-moon"></i> Dark</a></li>
+            </ul>
+        </div>
+        
+        <!-- User Dropdown -->
+        <div class="dropdown dropdown-end">
+            <label tabindex="0" class="btn btn-ghost btn-circle avatar">
+                <div class="w-10 rounded-full bg-primary text-primary-content flex items-center justify-center">
+                    <span class="text-lg font-bold"><%= user.full_name.charAt(0).toUpperCase() %></span>
+                </div>
+            </label>
+            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+                <li class="menu-title">
+                    <span><%= user.full_name %></span>
+                    <span class="badge badge-sm badge-<%= user.role === 'admin' ? 'error' : user.role === 'teacher' ? 'warning' : 'info' %>">
+                        <%= user.role.toUpperCase() %>
+                    </span>
+                </li>
+                <li><a href="/auth/change-password"><i class="fas fa-key"></i> Change Password</a></li>
+                <li>
+                    <form action="/auth/logout" method="POST" class="p-0 m-0">
+                        <button type="submit" class="w-full text-left">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Theme switcher functionality
+    function changeTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    }
+    
+    // Load saved theme on page load
+    window.addEventListener('DOMContentLoaded', () => {
+        const savedTheme = localStorage.getItem('theme') || 'corporate';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    });
+</script>
