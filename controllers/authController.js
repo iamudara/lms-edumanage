@@ -100,11 +100,19 @@ export const logout = (req, res, next) => {
  * GET /auth/change-password
  */
 export const showChangePasswordPage = (req, res) => {
+  // Get flash messages
+  const error = req.session.error_msg || null;
+  const success = req.session.success_msg || null;
+
+  // Clear flash messages after retrieving
+  req.session.error_msg = null;
+  req.session.success_msg = null;
+
   res.render('auth/change-password', {
     title: 'Change Password - LMS EduManage',
     user: req.user,
-    error: req.session.error_msg || null,
-    success: req.session.success_msg || null,
+    error,
+    success,
   });
 };
 
