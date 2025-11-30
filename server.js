@@ -193,8 +193,8 @@ const adminRouter = AdminJSExpress.buildRouter(adminJs);
 import { isAuthenticated, isAdmin, isTeacher, isStudent } from './middleware/auth.js';
 import errorHandler from './middleware/errorHandler.js';
 
-// Import route modules (will be created in Phase 2-5)
-// const authRoutes = require('./routes/auth');
+// Import route modules
+import authRoutes from './routes/auth.js';
 // const adminRoutes = require('./routes/admin');
 // const teacherRoutes = require('./routes/teacher');
 // const studentRoutes = require('./routes/student');
@@ -219,15 +219,8 @@ app.get('/', (req, res) => {
   }
 });
 
-// Temporary login page (Phase 2 will implement proper auth routes)
-app.get('/auth/login', (req, res) => {
-  res.send(`
-    <h1>LMS EduManage - Login</h1>
-    <p>Authentication system will be implemented in Phase 2 (Task 2.1-2.8)</p>
-    <p>Server is running successfully! ✅</p>
-    <a href="/">Back to Home</a>
-  `);
-});
+// Authentication routes (MUST come BEFORE protected routes)
+app.use('/auth', authRoutes);
 
 // Custom admin routes (MUST come BEFORE AdminJS route)
 // app.use('/admin/dashboard', isAuthenticated, isAdmin, adminRoutes.dashboard);
@@ -237,7 +230,6 @@ app.get('/auth/login', (req, res) => {
 app.use('/admin', isAuthenticated, isAdmin, adminRouter);
 
 // Other role-based routes
-// app.use('/auth', authRoutes);
 // app.use('/teacher', isAuthenticated, isTeacher, teacherRoutes);
 // app.use('/student', isAuthenticated, isStudent, studentRoutes);
 
