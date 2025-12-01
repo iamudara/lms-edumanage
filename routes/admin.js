@@ -5,9 +5,26 @@
  */
 
 import express from 'express';
+import multer from 'multer';
 import * as adminController from '../controllers/adminController.js';
+import * as bulkController from '../controllers/bulkController.js';
 
 const router = express.Router();
+
+// Configure multer for CSV file uploads (memory storage)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only CSV files are allowed'));
+    }
+  }
+});
 
 /**
  * Admin Dashboard (Placeholder)
@@ -37,52 +54,28 @@ router.get('/tools', (req, res) => {
  * Process bulk user upload from CSV
  * CSV Format: username, email, password, full_name, role, batch_code
  */
-router.post('/tools/bulk-users', (req, res) => {
-  // Placeholder - will be implemented in Task 3.6
-  res.json({ 
-    success: false,
-    message: 'Bulk user upload endpoint - to be implemented in Task 3.6' 
-  });
-});
+router.post('/tools/bulk-users', upload.single('csvFile'), bulkController.bulkCreateUsers);
 
 /**
  * POST /admin/tools/bulk-enrollments
  * Process bulk batch enrollment from CSV
  * CSV Format: batch_code, course_code
  */
-router.post('/tools/bulk-enrollments', (req, res) => {
-  // Placeholder - will be implemented in Task 3.7
-  res.json({ 
-    success: false,
-    message: 'Bulk enrollment upload endpoint - to be implemented in Task 3.7' 
-  });
-});
+router.post('/tools/bulk-enrollments', upload.single('csvFile'), bulkController.bulkCreateEnrollments);
 
 /**
  * POST /admin/tools/bulk-grades
  * Process bulk grade upload from CSV
  * CSV Format: student_email, course_code, grade, remarks
  */
-router.post('/tools/bulk-grades', (req, res) => {
-  // Placeholder - will be implemented in Task 3.8
-  res.json({ 
-    success: false,
-    message: 'Bulk grade upload endpoint - to be implemented in Task 3.8' 
-  });
-});
+router.post('/tools/bulk-grades', upload.single('csvFile'), bulkController.bulkUploadGrades);
 
 /**
  * POST /admin/tools/bulk-delete
  * Process bulk user deletion
  * Body: { userIds: [1, 2, 3, ...] }
  */
-router.post('/tools/bulk-delete', (req, res) => {
-  // Placeholder - will be implemented in Task 3.9
-  res.json({ 
-    success: false,
-    message: 'Bulk delete endpoint - to be implemented in Task 3.9' 
-  });
-});
+router.post('/tools/bulk-delete', bulkController.bulkDeleteUsers);
 
 /**
  * POST /admin/tools/bulk-batch-change
