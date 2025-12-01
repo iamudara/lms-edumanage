@@ -5,6 +5,7 @@
  */
 
 import express from 'express';
+import * as adminController from '../controllers/adminController.js';
 
 const router = express.Router();
 
@@ -12,14 +13,26 @@ const router = express.Router();
  * Admin Dashboard (Placeholder)
  * GET /admin/dashboard
  */
-router.get('/dashboard', (req, res) => {
+router.get('/dashboard', adminController.showDashboard);
+
+// ============================================
+// BULK OPERATIONS ROUTES
+// ============================================
+
+/**
+ * GET /admin/tools
+ * Bulk operations page with CSV upload forms
+ * Shows: Bulk user upload, bulk enrollment, bulk grades, bulk delete
+ */
+router.get('/tools', (req, res) => {
+  // Placeholder - will be implemented in Task 3.4
   res.send(`
     <!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Admin Dashboard - LMS EduManage</title>
+      <title>Admin Tools - LMS EduManage</title>
       <style>
         body {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -37,7 +50,6 @@ router.get('/dashboard', (req, res) => {
         }
         h1 { color: #333; margin-top: 0; }
         .info { background: #f0f9ff; padding: 15px; border-radius: 5px; margin: 20px 0; }
-        .user-info { background: #ecfdf5; padding: 15px; border-radius: 5px; margin: 20px 0; }
         .links { margin: 20px 0; }
         .links a { 
           display: inline-block;
@@ -50,67 +62,97 @@ router.get('/dashboard', (req, res) => {
           transition: background 0.3s;
         }
         .links a:hover { background: #4338ca; }
-        .logout { background: #dc2626 !important; }
-        .logout:hover { background: #b91c1c !important; }
-        .status { color: #16a34a; font-weight: bold; }
-        ul { line-height: 1.8; }
       </style>
     </head>
     <body>
       <div class="container">
-        <h1>🎯 Admin Dashboard</h1>
+        <h1>🛠️ Admin Tools - Bulk Operations</h1>
         
-        <div class="user-info">
-          <p><strong>Welcome, ${req.user.full_name}!</strong></p>
-          <p>Role: <span class="status">${req.user.role.toUpperCase()}</span></p>
-          <p>Email: ${req.user.email}</p>
-          <p>Username: ${req.user.username}</p>
-        </div>
-
         <div class="info">
-          <h3>✅ Authentication Working!</h3>
-          <p>You have successfully logged in as an admin. The role-based redirect is working correctly.</p>
-        </div>
-
-        <div class="info">
-          <h3>📋 Phase 2 Status: Almost Complete!</h3>
-          <p>You've completed:</p>
+          <h3>Coming in Task 3.4</h3>
+          <p>This page will contain:</p>
           <ul>
-            <li>✅ Task 2.1: Passport Configuration</li>
-            <li>✅ Task 2.2: Authentication Routes</li>
-            <li>✅ Task 2.3: Authentication Controller</li>
-            <li>✅ Task 2.4: Login View</li>
-            <li>✅ Task 2.5: Change Password View</li>
-            <li>✅ Task 2.6: Seed Initial Users</li>
-            <li>✅ Task 2.7: Root Route Handler</li>
-            <li>⏳ Task 2.8: Authentication Testing (In Progress)</li>
-          </ul>
-        </div>
-
-        <div class="info">
-          <h3>🚀 Next Steps</h3>
-          <p><strong>Phase 3:</strong> Admin Panel + Batch System</p>
-          <ul>
-            <li>Task 3.1: AdminJS Setup</li>
-            <li>Task 3.2: Admin Routes Structure</li>
-            <li>Task 3.3: Admin Dashboard (Full Implementation)</li>
-            <li>And more...</li>
+            <li>Bulk User Upload (CSV)</li>
+            <li>Bulk Batch Enrollment (CSV)</li>
+            <li>Bulk Grade Upload (CSV)</li>
+            <li>Bulk User Delete</li>
+            <li>Bulk Batch Change (CSV)</li>
           </ul>
         </div>
 
         <div class="links">
+          <a href="/admin/dashboard">Dashboard</a>
           <a href="/admin">AdminJS Panel</a>
-          <a href="/auth/change-password">Change Password</a>
-          <a href="/auth/logout" class="logout">Logout</a>
         </div>
-
-        <p style="color: #666; font-size: 14px; margin-top: 30px;">
-          <em>This is a temporary placeholder. Full admin dashboard will be implemented in Phase 3.</em>
-        </p>
       </div>
     </body>
     </html>
   `);
+});
+
+/**
+ * POST /admin/tools/bulk-users
+ * Process bulk user upload from CSV
+ * CSV Format: username, email, password, full_name, role, batch_code
+ */
+router.post('/tools/bulk-users', (req, res) => {
+  // Placeholder - will be implemented in Task 3.6
+  res.json({ 
+    success: false,
+    message: 'Bulk user upload endpoint - to be implemented in Task 3.6' 
+  });
+});
+
+/**
+ * POST /admin/tools/bulk-enrollments
+ * Process bulk batch enrollment from CSV
+ * CSV Format: batch_code, course_code
+ */
+router.post('/tools/bulk-enrollments', (req, res) => {
+  // Placeholder - will be implemented in Task 3.7
+  res.json({ 
+    success: false,
+    message: 'Bulk enrollment upload endpoint - to be implemented in Task 3.7' 
+  });
+});
+
+/**
+ * POST /admin/tools/bulk-grades
+ * Process bulk grade upload from CSV
+ * CSV Format: student_email, course_code, grade, remarks
+ */
+router.post('/tools/bulk-grades', (req, res) => {
+  // Placeholder - will be implemented in Task 3.8
+  res.json({ 
+    success: false,
+    message: 'Bulk grade upload endpoint - to be implemented in Task 3.8' 
+  });
+});
+
+/**
+ * POST /admin/tools/bulk-delete
+ * Process bulk user deletion
+ * Body: { userIds: [1, 2, 3, ...] }
+ */
+router.post('/tools/bulk-delete', (req, res) => {
+  // Placeholder - will be implemented in Task 3.9
+  res.json({ 
+    success: false,
+    message: 'Bulk delete endpoint - to be implemented in Task 3.9' 
+  });
+});
+
+/**
+ * POST /admin/tools/bulk-batch-change
+ * Process bulk batch change from CSV
+ * CSV Format: student_email, new_batch_code
+ */
+router.post('/tools/bulk-batch-change', (req, res) => {
+  // Placeholder - will be implemented later
+  res.json({ 
+    success: false,
+    message: 'Bulk batch change endpoint - to be implemented' 
+  });
 });
 
 export default router;
