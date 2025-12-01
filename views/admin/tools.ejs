@@ -80,12 +80,12 @@
                         </svg>
                         Upload Users
                     </button>
-                    <a href="/templates/users-template.csv" download class="btn btn-outline btn-secondary">
+                    <button type="button" onclick="downloadCSVTemplate('users')" class="btn btn-outline btn-secondary">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         Download Template
-                    </a>
+                    </button>
                 </div>
             </form>
 
@@ -152,12 +152,12 @@
                         </svg>
                         Upload Enrollments
                     </button>
-                    <a href="/templates/enrollments-template.csv" download class="btn btn-outline btn-secondary">
+                    <button type="button" onclick="downloadCSVTemplate('enrollments')" class="btn btn-outline btn-secondary">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         Download Template
-                    </a>
+                    </button>
                 </div>
             </form>
 
@@ -223,12 +223,12 @@
                         </svg>
                         Upload Grades
                     </button>
-                    <a href="/templates/grades-template.csv" download class="btn btn-outline btn-secondary">
+                    <button type="button" onclick="downloadCSVTemplate('grades')" class="btn btn-outline btn-secondary">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         Download Template
-                    </a>
+                    </button>
                 </div>
             </form>
 
@@ -362,6 +362,66 @@
         setTimeout(() => {
             alertContainer.innerHTML = '';
         }, 5000);
+    }
+
+    // Template Download Functions
+    function downloadCSVTemplate(templateType) {
+        let headers = [];
+        let sampleRows = [];
+        let filename = '';
+
+        if (templateType === 'users') {
+            headers = ['username', 'email', 'password', 'full_name', 'role', 'batch_code'];
+            sampleRows = [
+                ['john_doe', 'john@university.edu', 'password123', 'John Doe', 'student', 'BATCH2024A'],
+                ['jane_smith', 'jane@university.edu', 'password123', 'Jane Smith', 'teacher', ''],
+                ['admin_user', 'admin@university.edu', 'password123', 'Admin User', 'admin', '']
+            ];
+            filename = 'users-template.csv';
+        } else if (templateType === 'enrollments') {
+            headers = ['batch_code', 'course_code'];
+            sampleRows = [
+                ['BATCH2024A', 'CS101'],
+                ['BATCH2024A', 'MATH201'],
+                ['BATCH2024B', 'CS101']
+            ];
+            filename = 'enrollments-template.csv';
+        } else if (templateType === 'grades') {
+            headers = ['student_email', 'course_code', 'grade', 'remarks'];
+            sampleRows = [
+                ['student@university.edu', 'CS101', 'A', 'Excellent work'],
+                ['student@university.edu', 'MATH201', '85', 'Good performance'],
+                ['student2@university.edu', 'CS101', 'B+', '']
+            ];
+            filename = 'grades-template.csv';
+        }
+
+        // Create CSV content
+        const csvRows = [headers, ...sampleRows].map(row => {
+            return row.map(val => {
+                // Escape values that contain commas, quotes, or newlines
+                if (typeof val === 'string' && (val.includes(',') || val.includes('"') || val.includes('\n'))) {
+                    return `"${val.replace(/"/g, '""')}"`;
+                }
+                return val;
+            }).join(',');
+        });
+
+        const csvContent = csvRows.join('\n');
+
+        // Create and trigger download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        showAlert(`Downloaded ${filename} template with sample data`, 'success');
     }
 
     // Bulk Users Form Handler
