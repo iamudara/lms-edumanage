@@ -83,46 +83,47 @@ export const parseCsv = (fileBuffer) => {
  * Required headers: username, email, password, full_name, role
  * Optional headers: batch_code (required for students)
  * @param {Array} rows - Parsed CSV data
- * @returns {Object} - { valid: boolean, errors: array }
+ * @returns {Object} - { validRows: array, invalidRows: array, headerError: string|null }
  */
 export const validateUserCsv = (rows) => {
-  const errors = [];
   const requiredHeaders = ['username', 'email', 'password', 'full_name', 'role'];
   const validRoles = ['admin', 'teacher', 'student'];
 
   // Check if data exists
   if (!rows || rows.length === 0) {
     return {
-      valid: false,
-      errors: [{ row: 0, message: 'No data rows found in CSV' }]
+      validRows: [],
+      invalidRows: [],
+      headerError: 'No data rows found in CSV'
     };
   }
 
-  // Check headers
+  // Check headers (fatal error - cannot proceed)
   const headers = Object.keys(rows[0]);
   const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
   
   if (missingHeaders.length > 0) {
     return {
-      valid: false,
-      errors: [{
-        row: 0,
-        message: `Missing required headers: ${missingHeaders.join(', ')}`
-      }]
+      validRows: [],
+      invalidRows: [],
+      headerError: `Missing required headers: ${missingHeaders.join(', ')}`
     };
   }
 
-  // Validate each row
+  // Row-level validation
+  const validRows = [];
+  const invalidRows = [];
+
   const usernames = new Set();
   const emails = new Set();
 
   rows.forEach((row, index) => {
     const rowNum = index + 2; // +2 because index 0 is row 2 (after header)
+    const rowErrors = [];
 
     // Check required fields
     if (!row.username || row.username.length < 3) {
-      errors.push({
-        row: rowNum,
+      rowErrors.push({
         field: 'username',
         message: 'Username is required and must be at least 3 characters'
       });
@@ -131,8 +132,7 @@ export const validateUserCsv = (rows) => {
     // Check for duplicate username in CSV
     if (row.username) {
       if (usernames.has(row.username.toLowerCase())) {
-        errors.push({
-          row: rowNum,
+        rowErrors.push({
           field: 'username',
           message: `Duplicate username in CSV: ${row.username}`
         });
@@ -142,8 +142,7 @@ export const validateUserCsv = (rows) => {
 
     // Validate email
     if (!row.email || !validator.isEmail(row.email)) {
-      errors.push({
-        row: rowNum,
+      rowErrors.push({
         field: 'email',
         message: 'Valid email is required'
       });
@@ -152,8 +151,7 @@ export const validateUserCsv = (rows) => {
     // Check for duplicate email in CSV
     if (row.email) {
       if (emails.has(row.email.toLowerCase())) {
-        errors.push({
-          row: rowNum,
+        rowErrors.push({
           field: 'email',
           message: `Duplicate email in CSV: ${row.email}`
         });
@@ -163,8 +161,7 @@ export const validateUserCsv = (rows) => {
 
     // Validate password
     if (!row.password || row.password.length < 6) {
-      errors.push({
-        row: rowNum,
+      rowErrors.push({
         field: 'password',
         message: 'Password is required and must be at least 6 characters'
       });
@@ -172,8 +169,7 @@ export const validateUserCsv = (rows) => {
 
     // Validate full_name
     if (!row.full_name || row.full_name.length < 2) {
-      errors.push({
-        row: rowNum,
+      rowErrors.push({
         field: 'full_name',
         message: 'Full name is required and must be at least 2 characters'
       });
@@ -181,8 +177,7 @@ export const validateUserCsv = (rows) => {
 
     // Validate role
     if (!row.role || !validRoles.includes(row.role.toLowerCase())) {
-      errors.push({
-        row: rowNum,
+      rowErrors.push({
         field: 'role',
         message: `Role must be one of: ${validRoles.join(', ')}`
       });
@@ -191,18 +186,29 @@ export const validateUserCsv = (rows) => {
     // Validate batch_code for students
     if (row.role && row.role.toLowerCase() === 'student') {
       if (!row.batch_code || row.batch_code.length === 0) {
-        errors.push({
-          row: rowNum,
+        rowErrors.push({
           field: 'batch_code',
           message: 'Batch code is required for students'
         });
       }
     }
+
+    // Add row to appropriate array
+    if (rowErrors.length === 0) {
+      validRows.push({ rowNum, data: row });
+    } else {
+      invalidRows.push({ 
+        rowNum, 
+        data: row, 
+        errors: rowErrors 
+      });
+    }
   });
 
   return {
-    valid: errors.length === 0,
-    errors: errors
+    validRows,
+    invalidRows,
+    headerError: null
   };
 };
 

@@ -20,7 +20,8 @@ export const bulkCreateUsers = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'No CSV file uploaded',
-        results: []
+        summary: { total: 0, created: 0, skipped: 0, errors: 0 },
+        results: { success: [], errors: [], skipped: [] }
       });
     }
 
@@ -31,34 +32,52 @@ export const bulkCreateUsers = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'CSV parsing failed',
-        errors: formatErrors(parseResult.errors),
-        results: []
+        summary: { total: 0, created: 0, skipped: 0, errors: parseResult.errors.length },
+        results: { success: [], errors: parseResult.errors, skipped: [] }
       });
     }
 
-    // Validate CSV data
+    // Validate CSV data (row-level validation)
     const validationResult = validateUserCsv(parseResult.data);
     
-    if (!validationResult.valid) {
+    // Check for header errors (fatal - cannot proceed)
+    if (validationResult.headerError) {
+      await transaction.rollback();
       return res.status(400).json({
         success: false,
-        message: 'CSV validation failed',
-        errors: formatErrors(validationResult.errors),
-        results: []
+        message: validationResult.headerError,
+        summary: { total: parseResult.data.length, created: 0, skipped: 0, errors: parseResult.data.length },
+        results: { success: [], errors: [{ row: 0, message: validationResult.headerError }], skipped: [] }
       });
     }
 
-    const rows = parseResult.data;
+    const totalRows = parseResult.data.length;
     const results = {
       success: [],
       errors: [],
       skipped: []
     };
 
-    // Process each user
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
-      const rowNum = i + 2; // +2 for header and 0-index
+    // Add validation errors to results (include all original data)
+    validationResult.invalidRows.forEach(invalidRow => {
+      const errorMessages = invalidRow.errors.map(e => `${e.field}: ${e.message}`).join('; ');
+      results.errors.push({
+        row: invalidRow.rowNum,
+        username: invalidRow.data.username || '',
+        email: invalidRow.data.email || '',
+        password: invalidRow.data.password || '', // Include original password for re-upload
+        full_name: invalidRow.data.full_name || '',
+        role: invalidRow.data.role || '',
+        batch_code: invalidRow.data.batch_code || '',
+        status: 'error',
+        message: errorMessages
+      });
+    });
+
+    // Process only valid rows
+    for (const validRow of validationResult.validRows) {
+      const row = validRow.data;
+      const rowNum = validRow.rowNum;
       
       try {
         // Check for duplicate username in database
@@ -70,8 +89,14 @@ export const bulkCreateUsers = async (req, res) => {
         if (existingUsername) {
           results.skipped.push({
             row: rowNum,
-            username: row.username,
-            reason: 'Username already exists in database'
+            username: row.username || '',
+            email: row.email || '',
+            password: row.password || '', // Include original password for re-upload
+            full_name: row.full_name || '',
+            role: row.role || '',
+            batch_code: row.batch_code || '',
+            status: 'skipped',
+            message: 'Username already exists in database'
           });
           continue;
         }
@@ -85,8 +110,14 @@ export const bulkCreateUsers = async (req, res) => {
         if (existingEmail) {
           results.skipped.push({
             row: rowNum,
-            email: row.email,
-            reason: 'Email already exists in database'
+            username: row.username || '',
+            email: row.email || '',
+            password: row.password || '', // Include original password for re-upload
+            full_name: row.full_name || '',
+            role: row.role || '',
+            batch_code: row.batch_code || '',
+            status: 'skipped',
+            message: 'Email already exists in database'
           });
           continue;
         }
@@ -102,8 +133,14 @@ export const bulkCreateUsers = async (req, res) => {
           if (!batch) {
             results.errors.push({
               row: rowNum,
-              username: row.username,
-              reason: `Batch with code '${row.batch_code}' not found`
+              username: row.username || '',
+              email: row.email || '',
+              password: row.password || '', // Include original password for re-upload
+              full_name: row.full_name || '',
+              role: row.role || '',
+              batch_code: row.batch_code || '',
+              status: 'error',
+              message: `Batch with code '${row.batch_code}' not found`
             });
             continue;
           }
@@ -128,28 +165,41 @@ export const bulkCreateUsers = async (req, res) => {
           row: rowNum,
           username: user.username,
           email: user.email,
+          full_name: user.full_name,
           role: user.role,
-          batch_code: row.batch_code || 'N/A'
+          batch_code: row.batch_code || '',
+          status: 'success',
+          message: 'User created successfully'
         });
 
       } catch (error) {
         results.errors.push({
           row: rowNum,
-          username: row.username || 'N/A',
-          reason: error.message
+          username: row.username || '',
+          email: row.email || '',
+          password: row.password || '', // Include original password for re-upload
+          full_name: row.full_name || '',
+          role: row.role || '',
+          batch_code: row.batch_code || '',
+          status: 'error',
+          message: error.message
         });
       }
     }
 
-    // Commit transaction if at least one user was created
+    // Commit transaction if at least one user was created successfully
     if (results.success.length > 0) {
       await transaction.commit();
       
+      const hasErrors = results.errors.length > 0 || results.skipped.length > 0;
+      
       return res.status(200).json({
         success: true,
-        message: `Successfully created ${results.success.length} user(s)`,
+        message: hasErrors 
+          ? `Partial success: Created ${results.success.length} user(s). ${results.errors.length + results.skipped.length} row(s) failed.`
+          : `Successfully created ${results.success.length} user(s)`,
         summary: {
-          total: rows.length,
+          total: totalRows,
           created: results.success.length,
           skipped: results.skipped.length,
           errors: results.errors.length
@@ -161,9 +211,9 @@ export const bulkCreateUsers = async (req, res) => {
       
       return res.status(400).json({
         success: false,
-        message: 'No users were created',
+        message: 'No users were created. All rows had errors.',
         summary: {
-          total: rows.length,
+          total: totalRows,
           created: 0,
           skipped: results.skipped.length,
           errors: results.errors.length
@@ -181,7 +231,8 @@ export const bulkCreateUsers = async (req, res) => {
       success: false,
       message: 'Internal server error during bulk upload',
       error: error.message,
-      results: []
+      summary: { total: 0, created: 0, skipped: 0, errors: 1 },
+      results: { success: [], errors: [{ row: 0, message: error.message }], skipped: [] }
     });
   }
 };

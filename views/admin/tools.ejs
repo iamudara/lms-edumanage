@@ -379,11 +379,19 @@
             });
             const result = await response.json();
 
-            if (response.ok) {
-                showAlert(result.message || 'Users uploaded successfully!', 'success');
-                displayUsersResults(result.data);
+            // Show summary alert
+            if (result.summary) {
+                const summary = result.summary;
+                const alertType = summary.created > 0 ? 'success' : 'error';
+                const alertMsg = `Total: ${summary.total} | Created: ${summary.created} | Skipped: ${summary.skipped} | Errors: ${summary.errors}`;
+                showAlert(result.message + ' — ' + alertMsg, alertType);
             } else {
-                showAlert(result.error || 'Upload failed', 'error');
+                showAlert(result.message || 'Upload complete', response.ok ? 'success' : 'error');
+            }
+
+            // Display results table
+            if (result.results) {
+                displayUsersResults(result.results);
             }
         } catch (error) {
             showAlert('Network error: ' + error.message, 'error');
@@ -490,28 +498,43 @@
     });
 
     // Display Functions
-    function displayUsersResults(data) {
+    function displayUsersResults(results) {
         const resultsDiv = document.getElementById('usersResults');
         const tbody = document.querySelector('#usersTable tbody');
         tbody.innerHTML = '';
 
-        if (data && data.length > 0) {
-            data.forEach(row => {
+        // Combine all results (success, errors, skipped)
+        const allRows = [
+            ...(results.success || []),
+            ...(results.errors || []),
+            ...(results.skipped || [])
+        ];
+
+        if (allRows.length > 0) {
+            allRows.forEach(row => {
                 const tr = document.createElement('tr');
+                const statusClass = row.status === 'success' ? 'badge-success' : 
+                                   row.status === 'skipped' ? 'badge-warning' : 'badge-error';
                 tr.innerHTML = `
                     <td>${row.row}</td>
                     <td>${row.username || '-'}</td>
                     <td>${row.email || '-'}</td>
                     <td><span class="badge badge-sm">${row.role || '-'}</span></td>
-                    <td><span class="badge ${row.status === 'success' ? 'badge-success' : 'badge-error'}">${row.status}</span></td>
+                    <td><span class="badge ${statusClass}">${row.status}</span></td>
                     <td>${row.message}</td>
                 `;
                 tbody.appendChild(tr);
             });
 
             resultsDiv.classList.remove('hidden');
+
+            // Add download failed rows button if there are errors or skipped
+            const failedRows = [...(results.errors || []), ...(results.skipped || [])];
+            if (failedRows.length > 0) {
+                addDownloadFailedButton('usersResults', failedRows, 'failed-users.csv');
+            }
             
-            // Initialize DataTable if jQuery is loaded
+            // Initialize DataTable
             if (typeof $ !== 'undefined' && $.fn.DataTable) {
                 if ($.fn.DataTable.isDataTable('#usersTable')) {
                     $('#usersTable').DataTable().destroy();
@@ -522,6 +545,125 @@
                 });
             }
         }
+    }
+
+    // Add download button for failed rows
+    function addDownloadFailedButton(resultsId, failedRows, filename) {
+        const resultsDiv = document.getElementById(resultsId);
+        const existing = resultsDiv.querySelector('.download-failed-btn');
+        if (existing) existing.remove();
+
+        const btnDiv = document.createElement('div');
+        btnDiv.className = 'mt-4 download-failed-btn';
+        btnDiv.innerHTML = `
+            <button onclick="downloadFailedRows('${resultsId}')" class="btn btn-warning btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Download Failed Rows (${failedRows.length})
+            </button>
+        `;
+        resultsDiv.insertBefore(btnDiv, resultsDiv.querySelector('h3'));
+
+        // Store failed rows data
+        window[`${resultsId}_failedData`] = failedRows;
+        window[`${resultsId}_filename`] = filename;
+    }
+
+    // Download failed rows as CSV (with original data for re-upload)
+    function downloadFailedRows(resultsId) {
+        const failedRows = window[`${resultsId}_failedData`];
+        const filename = window[`${resultsId}_filename`];
+        
+        if (!failedRows || failedRows.length === 0) {
+            showAlert('No failed rows to download', 'warning');
+            return;
+        }
+
+        // Extract original CSV data from failed rows
+        // Determine which type of upload this is based on resultsId
+        let headers, rows;
+        
+        if (resultsId === 'usersResults') {
+            // For users: username, email, password, full_name, role, batch_code, error_reason
+            headers = ['username', 'email', 'password', 'full_name', 'role', 'batch_code', 'error_reason'];
+            rows = failedRows.map(row => {
+                const username = row.username || '';
+                const email = row.email || '';
+                const password = row.password || ''; // Include original password from server
+                const full_name = row.full_name || '';
+                const role = row.role || '';
+                const batch_code = row.batch_code || '';
+                const error_reason = row.message || '';
+                
+                return [username, email, password, full_name, role, batch_code, error_reason].map(val => {
+                    // Escape values with commas or quotes
+                    if (typeof val === 'string' && (val.includes(',') || val.includes('"') || val.includes('\n'))) {
+                        return `"${val.replace(/"/g, '""')}"`;
+                    }
+                    return val;
+                }).join(',');
+            });
+        } else if (resultsId === 'enrollmentsResults') {
+            // For enrollments: batch_code, course_code, error_reason
+            headers = ['batch_code', 'course_code', 'error_reason'];
+            rows = failedRows.map(row => {
+                const batch_code = row.batch_code || '';
+                const course_code = row.course_code || '';
+                const error_reason = row.message || '';
+                
+                return [batch_code, course_code, error_reason].map(val => {
+                    if (typeof val === 'string' && (val.includes(',') || val.includes('"') || val.includes('\n'))) {
+                        return `"${val.replace(/"/g, '""')}"`;
+                    }
+                    return val;
+                }).join(',');
+            });
+        } else if (resultsId === 'gradesResults') {
+            // For grades: student_username or student_email, course_code, grade, remarks, error_reason
+            headers = ['student_username', 'student_email', 'course_code', 'grade', 'remarks', 'error_reason'];
+            rows = failedRows.map(row => {
+                const student_username = row.student_username || '';
+                const student_email = row.student_email || row.email || '';
+                const course_code = row.course_code || '';
+                const grade = row.grade || '';
+                const remarks = row.remarks || '';
+                const error_reason = row.message || '';
+                
+                return [student_username, student_email, course_code, grade, remarks, error_reason].map(val => {
+                    if (typeof val === 'string' && (val.includes(',') || val.includes('"') || val.includes('\n'))) {
+                        return `"${val.replace(/"/g, '""')}"`;
+                    }
+                    return val;
+                }).join(',');
+            });
+        } else {
+            // Fallback: use all available fields
+            headers = Object.keys(failedRows[0]).join(',');
+            rows = failedRows.map(row => {
+                return Object.values(row).map(val => {
+                    if (typeof val === 'string' && (val.includes(',') || val.includes('"') || val.includes('\n'))) {
+                        return `"${val.replace(/"/g, '""')}"`;
+                    }
+                    return val;
+                }).join(',');
+            });
+        }
+
+        const csvContent = [headers.join(','), ...rows].join('\n');
+        
+        // Create download link
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showAlert(`Downloaded ${failedRows.length} failed rows with original data`, 'info');
     }
 
     function displayEnrollmentsResults(data) {
