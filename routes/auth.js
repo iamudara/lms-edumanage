@@ -30,6 +30,12 @@ router.post('/login', authController.processLogin);
 router.get('/logout', authController.logout);
 
 /**
+ * POST /auth/logout
+ * Logout user and destroy session (for form submissions)
+ */
+router.post('/logout', authController.logout);
+
+/**
  * GET /auth/change-password
  * Show change password form (requires authentication)
  */
