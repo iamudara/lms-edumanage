@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - LMS EduManage</title>
+  <link href="/css/output.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+  <!-- jQuery (required for DataTables) -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <!-- DataTables -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <style>
+    .tab { min-width: 120px; }
+  </style>
+</head>
+<body class="bg-base-200 min-h-screen">
+  
+  <%- include('../shared/navbar') %>
+
+  <div class="container mx-auto px-4 py-8">
+    
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-base-content mb-2">🛠️ Bulk Operations Tools</h1>
+      <p class="text-base-content/70">Upload CSV files to perform bulk operations on users, enrollments, and grades</p>
+    </div>
+
+    <!-- Alert Messages Area -->
+    <div id="alertContainer" class="mb-6"></div>
+
+    <!-- Tabs Navigation -->
+    <div class="tabs tabs-box bg-base-100 mb-6 shadow-md">
+      <a class="tab tab-active" data-tab="users">Bulk Users</a>
+      <a class="tab" data-tab="enrollments">Bulk Enrollments</a>
+      <a class="tab" data-tab="grades">Bulk Grades</a>
+      <a class="tab" data-tab="delete">Bulk Delete</a>
+    </div>
+
+    <!-- Tab Content: Bulk Users -->
+    <div id="tab-users" class="tab-content">
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title text-2xl mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                Bulk User Upload
+            </h2>
+            
+            <!-- Instructions -->
+            <div class="alert alert-info mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <h3 class="font-bold">CSV Format Requirements:</h3>
+                    <p>Headers: username, email, password, full_name, role, batch_code (for students only)</p>
+                    <p>Roles: admin, teacher, student | Max 1000 rows per upload</p>
+                </div>
+            </div>
+
+            <!-- Upload Form -->
+            <form id="bulkUsersForm" enctype="multipart/form-data" class="space-y-4">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">Upload CSV File</span>
+                    </label>
+                    <input type="file" name="csvFile" accept=".csv" required 
+                           class="file-input file-input-bordered file-input-primary w-full" />
+                </div>
+
+                <div class="flex gap-4">
+                    <button type="submit" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        Upload Users
+                    </button>
+                    <a href="/templates/users-template.csv" download class="btn btn-outline btn-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Download Template
+                    </a>
+                </div>
+            </form>
+
+            <!-- Results Table -->
+            <div id="usersResults" class="mt-6 hidden">
+                <h3 class="text-xl font-bold mb-4">Upload Results</h3>
+                <div class="overflow-x-auto">
+                    <table id="usersTable" class="table table-zebra w-full">
+                        <thead>
+                            <tr>
+                                <th>Row</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Message</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tab Content: Bulk Enrollments -->
+<div id="tab-enrollments" class="tab-content hidden">
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title text-2xl mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Bulk Batch Enrollment Upload
+            </h2>
+            
+            <!-- Instructions -->
+            <div class="alert alert-info mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <h3 class="font-bold">CSV Format Requirements:</h3>
+                    <p>Headers: batch_code, course_code</p>
+                    <p>Enrolls entire batches into courses | Max 1000 rows per upload</p>
+                </div>
+            </div>
+
+            <!-- Upload Form -->
+            <form id="bulkEnrollmentsForm" enctype="multipart/form-data" class="space-y-4">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">Upload CSV File</span>
+                    </label>
+                    <input type="file" name="csvFile" accept=".csv" required 
+                           class="file-input file-input-bordered file-input-primary w-full" />
+                </div>
+
+                <div class="flex gap-4">
+                    <button type="submit" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        Upload Enrollments
+                    </button>
+                    <a href="/templates/enrollments-template.csv" download class="btn btn-outline btn-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Download Template
+                    </a>
+                </div>
+            </form>
+
+            <!-- Results Table -->
+            <div id="enrollmentsResults" class="mt-6 hidden">
+                <h3 class="text-xl font-bold mb-4">Upload Results</h3>
+                <div class="overflow-x-auto">
+                    <table id="enrollmentsTable" class="table table-zebra w-full">
+                        <thead>
+                            <tr>
+                                <th>Row</th>
+                                <th>Batch Code</th>
+                                <th>Course Code</th>
+                                <th>Status</th>
+                                <th>Message</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tab Content: Bulk Grades -->
+<div id="tab-grades" class="tab-content hidden">
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title text-2xl mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+                Bulk Grade Upload
+            </h2>
+            
+            <!-- Instructions -->
+            <div class="alert alert-info mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <div>
+                    <h3 class="font-bold">CSV Format Requirements:</h3>
+                    <p>Headers: student_email, course_code, grade, remarks (optional)</p>
+                    <p>Grade format: A-F or 0-100 | Max 1000 rows per upload</p>
+                </div>
+            </div>
+
+            <!-- Upload Form -->
+            <form id="bulkGradesForm" enctype="multipart/form-data" class="space-y-4">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">Upload CSV File</span>
+                    </label>
+                    <input type="file" name="csvFile" accept=".csv" required 
+                           class="file-input file-input-bordered file-input-primary w-full" />
+                </div>
+
+                <div class="flex gap-4">
+                    <button type="submit" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        Upload Grades
+                    </button>
+                    <a href="/templates/grades-template.csv" download class="btn btn-outline btn-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Download Template
+                    </a>
+                </div>
+            </form>
+
+            <!-- Results Table -->
+            <div id="gradesResults" class="mt-6 hidden">
+                <h3 class="text-xl font-bold mb-4">Upload Results</h3>
+                <div class="overflow-x-auto">
+                    <table id="gradesTable" class="table table-zebra w-full">
+                        <thead>
+                            <tr>
+                                <th>Row</th>
+                                <th>Student Email</th>
+                                <th>Course Code</th>
+                                <th>Grade</th>
+                                <th>Status</th>
+                                <th>Message</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tab Content: Bulk Delete -->
+<div id="tab-delete" class="tab-content hidden">
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title text-2xl mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Bulk Delete Users
+            </h2>
+            
+            <!-- Warning -->
+            <div class="alert alert-warning mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                    <h3 class="font-bold">Warning: This action is irreversible!</h3>
+                    <p>Users with foreign key dependencies (courses, submissions, etc.) cannot be deleted.</p>
+                </div>
+            </div>
+
+            <!-- Delete Form -->
+            <form id="bulkDeleteForm" class="space-y-4">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">Enter User IDs to Delete (comma-separated)</span>
+                    </label>
+                    <textarea name="userIds" rows="4" placeholder="e.g., 5,12,23,45" required
+                              class="textarea textarea-bordered w-full"></textarea>
+                    <label class="label">
+                        <span class="label-text-alt">Enter the IDs of users you want to delete, separated by commas</span>
+                    </label>
+                </div>
+
+                <div class="form-control">
+                    <label class="label cursor-pointer justify-start gap-3">
+                        <input type="checkbox" id="confirmDelete" required class="checkbox checkbox-error" />
+                        <span class="label-text font-semibold text-error">I understand this action cannot be undone</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-error">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete Selected Users
+                </button>
+            </form>
+
+            <!-- Results -->
+            <div id="deleteResults" class="mt-6 hidden">
+                <h3 class="text-xl font-bold mb-4">Deletion Results</h3>
+                <div class="overflow-x-auto">
+                    <table id="deleteTable" class="table table-zebra w-full">
+                        <thead>
+                            <tr>
+                                <th>User ID</th>
+                                <th>Status</th>
+                                <th>Message</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom JavaScript -->
+<script>
+    // Tab Switching
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('tab-active'));
+            // Add active class to clicked tab
+            this.classList.add('tab-active');
+            
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+            // Show selected tab content
+            const tabName = this.dataset.tab;
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+        });
+    });
+
+    // Show Alert Function
+    function showAlert(message, type = 'info') {
+        const alertContainer = document.getElementById('alertContainer');
+        const alertHTML = `
+            <div class="alert alert-${type} shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>${message}</span>
+            </div>
+        `;
+        alertContainer.innerHTML = alertHTML;
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            alertContainer.innerHTML = '';
+        }, 5000);
+    }
+
+    // Bulk Users Form Handler
+    document.getElementById('bulkUsersForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="loading loading-spinner"></span> Uploading...';
+
+        try {
+            const response = await fetch('/admin/tools/bulk-users', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            if (response.ok) {
+                showAlert(result.message || 'Users uploaded successfully!', 'success');
+                displayUsersResults(result.data);
+            } else {
+                showAlert(result.error || 'Upload failed', 'error');
+            }
+        } catch (error) {
+            showAlert('Network error: ' + error.message, 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg> Upload Users';
+        }
+    });
+
+    // Bulk Enrollments Form Handler
+    document.getElementById('bulkEnrollmentsForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="loading loading-spinner"></span> Uploading...';
+
+        try {
+            const response = await fetch('/admin/tools/bulk-enrollments', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            if (response.ok) {
+                showAlert(result.message || 'Enrollments uploaded successfully!', 'success');
+                displayEnrollmentsResults(result.data);
+            } else {
+                showAlert(result.error || 'Upload failed', 'error');
+            }
+        } catch (error) {
+            showAlert('Network error: ' + error.message, 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg> Upload Enrollments';
+        }
+    });
+
+    // Bulk Grades Form Handler
+    document.getElementById('bulkGradesForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="loading loading-spinner"></span> Uploading...';
+
+        try {
+            const response = await fetch('/admin/tools/bulk-grades', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            if (response.ok) {
+                showAlert(result.message || 'Grades uploaded successfully!', 'success');
+                displayGradesResults(result.data);
+            } else {
+                showAlert(result.error || 'Upload failed', 'error');
+            }
+        } catch (error) {
+            showAlert('Network error: ' + error.message, 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg> Upload Grades';
+        }
+    });
+
+    // Bulk Delete Form Handler
+    document.getElementById('bulkDeleteForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (!confirm('Are you absolutely sure? This will permanently delete the selected users!')) {
+            return;
+        }
+
+        const userIds = this.querySelector('[name="userIds"]').value;
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="loading loading-spinner"></span> Deleting...';
+
+        try {
+            const response = await fetch('/admin/tools/bulk-delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ userIds: userIds.split(',').map(id => id.trim()) })
+            });
+            const result = await response.json();
+
+            if (response.ok) {
+                showAlert(result.message || 'Users deleted successfully!', 'success');
+                displayDeleteResults(result.data);
+                this.reset();
+            } else {
+                showAlert(result.error || 'Deletion failed', 'error');
+            }
+        } catch (error) {
+            showAlert('Network error: ' + error.message, 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg> Delete Selected Users';
+        }
+    });
+
+    // Display Functions
+    function displayUsersResults(data) {
+        const resultsDiv = document.getElementById('usersResults');
+        const tbody = document.querySelector('#usersTable tbody');
+        tbody.innerHTML = '';
+
+        if (data && data.length > 0) {
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.row}</td>
+                    <td>${row.username || '-'}</td>
+                    <td>${row.email || '-'}</td>
+                    <td><span class="badge badge-sm">${row.role || '-'}</span></td>
+                    <td><span class="badge ${row.status === 'success' ? 'badge-success' : 'badge-error'}">${row.status}</span></td>
+                    <td>${row.message}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            resultsDiv.classList.remove('hidden');
+            
+            // Initialize DataTable if jQuery is loaded
+            if (typeof $ !== 'undefined' && $.fn.DataTable) {
+                if ($.fn.DataTable.isDataTable('#usersTable')) {
+                    $('#usersTable').DataTable().destroy();
+                }
+                $('#usersTable').DataTable({
+                    pageLength: 25,
+                    order: [[0, 'asc']]
+                });
+            }
+        }
+    }
+
+    function displayEnrollmentsResults(data) {
+        const resultsDiv = document.getElementById('enrollmentsResults');
+        const tbody = document.querySelector('#enrollmentsTable tbody');
+        tbody.innerHTML = '';
+
+        if (data && data.length > 0) {
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.row}</td>
+                    <td>${row.batch_code || '-'}</td>
+                    <td>${row.course_code || '-'}</td>
+                    <td><span class="badge ${row.status === 'success' ? 'badge-success' : 'badge-error'}">${row.status}</span></td>
+                    <td>${row.message}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            resultsDiv.classList.remove('hidden');
+            
+            if (typeof $ !== 'undefined' && $.fn.DataTable) {
+                if ($.fn.DataTable.isDataTable('#enrollmentsTable')) {
+                    $('#enrollmentsTable').DataTable().destroy();
+                }
+                $('#enrollmentsTable').DataTable({
+                    pageLength: 25,
+                    order: [[0, 'asc']]
+                });
+            }
+        }
+    }
+
+    function displayGradesResults(data) {
+        const resultsDiv = document.getElementById('gradesResults');
+        const tbody = document.querySelector('#gradesTable tbody');
+        tbody.innerHTML = '';
+
+        if (data && data.length > 0) {
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.row}</td>
+                    <td>${row.student_email || '-'}</td>
+                    <td>${row.course_code || '-'}</td>
+                    <td><span class="badge badge-accent">${row.grade || '-'}</span></td>
+                    <td><span class="badge ${row.status === 'success' ? 'badge-success' : 'badge-error'}">${row.status}</span></td>
+                    <td>${row.message}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            resultsDiv.classList.remove('hidden');
+            
+            if (typeof $ !== 'undefined' && $.fn.DataTable) {
+                if ($.fn.DataTable.isDataTable('#gradesTable')) {
+                    $('#gradesTable').DataTable().destroy();
+                }
+                $('#gradesTable').DataTable({
+                    pageLength: 25,
+                    order: [[0, 'asc']]
+                });
+            }
+        }
+    }
+
+    function displayDeleteResults(data) {
+        const resultsDiv = document.getElementById('deleteResults');
+        const tbody = document.querySelector('#deleteTable tbody');
+        tbody.innerHTML = '';
+
+        if (data && data.length > 0) {
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.userId}</td>
+                    <td><span class="badge ${row.status === 'success' ? 'badge-success' : 'badge-error'}">${row.status}</span></td>
+                    <td>${row.message}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            resultsDiv.classList.remove('hidden');
+            
+            if (typeof $ !== 'undefined' && $.fn.DataTable) {
+                if ($.fn.DataTable.isDataTable('#deleteTable')) {
+                    $('#deleteTable').DataTable().destroy();
+                }
+                $('#deleteTable').DataTable({
+                    pageLength: 25,
+                    order: [[0, 'asc']]
+                });
+            }
+        }
+    }
+</script>
+
+  </div>
+
+  <%- include('../shared/footer') %>
+
+</body>
+</html>

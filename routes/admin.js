@@ -25,69 +25,11 @@ router.get('/dashboard', adminController.showDashboard);
  * Shows: Bulk user upload, bulk enrollment, bulk grades, bulk delete
  */
 router.get('/tools', (req, res) => {
-  // Placeholder - will be implemented in Task 3.4
-  res.send(`
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Admin Tools - LMS EduManage</title>
-      <style>
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-          max-width: 800px;
-          margin: 50px auto;
-          padding: 20px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          min-height: 100vh;
-        }
-        .container {
-          background: white;
-          border-radius: 10px;
-          padding: 40px;
-          box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        }
-        h1 { color: #333; margin-top: 0; }
-        .info { background: #f0f9ff; padding: 15px; border-radius: 5px; margin: 20px 0; }
-        .links { margin: 20px 0; }
-        .links a { 
-          display: inline-block;
-          margin: 5px 10px 5px 0;
-          padding: 10px 20px;
-          background: #4f46e5;
-          color: white;
-          text-decoration: none;
-          border-radius: 5px;
-          transition: background 0.3s;
-        }
-        .links a:hover { background: #4338ca; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <h1>🛠️ Admin Tools - Bulk Operations</h1>
-        
-        <div class="info">
-          <h3>Coming in Task 3.4</h3>
-          <p>This page will contain:</p>
-          <ul>
-            <li>Bulk User Upload (CSV)</li>
-            <li>Bulk Batch Enrollment (CSV)</li>
-            <li>Bulk Grade Upload (CSV)</li>
-            <li>Bulk User Delete</li>
-            <li>Bulk Batch Change (CSV)</li>
-          </ul>
-        </div>
-
-        <div class="links">
-          <a href="/admin/dashboard">Dashboard</a>
-          <a href="/admin">AdminJS Panel</a>
-        </div>
-      </div>
-    </body>
-    </html>
-  `);
+  res.render('admin/tools', {
+    user: req.user,
+    title: 'Bulk Operations - Admin Tools',
+    useDataTables: true
+  });
 });
 
 /**
