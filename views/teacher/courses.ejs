@@ -51,7 +51,7 @@
           const assignmentCount = course.Assignments.length;
           const batchCount = course.BatchEnrollments.length;
         %>
-          <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+          <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow cursor-pointer" onclick="window.location.href='/teacher/courses/<%= course.id %>'">
             <div class="card-body">
               <!-- Course Code Badge -->
               <div class="badge badge-primary badge-lg mb-2">
@@ -85,42 +85,30 @@
               </div>
 
               <!-- Action Buttons -->
-              <div class="card-actions justify-end">
-                <a href="/teacher/courses/<%= course.id %>" class="btn btn-primary btn-sm">
-                  <i class="fas fa-eye mr-1"></i>View Details
+              <div class="card-actions justify-end gap-2">
+                <a href="/teacher/courses/<%= course.id %>/assignments/create" class="btn btn-primary btn-sm" onclick="event.stopPropagation();">
+                  <i class="fas fa-plus mr-1"></i>Assignment
                 </a>
-                <div class="dropdown dropdown-end">
-                  <label tabindex="0" class="btn btn-ghost btn-sm">
-                    <i class="fas fa-ellipsis-v"></i>
-                  </label>
-                  <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
-                    <li>
-                      <a href="/teacher/courses/<%= course.id %>/materials">
-                        <i class="fas fa-file-alt"></i>Materials
-                      </a>
-                    </li>
-                    <li>
-                      <a href="/teacher/courses/<%= course.id %>/assignments/create">
-                        <i class="fas fa-tasks"></i>Create Assignment
-                      </a>
-                    </li>
-                    <li>
-                      <a href="/teacher/courses/<%= course.id %>/grades">
-                        <i class="fas fa-chart-bar"></i>View Grades
-                      </a>
-                    </li>
-                  </ul>
-                </div>
+                <a href="/teacher/courses/<%= course.id %>/materials" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();">
+                  <i class="fas fa-file-alt mr-1"></i>Materials
+                </a>
+                <a href="/teacher/courses/<%= course.id %>/grades" class="btn btn-accent btn-sm" onclick="event.stopPropagation();">
+                  <i class="fas fa-chart-bar mr-1"></i>Grades
+                </a>
               </div>
 
               <!-- Created Date -->
               <div class="text-xs text-base-content/50 mt-2">
                 <i class="far fa-clock mr-1"></i>
-                Created <%= new Date(course.created_at).toLocaleDateString('en-US', { 
-                  month: 'short', 
-                  day: 'numeric',
-                  year: 'numeric'
-                }) %>
+                <% 
+                  const createDate = course.created_at || course.createdAt;
+                  const dateStr = createDate ? new Date(createDate).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    year: 'numeric'
+                  }) : 'Unknown';
+                %>
+                Created <%= dateStr %>
               </div>
             </div>
           </div>

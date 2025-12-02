@@ -101,7 +101,7 @@
                   
                   const assignmentCount = course.Assignments.length;
                 %>
-                  <div class="card bg-base-200 hover:shadow-lg transition-shadow">
+                  <div class="card bg-base-200 hover:shadow-lg transition-shadow cursor-pointer" onclick="window.location.href='/teacher/courses/<%= course.id %>'">
                     <div class="card-body">
                       <div class="flex justify-between items-start">
                         <div class="flex-1">
@@ -128,13 +128,13 @@
                         </div>
 
                         <div class="flex flex-col gap-2 ml-4">
-                          <a href="/teacher/courses/<%= course.id %>" class="btn btn-sm btn-primary">
-                            <i class="fas fa-eye mr-1"></i>View
+                          <a href="/teacher/courses/<%= course.id %>/assignments/create" class="btn btn-sm btn-primary" onclick="event.stopPropagation();">
+                            <i class="fas fa-plus mr-1"></i>Assignment
                           </a>
-                          <a href="/teacher/courses/<%= course.id %>/materials" class="btn btn-sm btn-secondary">
+                          <a href="/teacher/courses/<%= course.id %>/materials" class="btn btn-sm btn-secondary" onclick="event.stopPropagation();">
                             <i class="fas fa-file-alt mr-1"></i>Materials
                           </a>
-                          <a href="/teacher/courses/<%= course.id %>/grades" class="btn btn-sm btn-accent">
+                          <a href="/teacher/courses/<%= course.id %>/grades" class="btn btn-sm btn-accent" onclick="event.stopPropagation();">
                             <i class="fas fa-chart-bar mr-1"></i>Grades
                           </a>
                         </div>
@@ -222,43 +222,6 @@
               </a>
             <% } %>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="card bg-base-100 shadow-xl mt-8">
-      <div class="card-body">
-        <h2 class="card-title text-2xl mb-4">
-          <i class="fas fa-bolt mr-2"></i>Quick Actions
-        </h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <a href="/teacher/courses/create" class="btn btn-outline btn-primary">
-            <i class="fas fa-plus-circle mr-2"></i>Create New Course
-          </a>
-          
-          <a href="/teacher/courses" class="btn btn-outline btn-secondary">
-            <i class="fas fa-list mr-2"></i>View All Courses
-          </a>
-          
-          <% if (courses.length > 0) { %>
-            <a href="/teacher/courses/<%= courses[0].id %>/materials" class="btn btn-outline btn-accent">
-              <i class="fas fa-upload mr-2"></i>Upload Materials
-            </a>
-            
-            <a href="/teacher/courses/<%= courses[0].id %>/assignments/create" class="btn btn-outline btn-info">
-              <i class="fas fa-tasks mr-2"></i>Create Assignment
-            </a>
-          <% } else { %>
-            <button class="btn btn-outline btn-disabled" disabled>
-              <i class="fas fa-upload mr-2"></i>Upload Materials
-            </button>
-            
-            <button class="btn btn-outline btn-disabled" disabled>
-              <i class="fas fa-tasks mr-2"></i>Create Assignment
-            </button>
-          <% } %>
         </div>
       </div>
     </div>
