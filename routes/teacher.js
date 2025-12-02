@@ -5,6 +5,7 @@
  */
 
 import express from 'express';
+import { showDashboard } from '../controllers/teacherController.js';
 
 const router = express.Router();
 
@@ -17,9 +18,7 @@ const router = express.Router();
  * GET /teacher/dashboard
  * Shows teacher's courses, pending submissions, recent activity
  */
-router.get('/dashboard', (req, res) => {
-  res.send('Teacher Dashboard - To be implemented in Task 4.2');
-});
+router.get('/dashboard', showDashboard);
 
 // ============================================
 // COURSE MANAGEMENT

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= pageTitle %> - LMS EduManage</title>
+  <link href="/css/output.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <%- include('../shared/navbar') %>
+
+  <div class="container mx-auto px-4 py-8">
+    <!-- Page Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-base-content mb-2">
+        <i class="fas fa-chalkboard-teacher mr-2"></i>Teacher Dashboard
+      </h1>
+      <p class="text-base-content/70">Welcome back, <%= user.full_name %>!</p>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <!-- Total Courses -->
+      <div class="stats shadow bg-primary text-primary-content">
+        <div class="stat">
+          <div class="stat-figure text-primary-content/50">
+            <i class="fas fa-book text-4xl"></i>
+          </div>
+          <div class="stat-title text-primary-content/80">Total Courses</div>
+          <div class="stat-value"><%= stats.totalCourses %></div>
+          <div class="stat-desc text-primary-content/60">Your active courses</div>
+        </div>
+      </div>
+
+      <!-- Total Students -->
+      <div class="stats shadow bg-secondary text-secondary-content">
+        <div class="stat">
+          <div class="stat-figure text-secondary-content/50">
+            <i class="fas fa-users text-4xl"></i>
+          </div>
+          <div class="stat-title text-secondary-content/80">Total Students</div>
+          <div class="stat-value"><%= stats.totalStudents %></div>
+          <div class="stat-desc text-secondary-content/60">Enrolled in your courses</div>
+        </div>
+      </div>
+
+      <!-- Total Assignments -->
+      <div class="stats shadow bg-accent text-accent-content">
+        <div class="stat">
+          <div class="stat-figure text-accent-content/50">
+            <i class="fas fa-clipboard-list text-4xl"></i>
+          </div>
+          <div class="stat-title text-accent-content/80">Assignments</div>
+          <div class="stat-value"><%= stats.totalAssignments %></div>
+          <div class="stat-desc text-accent-content/60">Created by you</div>
+        </div>
+      </div>
+
+      <!-- Pending Submissions -->
+      <div class="stats shadow bg-warning text-warning-content">
+        <div class="stat">
+          <div class="stat-figure text-warning-content/50">
+            <i class="fas fa-hourglass-half text-4xl"></i>
+          </div>
+          <div class="stat-title text-warning-content/80">Pending Grading</div>
+          <div class="stat-value"><%= stats.pendingSubmissions %></div>
+          <div class="stat-desc text-warning-content/60">Awaiting your review</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- My Courses Section (2/3 width) -->
+      <div class="lg:col-span-2">
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="card-title text-2xl">
+                <i class="fas fa-book-open mr-2"></i>My Courses
+              </h2>
+              <a href="/teacher/courses/create" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus mr-2"></i>Create Course
+              </a>
+            </div>
+
+            <% if (courses.length === 0) { %>
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <span>You haven't created any courses yet. Click "Create Course" to get started!</span>
+              </div>
+            <% } else { %>
+              <div class="space-y-4">
+                <% courses.forEach(course => { 
+                  // Calculate enrolled students for this course
+                  let enrolledStudents = 0;
+                  course.BatchEnrollments.forEach(enrollment => {
+                    enrolledStudents += enrollment.batch.students.length;
+                  });
+                  
+                  const assignmentCount = course.Assignments.length;
+                %>
+                  <div class="card bg-base-200 hover:shadow-lg transition-shadow">
+                    <div class="card-body">
+                      <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                          <h3 class="card-title text-lg">
+                            <span class="badge badge-primary mr-2"><%= course.code %></span>
+                            <%= course.title %>
+                          </h3>
+                          <p class="text-base-content/70 mt-2"><%= course.description || 'No description available' %></p>
+                          
+                          <div class="flex gap-4 mt-3">
+                            <div class="badge badge-outline">
+                              <i class="fas fa-users mr-1"></i>
+                              <%= enrolledStudents %> Students
+                            </div>
+                            <div class="badge badge-outline">
+                              <i class="fas fa-clipboard-list mr-1"></i>
+                              <%= assignmentCount %> Assignments
+                            </div>
+                            <div class="badge badge-outline">
+                              <i class="fas fa-layer-group mr-1"></i>
+                              <%= course.BatchEnrollments.length %> Batches
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="flex flex-col gap-2 ml-4">
+                          <a href="/teacher/courses/<%= course.id %>" class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye mr-1"></i>View
+                          </a>
+                          <a href="/teacher/courses/<%= course.id %>/materials" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-file-alt mr-1"></i>Materials
+                          </a>
+                          <a href="/teacher/courses/<%= course.id %>/grades" class="btn btn-sm btn-accent">
+                            <i class="fas fa-chart-bar mr-1"></i>Grades
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activity Section (1/3 width) -->
+      <div class="lg:col-span-1">
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title text-2xl mb-4">
+              <i class="fas fa-clock mr-2"></i>Recent Activity
+            </h2>
+
+            <% if (recentSubmissions.length === 0) { %>
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <span>No recent submissions</span>
+              </div>
+            <% } else { %>
+              <div class="space-y-3">
+                <% recentSubmissions.forEach(submission => { %>
+                  <div class="card bg-base-200 hover:bg-base-300 transition-colors">
+                    <div class="card-body p-4">
+                      <div class="flex items-start gap-3">
+                        <div class="avatar placeholder">
+                          <div class="bg-neutral text-neutral-content rounded-full w-10">
+                            <span class="text-sm"><%= submission.student.full_name.charAt(0) %></span>
+                          </div>
+                        </div>
+                        
+                        <div class="flex-1 min-w-0">
+                          <p class="font-semibold text-sm truncate"><%= submission.student.full_name %></p>
+                          <p class="text-xs text-base-content/70 truncate">
+                            <%= submission.assignment.course.code %> - <%= submission.assignment.title %>
+                          </p>
+                          <p class="text-xs text-base-content/50 mt-1">
+                            <i class="far fa-clock mr-1"></i>
+                            <%= new Date(submission.submitted_at).toLocaleDateString('en-US', { 
+                              month: 'short', 
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }) %>
+                          </p>
+                          
+                          <% if (submission.marks !== null) { %>
+                            <div class="badge badge-success badge-sm mt-2">
+                              <i class="fas fa-check mr-1"></i>Graded
+                            </div>
+                          <% } else { %>
+                            <div class="badge badge-warning badge-sm mt-2">
+                              <i class="fas fa-hourglass-half mr-1"></i>Pending
+                            </div>
+                          <% } %>
+                        </div>
+                      </div>
+                      
+                      <div class="card-actions justify-end mt-3">
+                        <a href="/teacher/submissions/<%= submission.id %>/grade" class="btn btn-xs btn-primary">
+                          <% if (submission.marks !== null) { %>
+                            <i class="fas fa-eye mr-1"></i>View
+                          <% } else { %>
+                            <i class="fas fa-edit mr-1"></i>Grade
+                          <% } %>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            <% } %>
+
+            <% if (stats.pendingSubmissions > 5) { %>
+              <div class="divider"></div>
+              <a href="/teacher/submissions" class="btn btn-sm btn-outline btn-block">
+                View All Submissions (<%= stats.pendingSubmissions %> pending)
+              </a>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card bg-base-100 shadow-xl mt-8">
+      <div class="card-body">
+        <h2 class="card-title text-2xl mb-4">
+          <i class="fas fa-bolt mr-2"></i>Quick Actions
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <a href="/teacher/courses/create" class="btn btn-outline btn-primary">
+            <i class="fas fa-plus-circle mr-2"></i>Create New Course
+          </a>
+          
+          <a href="/teacher/courses" class="btn btn-outline btn-secondary">
+            <i class="fas fa-list mr-2"></i>View All Courses
+          </a>
+          
+          <% if (courses.length > 0) { %>
+            <a href="/teacher/courses/<%= courses[0].id %>/materials" class="btn btn-outline btn-accent">
+              <i class="fas fa-upload mr-2"></i>Upload Materials
+            </a>
+            
+            <a href="/teacher/courses/<%= courses[0].id %>/assignments/create" class="btn btn-outline btn-info">
+              <i class="fas fa-tasks mr-2"></i>Create Assignment
+            </a>
+          <% } else { %>
+            <button class="btn btn-outline btn-disabled" disabled>
+              <i class="fas fa-upload mr-2"></i>Upload Materials
+            </button>
+            
+            <button class="btn btn-outline btn-disabled" disabled>
+              <i class="fas fa-tasks mr-2"></i>Create Assignment
+            </button>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%- include('../shared/footer') %>
+</body>
+</html>
