@@ -595,3 +595,63 @@ export const createAssignment = async (req, res) => {
     res.redirect(`/teacher/courses/${req.params.id}/assignments/create?error=Error creating assignment: ${error.message}`);
   }
 };
+
+/**
+ * Get Submissions for Assignment
+ * GET /teacher/assignments/:id/submissions
+ * 
+ * Displays all student submissions for a specific assignment
+ * Shows: student info, submission date, grading status, score
+ */
+export const getSubmissions = async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+    const assignmentId = req.params.id;
+
+    // 1. Get assignment with course details
+    const assignment = await Assignment.findByPk(assignmentId, {
+      include: [{
+        model: Course,
+        as: 'course',
+        where: { teacher_id: teacherId } // Verify teacher owns the course
+      }]
+    });
+
+    // Check if assignment exists and teacher has access
+    if (!assignment) {
+      return res.status(404).send('Assignment not found or access denied');
+    }
+
+    const course = assignment.course;
+
+    // 2. Get all submissions for this assignment with student details
+    const submissions = await Submission.findAll({
+      where: { assignment_id: assignmentId },
+      include: [{
+        model: User,
+        as: 'student',
+        attributes: ['id', 'full_name', 'email', 'batch_id'],
+        include: [{
+          model: Batch,
+          as: 'batch',
+          attributes: ['id', 'name', 'code']
+        }]
+      }],
+      order: [['submitted_at', 'DESC']] // Most recent first
+    });
+
+    // 3. Render submissions view
+    res.render('teacher/submissions', {
+      user: req.user,
+      assignment,
+      course,
+      submissions,
+      success: req.query.success,
+      error: req.query.error
+    });
+
+  } catch (error) {
+    console.error('Get Submissions Error:', error);
+    res.status(500).send('Error loading submissions: ' + error.message);
+  }
+};

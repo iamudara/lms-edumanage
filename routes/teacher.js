@@ -15,7 +15,8 @@ import {
   uploadMaterial,
   deleteMaterial,
   showCreateAssignment,
-  createAssignment
+  createAssignment,
+  getSubmissions
 } from '../controllers/teacherController.js';
 import { uploadMaterial as uploadMiddleware } from '../middleware/upload.js';
 
@@ -134,9 +135,7 @@ router.put('/assignments/:id', (req, res) => {
  * GET /teacher/assignments/:id/submissions
  * Lists all student submissions for a specific assignment
  */
-router.get('/assignments/:id/submissions', (req, res) => {
-  res.send(`Assignment Submissions - ID: ${req.params.id} - To be implemented in Task 4.6`);
-});
+router.get('/assignments/:id/submissions', getSubmissions);
 
 /**
  * View single submission for grading
