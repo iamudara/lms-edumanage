@@ -23,6 +23,11 @@ export default (sequelize) => {
       type: DataTypes.STRING(500),
       allowNull: true
     },
+    file_type: {
+      type: DataTypes.STRING(10),
+      allowNull: true,
+      comment: 'File extension: pdf, doc, docx, ppt, pptx, txt, url'
+    },
     description: {
       type: DataTypes.TEXT,
       allowNull: true

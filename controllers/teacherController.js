@@ -11,9 +11,11 @@ import {
   Assignment, 
   Submission, 
   Batch, 
-  Grade 
+  Grade,
+  Material
 } from '../models/index.js';
 import { Op } from 'sequelize';
+import cloudinary from '../config/cloudinary.js';
 
 /**
  * Show Teacher Dashboard
@@ -318,5 +320,183 @@ export const getCourseDetail = async (req, res) => {
   } catch (error) {
     console.error('Get Course Detail Error:', error);
     res.status(500).send('Error loading course details: ' + error.message);
+  }
+};
+
+/**
+ * Get Course Materials
+ * GET /teacher/courses/:id/materials
+ * 
+ * Shows all materials for a course with upload form
+ */
+export const getMaterials = async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    const teacherId = req.user.id;
+
+    // Verify teacher owns the course
+    const course = await Course.findOne({
+      where: { 
+        id: courseId,
+        teacher_id: teacherId
+      }
+    });
+
+    if (!course) {
+      return res.status(404).send('Course not found or you do not have permission to access it');
+    }
+
+    // Get all materials for this course
+    const materials = await Material.findAll({
+      where: { course_id: courseId },
+      order: [['created_at', 'DESC']]
+    });
+
+    res.render('teacher/materials', {
+      user: req.user,
+      course,
+      materials,
+      pageTitle: `Materials - ${course.title}`,
+      success: req.query.success,
+      error: req.query.error
+    });
+
+  } catch (error) {
+    console.error('Get Materials Error:', error);
+    res.status(500).send('Error loading materials: ' + error.message);
+  }
+};
+
+/**
+ * Upload Material
+ * POST /teacher/courses/:id/materials/upload
+ * 
+ * Handles both file upload and URL input
+ * Supports: PDF, DOC, DOCX, PPT, PPTX (max 10MB)
+ */
+export const uploadMaterial = async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    const teacherId = req.user.id;
+    const { title, description, material_url } = req.body;
+
+    // Verify teacher owns the course
+    const course = await Course.findOne({
+      where: { 
+        id: courseId,
+        teacher_id: teacherId
+      }
+    });
+
+    if (!course) {
+      return res.redirect(`/teacher/courses/${courseId}/materials?error=Course not found`);
+    }
+
+    // Validation
+    if (!title || title.trim() === '') {
+      return res.redirect(`/teacher/courses/${courseId}/materials?error=Title is required`);
+    }
+
+    let fileUrl = material_url || '';
+    let fileType = 'url'; // Default to URL
+
+    // Check if file was uploaded
+    if (req.file) {
+      fileUrl = req.file.path; // Cloudinary URL
+      
+      // Extract file extension from original filename
+      const originalName = req.file.originalname;
+      const extMatch = originalName.match(/\.([a-z0-9]+)$/i);
+      fileType = extMatch ? extMatch[1].toLowerCase() : 'file';
+    } else if (!material_url || material_url.trim() === '') {
+      return res.redirect(`/teacher/courses/${courseId}/materials?error=Please upload a file or provide a URL`);
+    }
+
+    // Validate URL format if provided
+    if (material_url && !req.file) {
+      // More flexible URL pattern that supports YouTube, Google Drive, etc.
+      const urlPattern = /^https?:\/\/.+/i;
+      if (!urlPattern.test(material_url)) {
+        return res.redirect(`/teacher/courses/${courseId}/materials?error=Invalid URL format. URL must start with http:// or https://`);
+      }
+    }
+
+    // Create material
+    await Material.create({
+      course_id: courseId,
+      title: title.trim(),
+      description: description ? description.trim() : null,
+      file_url: fileUrl,
+      file_type: fileType
+    });
+
+    res.redirect(`/teacher/courses/${courseId}/materials?success=Material uploaded successfully`);
+
+  } catch (error) {
+    console.error('Upload Material Error:', error);
+    res.redirect(`/teacher/courses/${req.params.id}/materials?error=Error uploading material: ${error.message}`);
+  }
+};
+
+/**
+ * Delete Material
+ * DELETE /teacher/materials/:id
+ * 
+ * Deletes material and associated Cloudinary file if exists
+ */
+export const deleteMaterial = async (req, res) => {
+  try {
+    const materialId = req.params.id;
+    const teacherId = req.user.id;
+
+    // Find material with course to verify ownership
+    const material = await Material.findOne({
+      where: { id: materialId },
+      include: [{
+        model: Course,
+        as: 'course',
+        where: { teacher_id: teacherId }
+      }]
+    });
+
+    if (!material) {
+      return res.status(404).json({
+        success: false,
+        message: 'Material not found or you do not have permission to delete it'
+      });
+    }
+
+    const courseId = material.course_id;
+
+    // Delete from Cloudinary if it's a Cloudinary URL
+    if (material.file_url && material.file_url.includes('cloudinary.com')) {
+      try {
+        // Extract public_id from Cloudinary URL
+        const urlParts = material.file_url.split('/');
+        const filename = urlParts[urlParts.length - 1];
+        const publicId = `lms-uploads/materials/${filename.split('.')[0]}`;
+        
+        await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
+      } catch (cloudinaryError) {
+        console.error('Cloudinary delete error:', cloudinaryError);
+        // Continue with database deletion even if Cloudinary fails
+      }
+    }
+
+    // Delete from database
+    await material.destroy();
+
+    res.json({
+      success: true,
+      message: 'Material deleted successfully',
+      redirectUrl: `/teacher/courses/${courseId}/materials?success=Material deleted successfully`
+    });
+
+  } catch (error) {
+    console.error('Delete Material Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting material: ' + error.message
+    });
   }
 };

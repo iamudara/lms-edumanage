@@ -13,11 +13,17 @@ import cloudinary from '../config/cloudinary.js';
  */
 const materialStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: 'lms-uploads/materials',
-    allowed_formats: ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt'],
-    resource_type: 'auto',
-    transformation: [{ quality: 'auto' }]
+  params: async (req, file) => {
+    // Generate unique filename
+    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
+    
+    return {
+      folder: 'lms-uploads/materials',
+      resource_type: 'auto',
+      public_id: uniqueName,
+      use_filename: false,
+      access_mode: 'public'
+    };
   }
 });
 
@@ -27,11 +33,17 @@ const materialStorage = new CloudinaryStorage({
  */
 const submissionStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: 'lms-uploads/submissions',
-    allowed_formats: ['pdf', 'doc', 'docx', 'txt', 'zip'],
-    resource_type: 'auto',
-    transformation: [{ quality: 'auto' }]
+  params: async (req, file) => {
+    // Generate unique filename
+    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
+    
+    return {
+      folder: 'lms-uploads/submissions',
+      resource_type: 'auto',
+      public_id: uniqueName,
+      use_filename: false,
+      access_mode: 'public'
+    };
   }
 });
 

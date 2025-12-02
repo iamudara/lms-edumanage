@@ -10,8 +10,12 @@ import {
   getCourses,
   showCreateCourse,
   createCourse,
-  getCourseDetail
+  getCourseDetail,
+  getMaterials,
+  uploadMaterial,
+  deleteMaterial
 } from '../controllers/teacherController.js';
+import { uploadMaterial as uploadMiddleware } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -67,27 +71,21 @@ router.get('/courses/:id', getCourseDetail);
  * GET /teacher/courses/:id/materials
  * Lists all materials for a specific course
  */
-router.get('/courses/:id/materials', (req, res) => {
-  res.send(`Course Materials - ID: ${req.params.id} - To be implemented in Task 4.4`);
-});
+router.get('/courses/:id/materials', getMaterials);
 
 /**
  * Upload material to course
  * POST /teacher/courses/:id/materials/upload
  * Handles file upload or URL input for course materials
  */
-router.post('/courses/:id/materials/upload', (req, res) => {
-  res.send(`Upload Material - Course ID: ${req.params.id} - To be implemented in Task 4.4`);
-});
+router.post('/courses/:id/materials/upload', uploadMiddleware, uploadMaterial);
 
 /**
  * Delete a material
  * DELETE /teacher/materials/:id
  * Removes a material from a course
  */
-router.delete('/materials/:id', (req, res) => {
-  res.send(`Delete Material - ID: ${req.params.id} - To be implemented in Task 4.4`);
-});
+router.delete('/materials/:id', deleteMaterial);
 
 // ============================================
 // ASSIGNMENT MANAGEMENT
