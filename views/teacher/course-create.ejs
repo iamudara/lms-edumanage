@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= pageTitle %> - LMS EduManage</title>
+  <link href="/css/output.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <%- include('../shared/navbar') %>
+
+  <div class="container mx-auto px-4 py-8 max-w-3xl">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs mb-6">
+      <ul>
+        <li><a href="/teacher/dashboard"><i class="fas fa-home mr-1"></i>Dashboard</a></li>
+        <li><a href="/teacher/courses"><i class="fas fa-book mr-1"></i>Courses</a></li>
+        <li>Create New Course</li>
+      </ul>
+    </div>
+
+    <!-- Page Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-base-content mb-2">
+        <i class="fas fa-plus-circle mr-2"></i>Create New Course
+      </h1>
+      <p class="text-base-content/70">Add a new course to your teaching portfolio</p>
+    </div>
+
+    <!-- Error Messages -->
+    <% if (errors && errors.length > 0) { %>
+      <div class="alert alert-error mb-6">
+        <i class="fas fa-exclamation-circle"></i>
+        <div>
+          <% if (errors.length === 1) { %>
+            <span><%= errors[0] %></span>
+          <% } else { %>
+            <div class="font-bold mb-1">Please fix the following errors:</div>
+            <ul class="list-disc list-inside">
+              <% errors.forEach(error => { %>
+                <li><%= error %></li>
+              <% }) %>
+            </ul>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- Course Creation Form -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <form action="/teacher/courses/create" method="POST" class="space-y-6">
+          
+          <!-- Course Title -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">
+                <i class="fas fa-heading mr-1"></i>Course Title
+                <span class="text-error">*</span>
+              </span>
+            </label>
+            <input 
+              type="text" 
+              name="title" 
+              placeholder="e.g., Introduction to Computer Science"
+              class="input input-bordered w-full"
+              value="<%= locals.formData && locals.formData.title ? locals.formData.title : '' %>"
+              required
+            >
+            <label class="label">
+              <span class="label-text-alt text-base-content/60">
+                The full name of your course
+              </span>
+            </label>
+          </div>
+
+          <!-- Course Code -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">
+                <i class="fas fa-code mr-1"></i>Course Code
+                <span class="text-error">*</span>
+              </span>
+            </label>
+            <input 
+              type="text" 
+              name="code" 
+              placeholder="e.g., CS101"
+              class="input input-bordered w-full"
+              value="<%= locals.formData && locals.formData.code ? locals.formData.code : '' %>"
+              required
+              maxlength="20"
+            >
+            <label class="label">
+              <span class="label-text-alt text-base-content/60">
+                A unique identifier for this course (will be converted to uppercase)
+              </span>
+            </label>
+          </div>
+
+          <!-- Course Description -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">
+                <i class="fas fa-align-left mr-1"></i>Course Description
+                <span class="text-error">*</span>
+              </span>
+            </label>
+            <textarea 
+              name="description" 
+              class="textarea textarea-bordered h-32"
+              placeholder="Describe what students will learn in this course..."
+              required
+            ><%= locals.formData && locals.formData.description ? locals.formData.description : '' %></textarea>
+            <label class="label">
+              <span class="label-text-alt text-base-content/60">
+                Provide a detailed overview of the course content and objectives
+              </span>
+            </label>
+          </div>
+
+          <!-- Info Box -->
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            <div>
+              <div class="font-semibold mb-1">After creating the course:</div>
+              <ul class="text-sm list-disc list-inside ml-4">
+                <li>Contact your admin to enroll batches</li>
+                <li>Upload course materials</li>
+                <li>Create assignments for students</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="card-actions justify-end pt-4 border-t">
+            <a href="/teacher/courses" class="btn btn-ghost">
+              <i class="fas fa-times mr-2"></i>Cancel
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save mr-2"></i>Create Course
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Tips Card -->
+    <div class="card bg-base-200 shadow-xl mt-6">
+      <div class="card-body">
+        <h2 class="card-title text-lg">
+          <i class="fas fa-lightbulb mr-2 text-warning"></i>Tips for Creating a Great Course
+        </h2>
+        <ul class="list-disc list-inside space-y-2 text-sm text-base-content/80">
+          <li><strong>Choose a clear title:</strong> Make it easy for students to understand what they'll learn</li>
+          <li><strong>Use standard codes:</strong> Follow your institution's course code convention (e.g., CS101, MATH201)</li>
+          <li><strong>Write detailed descriptions:</strong> Include prerequisites, learning outcomes, and topics covered</li>
+          <li><strong>Plan ahead:</strong> Consider the course structure before creating assignments and materials</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <%- include('../shared/footer') %>
+
+  <script>
+    // Auto-uppercase course code
+    document.querySelector('input[name="code"]').addEventListener('input', function(e) {
+      e.target.value = e.target.value.toUpperCase();
+    });
+
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+      const title = document.querySelector('input[name="title"]').value.trim();
+      const code = document.querySelector('input[name="code"]').value.trim();
+      const description = document.querySelector('textarea[name="description"]').value.trim();
+
+      if (!title || !code || !description) {
+        e.preventDefault();
+        alert('Please fill in all required fields');
+        return false;
+      }
+
+      if (code.length < 2) {
+        e.preventDefault();
+        alert('Course code must be at least 2 characters long');
+        return false;
+      }
+    });
+  </script>
+</body>
+</html>

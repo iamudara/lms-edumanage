@@ -5,7 +5,13 @@
  */
 
 import express from 'express';
-import { showDashboard } from '../controllers/teacherController.js';
+import { 
+  showDashboard,
+  getCourses,
+  showCreateCourse,
+  createCourse,
+  getCourseDetail
+} from '../controllers/teacherController.js';
 
 const router = express.Router();
 
@@ -29,36 +35,28 @@ router.get('/dashboard', showDashboard);
  * GET /teacher/courses
  * Lists all courses created by this teacher
  */
-router.get('/courses', (req, res) => {
-  res.send('Teacher Courses List - To be implemented in Task 4.3');
-});
+router.get('/courses', getCourses);
 
 /**
  * Show course creation form
  * GET /teacher/courses/create
  * Form to create a new course
  */
-router.get('/courses/create', (req, res) => {
-  res.send('Create Course Form - To be implemented in Task 4.3');
-});
+router.get('/courses/create', showCreateCourse);
 
 /**
  * Create a new course
  * POST /teacher/courses/create
  * Processes course creation form
  */
-router.post('/courses/create', (req, res) => {
-  res.send('Create Course Action - To be implemented in Task 4.3');
-});
+router.post('/courses/create', createCourse);
 
 /**
  * Get single course details
  * GET /teacher/courses/:id
  * Shows course details, enrolled batches, materials, assignments
  */
-router.get('/courses/:id', (req, res) => {
-  res.send(`Course Detail - ID: ${req.params.id} - To be implemented in Task 4.3`);
-});
+router.get('/courses/:id', getCourseDetail);
 
 // ============================================
 // MATERIAL MANAGEMENT

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= pageTitle %> - LMS EduManage</title>
+  <link href="/css/output.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <%- include('../shared/navbar') %>
+
+  <div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs mb-6">
+      <ul>
+        <li><a href="/teacher/dashboard"><i class="fas fa-home mr-1"></i>Dashboard</a></li>
+        <li><a href="/teacher/courses"><i class="fas fa-book mr-1"></i>Courses</a></li>
+        <li><%= course.code %></li>
+      </ul>
+    </div>
+
+    <!-- Course Header -->
+    <div class="card bg-gradient-to-r from-primary to-secondary text-primary-content shadow-xl mb-6">
+      <div class="card-body">
+        <div class="flex justify-between items-start">
+          <div class="flex-1">
+            <div class="badge badge-outline badge-lg mb-3"><%= course.code %></div>
+            <h1 class="text-4xl font-bold mb-2"><%= course.title %></h1>
+            <p class="text-primary-content/90 text-lg"><%= course.description %></p>
+          </div>
+          <div class="dropdown dropdown-end">
+            <label tabindex="0" class="btn btn-ghost">
+              <i class="fas fa-ellipsis-v text-xl"></i>
+            </label>
+            <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52 text-base-content">
+              <li><a href="/teacher/courses/<%= course.id %>/materials"><i class="fas fa-file-alt"></i>Manage Materials</a></li>
+              <li><a href="/teacher/courses/<%= course.id %>/assignments/create"><i class="fas fa-tasks"></i>Create Assignment</a></li>
+              <li><a href="/teacher/courses/<%= course.id %>/grades"><i class="fas fa-chart-bar"></i>Manage Grades</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-3 gap-4 mt-6">
+          <div class="stat bg-base-100/10 rounded-lg">
+            <div class="stat-title text-primary-content/70">Enrolled Batches</div>
+            <div class="stat-value text-primary-content"><%= enrolledBatches.length %></div>
+          </div>
+          <div class="stat bg-base-100/10 rounded-lg">
+            <div class="stat-title text-primary-content/70">Total Students</div>
+            <div class="stat-value text-primary-content"><%= totalStudents %></div>
+          </div>
+          <div class="stat bg-base-100/10 rounded-lg">
+            <div class="stat-title text-primary-content/70">Assignments</div>
+            <div class="stat-value text-primary-content"><%= course.Assignments.length %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Main Content (2/3 width) -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Assignments Section -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="card-title text-2xl">
+                <i class="fas fa-clipboard-list mr-2"></i>Assignments
+              </h2>
+              <a href="/teacher/courses/<%= course.id %>/assignments/create" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus mr-1"></i>Create Assignment
+              </a>
+            </div>
+
+            <% if (course.Assignments.length === 0) { %>
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <span>No assignments created yet for this course.</span>
+              </div>
+            <% } else { %>
+              <div class="space-y-3">
+                <% course.Assignments.forEach(assignment => { 
+                  const submissionCount = assignment.Submissions.length;
+                  const gradedCount = assignment.Submissions.filter(s => s.marks !== null).length;
+                  const pendingCount = submissionCount - gradedCount;
+                  const isOverdue = new Date(assignment.deadline) < new Date();
+                %>
+                  <div class="card bg-base-200 hover:shadow-md transition-shadow">
+                    <div class="card-body p-4">
+                      <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                          <h3 class="font-bold text-lg"><%= assignment.title %></h3>
+                          <p class="text-sm text-base-content/70 mt-1"><%= assignment.description %></p>
+                          
+                          <div class="flex gap-3 mt-3">
+                            <div class="badge badge-outline">
+                              <i class="far fa-calendar mr-1"></i>
+                              Due: <%= new Date(assignment.deadline).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }) %>
+                            </div>
+                            <% if (isOverdue) { %>
+                              <div class="badge badge-error">Overdue</div>
+                            <% } else { %>
+                              <div class="badge badge-success">Active</div>
+                            <% } %>
+                          </div>
+
+                          <div class="flex gap-3 mt-2 text-sm">
+                            <span><i class="fas fa-file-alt mr-1 text-info"></i><%= submissionCount %> Submissions</span>
+                            <span><i class="fas fa-check mr-1 text-success"></i><%= gradedCount %> Graded</span>
+                            <% if (pendingCount > 0) { %>
+                              <span><i class="fas fa-hourglass-half mr-1 text-warning"></i><%= pendingCount %> Pending</span>
+                            <% } %>
+                          </div>
+                        </div>
+
+                        <div class="flex flex-col gap-2">
+                          <a href="/teacher/assignments/<%= assignment.id %>/submissions" class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye mr-1"></i>View Submissions
+                          </a>
+                          <a href="/teacher/assignments/<%= assignment.id %>/edit" class="btn btn-sm btn-ghost">
+                            <i class="fas fa-edit mr-1"></i>Edit Deadline
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar (1/3 width) -->
+      <div class="space-y-6">
+        <!-- Enrolled Batches -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title text-xl mb-4">
+              <i class="fas fa-layer-group mr-2"></i>Enrolled Batches
+            </h2>
+
+            <% if (enrolledBatches.length === 0) { %>
+              <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>No batches enrolled yet. Contact admin to enroll batches.</span>
+              </div>
+            <% } else { %>
+              <div class="space-y-2">
+                <% enrolledBatches.forEach(batch => { %>
+                  <div class="flex justify-between items-center p-3 bg-base-200 rounded-lg">
+                    <div>
+                      <div class="font-semibold"><%= batch.name %></div>
+                      <div class="text-sm text-base-content/70"><%= batch.code %></div>
+                    </div>
+                    <div class="badge badge-primary"><%= batch.studentsCount %> students</div>
+                  </div>
+                <% }) %>
+              </div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title text-xl mb-4">
+              <i class="fas fa-bolt mr-2"></i>Quick Actions
+            </h2>
+            
+            <div class="space-y-2">
+              <a href="/teacher/courses/<%= course.id %>/materials" class="btn btn-outline btn-block justify-start">
+                <i class="fas fa-file-alt mr-2"></i>Manage Materials
+              </a>
+              <a href="/teacher/courses/<%= course.id %>/assignments/create" class="btn btn-outline btn-block justify-start">
+                <i class="fas fa-plus-circle mr-2"></i>Create Assignment
+              </a>
+              <a href="/teacher/courses/<%= course.id %>/grades" class="btn btn-outline btn-block justify-start">
+                <i class="fas fa-chart-bar mr-2"></i>View All Grades
+              </a>
+              <a href="/teacher/courses" class="btn btn-ghost btn-block justify-start">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Courses
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%- include('../shared/footer') %>
+</body>
+</html>

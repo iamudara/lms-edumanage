@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= pageTitle %> - LMS EduManage</title>
+  <link href="/css/output.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <%- include('../shared/navbar') %>
+
+  <div class="container mx-auto px-4 py-8">
+    <!-- Page Header -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-base-content mb-2">
+          <i class="fas fa-book mr-2"></i>My Courses
+        </h1>
+        <p class="text-base-content/70">Manage all your courses</p>
+      </div>
+      <a href="/teacher/courses/create" class="btn btn-primary">
+        <i class="fas fa-plus mr-2"></i>Create New Course
+      </a>
+    </div>
+
+    <!-- Courses Grid -->
+    <% if (courses.length === 0) { %>
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body text-center py-16">
+          <i class="fas fa-book-open text-6xl text-base-content/20 mb-4"></i>
+          <h2 class="text-2xl font-bold mb-2">No Courses Yet</h2>
+          <p class="text-base-content/70 mb-6">Start creating courses to manage your teaching content</p>
+          <div>
+            <a href="/teacher/courses/create" class="btn btn-primary btn-wide">
+              <i class="fas fa-plus mr-2"></i>Create Your First Course
+            </a>
+          </div>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <% courses.forEach(course => { 
+          // Calculate enrolled students
+          let enrolledStudents = 0;
+          course.BatchEnrollments.forEach(enrollment => {
+            enrolledStudents += enrollment.batch.students.length;
+          });
+          
+          const assignmentCount = course.Assignments.length;
+          const batchCount = course.BatchEnrollments.length;
+        %>
+          <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+            <div class="card-body">
+              <!-- Course Code Badge -->
+              <div class="badge badge-primary badge-lg mb-2">
+                <%= course.code %>
+              </div>
+
+              <!-- Course Title -->
+              <h2 class="card-title text-xl mb-2">
+                <%= course.title %>
+              </h2>
+
+              <!-- Course Description -->
+              <p class="text-base-content/70 text-sm mb-4 line-clamp-3">
+                <%= course.description || 'No description available' %>
+              </p>
+
+              <!-- Statistics -->
+              <div class="grid grid-cols-3 gap-2 mb-4">
+                <div class="text-center p-2 bg-base-200 rounded">
+                  <div class="text-2xl font-bold text-primary"><%= batchCount %></div>
+                  <div class="text-xs text-base-content/70">Batches</div>
+                </div>
+                <div class="text-center p-2 bg-base-200 rounded">
+                  <div class="text-2xl font-bold text-secondary"><%= enrolledStudents %></div>
+                  <div class="text-xs text-base-content/70">Students</div>
+                </div>
+                <div class="text-center p-2 bg-base-200 rounded">
+                  <div class="text-2xl font-bold text-accent"><%= assignmentCount %></div>
+                  <div class="text-xs text-base-content/70">Assignments</div>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="card-actions justify-end">
+                <a href="/teacher/courses/<%= course.id %>" class="btn btn-primary btn-sm">
+                  <i class="fas fa-eye mr-1"></i>View Details
+                </a>
+                <div class="dropdown dropdown-end">
+                  <label tabindex="0" class="btn btn-ghost btn-sm">
+                    <i class="fas fa-ellipsis-v"></i>
+                  </label>
+                  <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                    <li>
+                      <a href="/teacher/courses/<%= course.id %>/materials">
+                        <i class="fas fa-file-alt"></i>Materials
+                      </a>
+                    </li>
+                    <li>
+                      <a href="/teacher/courses/<%= course.id %>/assignments/create">
+                        <i class="fas fa-tasks"></i>Create Assignment
+                      </a>
+                    </li>
+                    <li>
+                      <a href="/teacher/courses/<%= course.id %>/grades">
+                        <i class="fas fa-chart-bar"></i>View Grades
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Created Date -->
+              <div class="text-xs text-base-content/50 mt-2">
+                <i class="far fa-clock mr-1"></i>
+                Created <%= new Date(course.created_at).toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric',
+                  year: 'numeric'
+                }) %>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+
+      <!-- Summary Stats -->
+      <div class="stats shadow mt-8 w-full">
+        <div class="stat">
+          <div class="stat-figure text-primary">
+            <i class="fas fa-book text-3xl"></i>
+          </div>
+          <div class="stat-title">Total Courses</div>
+          <div class="stat-value text-primary"><%= courses.length %></div>
+          <div class="stat-desc">Created by you</div>
+        </div>
+        
+        <div class="stat">
+          <div class="stat-figure text-secondary">
+            <i class="fas fa-users text-3xl"></i>
+          </div>
+          <div class="stat-title">Total Students</div>
+          <div class="stat-value text-secondary">
+            <% 
+              let totalStudents = 0;
+              courses.forEach(course => {
+                course.BatchEnrollments.forEach(enrollment => {
+                  totalStudents += enrollment.batch.students.length;
+                });
+              });
+            %>
+            <%= totalStudents %>
+          </div>
+          <div class="stat-desc">Across all courses</div>
+        </div>
+        
+        <div class="stat">
+          <div class="stat-figure text-accent">
+            <i class="fas fa-tasks text-3xl"></i>
+          </div>
+          <div class="stat-title">Total Assignments</div>
+          <div class="stat-value text-accent">
+            <% 
+              let totalAssignments = 0;
+              courses.forEach(course => {
+                totalAssignments += course.Assignments.length;
+              });
+            %>
+            <%= totalAssignments %>
+          </div>
+          <div class="stat-desc">Active assignments</div>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <%- include('../shared/footer') %>
+</body>
+</html>
