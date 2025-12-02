@@ -10,6 +10,7 @@ import MySQLStoreFactory from 'express-mysql-session';
 import passport from 'passport';
 import bodyParser from 'body-parser';
 import AdminJS from 'adminjs';
+import { ComponentLoader } from 'adminjs';
 import * as AdminJSExpress from '@adminjs/express';
 import * as AdminJSSequelize from '@adminjs/sequelize';
 
@@ -48,7 +49,14 @@ AdminJS.registerAdapter({
   Database: AdminJSSequelize.Database,
 });
 
-// 7. Configure MySQL session store (NOT memory store - critical for Railway)
+// 7. ComponentLoader for custom dashboard
+const componentLoader = new ComponentLoader();
+
+const Components = {
+  Dashboard: componentLoader.add('Dashboard', path.resolve(__dirname, 'admin-components/dashboard.jsx')),
+};
+
+// 8. Configure MySQL session store (NOT memory store - critical for Railway)
 const sessionStore = new MySQLStore({
   host: process.env.DB_HOST,
   port: 3306,
@@ -109,6 +117,7 @@ app.use((req, res, next) => {
 
 // 9. Create AdminJS instance
 const adminJs = new AdminJS({
+  componentLoader,
   resources: [
     {
       resource: User,
@@ -121,7 +130,7 @@ const adminJs = new AdminJS({
     {
       resource: Batch,
       options: {
-        listProperties: ['id', 'name', 'code', 'year', 'created_at'],
+        listProperties: ['id', 'name', 'code', 'year'],
         editProperties: ['name', 'code', 'description', 'year'],
       }
     },
@@ -169,6 +178,9 @@ const adminJs = new AdminJS({
     }
   ],
   rootPath: '/admin',
+  dashboard: {
+    component: Components.Dashboard,
+  },
   branding: {
     companyName: 'LMS EduManage',
     logo: false,
