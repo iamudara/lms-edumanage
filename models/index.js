@@ -140,10 +140,12 @@ Grade.belongsTo(User, {
   as: 'student'
 });
 
-// Sync database function
+// Sync function
 const syncDatabase = async () => {
   try {
-    await sequelize.sync({ alter: true });
+    // Use { force: false } instead of { alter: true } to avoid too many keys error
+    // Only creates tables if they don't exist, doesn't modify existing ones
+    await sequelize.sync({ force: false });
     console.log('✓ Database synchronized successfully');
     console.log('✓ All tables created/updated');
   } catch (error) {
