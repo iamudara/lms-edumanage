@@ -1,102 +1,197 @@
 /**
  * Teacher Routes
- * Handles teacher-specific routes (dashboard, courses, assignments, etc.)
- * Phase 4: Full implementation pending
+ * Handles teacher-specific routes (dashboard, courses, assignments, materials, grading)
+ * Phase 4: Teacher Features Implementation
  */
 
 import express from 'express';
 
 const router = express.Router();
 
+// ============================================
+// DASHBOARD
+// ============================================
+
 /**
- * Teacher Dashboard (Placeholder)
+ * Teacher Dashboard
  * GET /teacher/dashboard
+ * Shows teacher's courses, pending submissions, recent activity
  */
 router.get('/dashboard', (req, res) => {
-  res.send(`
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Teacher Dashboard - LMS EduManage</title>
-      <style>
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-          max-width: 800px;
-          margin: 50px auto;
-          padding: 20px;
-          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-          min-height: 100vh;
-        }
-        .container {
-          background: white;
-          border-radius: 10px;
-          padding: 40px;
-          box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        }
-        h1 { color: #333; margin-top: 0; }
-        .info { background: #fef3c7; padding: 15px; border-radius: 5px; margin: 20px 0; }
-        .user-info { background: #ecfdf5; padding: 15px; border-radius: 5px; margin: 20px 0; }
-        .links { margin: 20px 0; }
-        .links a { 
-          display: inline-block;
-          margin: 5px 10px 5px 0;
-          padding: 10px 20px;
-          background: #f59e0b;
-          color: white;
-          text-decoration: none;
-          border-radius: 5px;
-          transition: background 0.3s;
-        }
-        .links a:hover { background: #d97706; }
-        .logout { background: #dc2626 !important; }
-        .logout:hover { background: #b91c1c !important; }
-        .status { color: #d97706; font-weight: bold; }
-        ul { line-height: 1.8; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <h1>👨‍🏫 Teacher Dashboard</h1>
-        
-        <div class="user-info">
-          <p><strong>Welcome, ${req.user.full_name}!</strong></p>
-          <p>Role: <span class="status">${req.user.role.toUpperCase()}</span></p>
-          <p>Email: ${req.user.email}</p>
-          <p>Username: ${req.user.username}</p>
-        </div>
+  res.send('Teacher Dashboard - To be implemented in Task 4.2');
+});
 
-        <div class="info">
-          <h3>✅ Authentication Working!</h3>
-          <p>You have successfully logged in as a teacher. The role-based redirect is working correctly.</p>
-        </div>
+// ============================================
+// COURSE MANAGEMENT
+// ============================================
 
-        <div class="info">
-          <h3>🚀 Coming Soon in Phase 4</h3>
-          <p>Teacher features will include:</p>
-          <ul>
-            <li>Course Management</li>
-            <li>Material Upload</li>
-            <li>Assignment Creation</li>
-            <li>View Submissions</li>
-            <li>Grade Assignments</li>
-            <li>Manage Student Grades</li>
-          </ul>
-        </div>
+/**
+ * Get all teacher's courses
+ * GET /teacher/courses
+ * Lists all courses created by this teacher
+ */
+router.get('/courses', (req, res) => {
+  res.send('Teacher Courses List - To be implemented in Task 4.3');
+});
 
-        <div class="links">
-          <a href="/auth/change-password">Change Password</a>
-          <a href="/auth/logout" class="logout">Logout</a>
-        </div>
+/**
+ * Show course creation form
+ * GET /teacher/courses/create
+ * Form to create a new course
+ */
+router.get('/courses/create', (req, res) => {
+  res.send('Create Course Form - To be implemented in Task 4.3');
+});
 
-        <p style="color: #666; font-size: 14px; margin-top: 30px;">
-          <em>This is a temporary placeholder. Full teacher dashboard will be implemented in Phase 4.</em>
-        </p>
-      </div>
-    </body>
-    </html>
-  `);
+/**
+ * Create a new course
+ * POST /teacher/courses/create
+ * Processes course creation form
+ */
+router.post('/courses/create', (req, res) => {
+  res.send('Create Course Action - To be implemented in Task 4.3');
+});
+
+/**
+ * Get single course details
+ * GET /teacher/courses/:id
+ * Shows course details, enrolled batches, materials, assignments
+ */
+router.get('/courses/:id', (req, res) => {
+  res.send(`Course Detail - ID: ${req.params.id} - To be implemented in Task 4.3`);
+});
+
+// ============================================
+// MATERIAL MANAGEMENT
+// ============================================
+
+/**
+ * Get materials for a course
+ * GET /teacher/courses/:id/materials
+ * Lists all materials for a specific course
+ */
+router.get('/courses/:id/materials', (req, res) => {
+  res.send(`Course Materials - ID: ${req.params.id} - To be implemented in Task 4.4`);
+});
+
+/**
+ * Upload material to course
+ * POST /teacher/courses/:id/materials/upload
+ * Handles file upload or URL input for course materials
+ */
+router.post('/courses/:id/materials/upload', (req, res) => {
+  res.send(`Upload Material - Course ID: ${req.params.id} - To be implemented in Task 4.4`);
+});
+
+/**
+ * Delete a material
+ * DELETE /teacher/materials/:id
+ * Removes a material from a course
+ */
+router.delete('/materials/:id', (req, res) => {
+  res.send(`Delete Material - ID: ${req.params.id} - To be implemented in Task 4.4`);
+});
+
+// ============================================
+// ASSIGNMENT MANAGEMENT
+// ============================================
+
+/**
+ * Show assignment creation form
+ * GET /teacher/courses/:id/assignments/create
+ * Form to create a new assignment for a course
+ */
+router.get('/courses/:id/assignments/create', (req, res) => {
+  res.send(`Create Assignment Form - Course ID: ${req.params.id} - To be implemented in Task 4.5`);
+});
+
+/**
+ * Create new assignment
+ * POST /teacher/courses/:id/assignments
+ * Processes assignment creation (title, description, deadline)
+ */
+router.post('/courses/:id/assignments', (req, res) => {
+  res.send(`Create Assignment - Course ID: ${req.params.id} - To be implemented in Task 4.5`);
+});
+
+/**
+ * Get assignment edit form
+ * GET /teacher/assignments/:id/edit
+ * Form to edit assignment deadline
+ */
+router.get('/assignments/:id/edit', (req, res) => {
+  res.send(`Edit Assignment - ID: ${req.params.id} - To be implemented in Task 4.10`);
+});
+
+/**
+ * Update assignment deadline
+ * PUT /teacher/assignments/:id
+ * Updates assignment deadline only
+ */
+router.put('/assignments/:id', (req, res) => {
+  res.send(`Update Assignment - ID: ${req.params.id} - To be implemented in Task 4.10`);
+});
+
+// ============================================
+// SUBMISSION MANAGEMENT
+// ============================================
+
+/**
+ * View all submissions for an assignment
+ * GET /teacher/assignments/:id/submissions
+ * Lists all student submissions for a specific assignment
+ */
+router.get('/assignments/:id/submissions', (req, res) => {
+  res.send(`Assignment Submissions - ID: ${req.params.id} - To be implemented in Task 4.6`);
+});
+
+/**
+ * View single submission for grading
+ * GET /teacher/submissions/:id/grade
+ * Shows submission details and grading form
+ */
+router.get('/submissions/:id/grade', (req, res) => {
+  res.send(`Grade Submission Form - ID: ${req.params.id} - To be implemented in Task 4.7`);
+});
+
+/**
+ * Grade a submission
+ * POST /teacher/submissions/:id/grade
+ * Assigns marks and feedback to a submission
+ */
+router.post('/submissions/:id/grade', (req, res) => {
+  res.send(`Grade Submission Action - ID: ${req.params.id} - To be implemented in Task 4.7`);
+});
+
+// ============================================
+// GRADE MANAGEMENT
+// ============================================
+
+/**
+ * View grades for a course
+ * GET /teacher/courses/:id/grades
+ * Shows all enrolled students with assignment marks and final grades
+ */
+router.get('/courses/:id/grades', (req, res) => {
+  res.send(`Course Grades - ID: ${req.params.id} - To be implemented in Task 4.8`);
+});
+
+/**
+ * Save final grade for a student
+ * POST /teacher/courses/:id/grades
+ * Manually saves final grade for a student in a course
+ */
+router.post('/courses/:id/grades', (req, res) => {
+  res.send(`Save Grade - Course ID: ${req.params.id} - To be implemented in Task 4.8`);
+});
+
+/**
+ * Bulk grade upload via CSV
+ * POST /teacher/courses/:id/grades/bulk
+ * Processes CSV file for bulk grade upload
+ */
+router.post('/courses/:id/grades/bulk', (req, res) => {
+  res.send(`Bulk Grade Upload - Course ID: ${req.params.id} - To be implemented in Task 4.9`);
 });
 
 export default router;
