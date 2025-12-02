@@ -13,7 +13,9 @@ import {
   getCourseDetail,
   getMaterials,
   uploadMaterial,
-  deleteMaterial
+  deleteMaterial,
+  showCreateAssignment,
+  createAssignment
 } from '../controllers/teacherController.js';
 import { uploadMaterial as uploadMiddleware } from '../middleware/upload.js';
 
@@ -96,18 +98,14 @@ router.delete('/materials/:id', deleteMaterial);
  * GET /teacher/courses/:id/assignments/create
  * Form to create a new assignment for a course
  */
-router.get('/courses/:id/assignments/create', (req, res) => {
-  res.send(`Create Assignment Form - Course ID: ${req.params.id} - To be implemented in Task 4.5`);
-});
+router.get('/courses/:id/assignments/create', showCreateAssignment);
 
 /**
  * Create new assignment
  * POST /teacher/courses/:id/assignments
  * Processes assignment creation (title, description, deadline)
  */
-router.post('/courses/:id/assignments', (req, res) => {
-  res.send(`Create Assignment - Course ID: ${req.params.id} - To be implemented in Task 4.5`);
-});
+router.post('/courses/:id/assignments', createAssignment);
 
 /**
  * Get assignment edit form

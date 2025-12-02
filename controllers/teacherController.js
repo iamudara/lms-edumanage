@@ -500,3 +500,98 @@ export const deleteMaterial = async (req, res) => {
     });
   }
 };
+
+/**
+ * Show Assignment Creation Form
+ * GET /teacher/courses/:id/assignments/create
+ * 
+ * Displays form to create a new assignment for a course
+ */
+export const showCreateAssignment = async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    const teacherId = req.user.id;
+
+    // Verify teacher owns the course
+    const course = await Course.findOne({
+      where: { 
+        id: courseId,
+        teacher_id: teacherId
+      }
+    });
+
+    if (!course) {
+      return res.status(404).send('Course not found or you do not have permission to access it');
+    }
+
+    res.render('teacher/assignment-create', {
+      user: req.user,
+      course,
+      pageTitle: `Create Assignment - ${course.code}`,
+      error: req.query.error
+    });
+
+  } catch (error) {
+    console.error('Show Create Assignment Error:', error);
+    res.status(500).send('Error loading assignment creation form: ' + error.message);
+  }
+};
+
+/**
+ * Create New Assignment
+ * POST /teacher/courses/:id/assignments
+ * 
+ * Creates a new assignment for a course
+ * Validates: deadline must be in the future
+ */
+export const createAssignment = async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    const teacherId = req.user.id;
+    const { title, description, deadline } = req.body;
+
+    // Verify teacher owns the course
+    const course = await Course.findOne({
+      where: { 
+        id: courseId,
+        teacher_id: teacherId
+      }
+    });
+
+    if (!course) {
+      return res.redirect(`/teacher/courses?error=Course not found`);
+    }
+
+    // Validation
+    if (!title || title.trim() === '') {
+      return res.redirect(`/teacher/courses/${courseId}/assignments/create?error=Title is required`);
+    }
+
+    if (!deadline) {
+      return res.redirect(`/teacher/courses/${courseId}/assignments/create?error=Deadline is required`);
+    }
+
+    // Server-side deadline validation - must be in the future
+    const deadlineDate = new Date(deadline);
+    const now = new Date();
+
+    if (deadlineDate <= now) {
+      return res.redirect(`/teacher/courses/${courseId}/assignments/create?error=Deadline must be in the future`);
+    }
+
+    // Create assignment
+    const assignment = await Assignment.create({
+      course_id: courseId,
+      title: title.trim(),
+      description: description ? description.trim() : null,
+      deadline: deadlineDate,
+      created_by: teacherId
+    });
+
+    res.redirect(`/teacher/courses/${courseId}?success=Assignment created successfully`);
+
+  } catch (error) {
+    console.error('Create Assignment Error:', error);
+    res.redirect(`/teacher/courses/${req.params.id}/assignments/create?error=Error creating assignment: ${error.message}`);
+  }
+};
