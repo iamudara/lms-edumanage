@@ -7,6 +7,7 @@
 import express from 'express';
 import {
   showDashboard,
+  getAllCourses,
   getCourseView,
   getAssignmentDetail,
   submitAssignment,
@@ -22,6 +23,13 @@ const router = express.Router();
  * Display: enrolled courses, upcoming deadlines, recent grades, pending assignments
  */
 router.get('/dashboard', showDashboard);
+
+/**
+ * My Courses
+ * GET /student/courses
+ * Display: list of all enrolled courses
+ */
+router.get('/courses', getAllCourses);
 
 /**
  * Course View (Student)

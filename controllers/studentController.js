@@ -5,6 +5,7 @@
 
 import { 
   Course, 
+  Batch,
   BatchEnrollment, 
   Assignment, 
   Submission, 
@@ -154,13 +155,198 @@ export const showDashboard = async (req, res) => {
 };
 
 /**
+ * Get All Courses (Student)
+ * GET /student/courses
+ * Display: list of all enrolled courses
+ */
+export const getAllCourses = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const batchId = req.user.batch_id;
+
+    // Check if student has a batch assigned
+    if (!batchId) {
+      return res.status(400).render('error', {
+        message: 'You are not assigned to any batch. Please contact the administrator.',
+        user: req.user
+      });
+    }
+
+    // Get enrolled courses (via batch enrollments)
+    const enrolledCourses = await Course.findAll({
+      include: [
+        {
+          model: BatchEnrollment,
+          where: { batch_id: batchId },
+          required: true,
+          include: [
+            {
+              model: Batch,
+              as: 'batch',
+              attributes: ['id', 'name', 'code']
+            }
+          ]
+        },
+        {
+          model: User,
+          as: 'teacher',
+          attributes: ['id', 'full_name', 'email']
+        },
+        {
+          model: Assignment,
+          required: false,
+          attributes: ['id', 'title', 'deadline']
+        },
+        {
+          model: Material,
+          required: false,
+          attributes: ['id']
+        }
+      ],
+      order: [['created_at', 'DESC']]
+    });
+
+    // Get grades for all courses
+    const grades = await Grade.findAll({
+      where: { student_id: studentId },
+      attributes: ['course_id', 'grade']
+    });
+
+    // Create a map of course grades
+    const gradeMap = {};
+    grades.forEach(grade => {
+      gradeMap[grade.course_id] = grade.grade;
+    });
+
+    res.render('student/courses', {
+      title: 'My Courses',
+      user: req.user,
+      courses: enrolledCourses,
+      gradeMap
+    });
+
+  } catch (error) {
+    console.error('Error loading courses:', error);
+    res.status(500).render('error', {
+      message: 'Failed to load courses. Please try again later.',
+      error: process.env.NODE_ENV === 'development' ? error : {},
+      user: req.user
+    });
+  }
+};
+
+/**
  * Get Course View (Student)
  * GET /student/courses/:id
  * Display: course info, materials, assignments list, course grade
  */
 export const getCourseView = async (req, res) => {
-  // TODO: Implement in Task 5.3
-  res.send('Course View - Coming Soon (Task 5.3)');
+  try {
+    const courseId = req.params.id;
+    const studentId = req.user.id;
+    const batchId = req.user.batch_id;
+
+    // Check if student has a batch assigned
+    if (!batchId) {
+      return res.status(400).render('error', {
+        message: 'You are not assigned to any batch. Please contact the administrator.',
+        user: req.user
+      });
+    }
+
+    // Get course with all details
+    const course = await Course.findByPk(courseId, {
+      include: [
+        {
+          model: User,
+          as: 'teacher',
+          attributes: ['id', 'full_name', 'email']
+        },
+        {
+          model: BatchEnrollment,
+          where: { batch_id: batchId },
+          required: true  // Only show if student's batch is enrolled
+        },
+        {
+          model: Material,
+          required: false
+        },
+        {
+          model: Assignment,
+          required: false,
+          include: [
+            {
+              model: Submission,
+              required: false,
+              where: { student_id: studentId },
+              attributes: ['id', 'submitted_at', 'marks', 'feedback', 'graded_by']
+            }
+          ]
+        }
+      ],
+      order: [
+        [Material, 'created_at', 'DESC'],
+        [Assignment, 'deadline', 'ASC']
+      ]
+    });
+
+    // Check if course exists and student's batch is enrolled
+    if (!course) {
+      return res.status(404).render('error', {
+        message: 'Course not found or you are not enrolled in this course.',
+        user: req.user
+      });
+    }
+
+    // Get student's grade for this course
+    const grade = await Grade.findOne({
+      where: {
+        course_id: courseId,
+        student_id: studentId
+      }
+    });
+
+    // Calculate assignment statistics
+    const totalAssignments = course.Assignments ? course.Assignments.length : 0;
+    const submittedAssignments = course.Assignments 
+      ? course.Assignments.filter(a => a.Submissions && a.Submissions.length > 0).length 
+      : 0;
+    const gradedAssignments = course.Assignments
+      ? course.Assignments.filter(a => a.Submissions && a.Submissions.length > 0 && a.Submissions[0].marks !== null).length
+      : 0;
+    
+    // Calculate average assignment score
+    let averageScore = null;
+    if (gradedAssignments > 0) {
+      const scores = course.Assignments
+        .filter(a => a.Submissions && a.Submissions.length > 0 && a.Submissions[0].marks !== null)
+        .map(a => parseFloat(a.Submissions[0].marks));
+      
+      averageScore = (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2);
+    }
+
+    res.render('student/course', {
+      title: course.title,
+      user: req.user,
+      course,
+      grade,
+      stats: {
+        totalMaterials: course.Materials ? course.Materials.length : 0,
+        totalAssignments,
+        submittedAssignments,
+        gradedAssignments,
+        averageScore
+      }
+    });
+
+  } catch (error) {
+    console.error('Error loading course view:', error);
+    res.status(500).render('error', {
+      message: 'Failed to load course details. Please try again later.',
+      error: process.env.NODE_ENV === 'development' ? error : {},
+      user: req.user
+    });
+  }
 };
 
 /**
