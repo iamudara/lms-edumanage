@@ -16,6 +16,7 @@ import {
 } from '../models/index.js';
 import { Op } from 'sequelize';
 import cloudinary from '../config/cloudinary.js';
+import { checkDeadline, isDeadlinePassed } from '../services/deadlineService.js';
 
 /**
  * Show Student Dashboard
@@ -396,16 +397,12 @@ export const getAssignmentDetail = async (req, res) => {
       ? assignment.Submissions[0] 
       : null;
 
-    // Calculate deadline status
-    const now = new Date();
-    const deadline = new Date(assignment.deadline);
-    const isPastDeadline = deadline < now;
-    const daysUntil = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
-    const isUrgent = daysUntil <= 2 && daysUntil >= 0;
+    // Calculate deadline status using deadline service
+    const deadlineStatus = checkDeadline(assignment.deadline);
 
     // Determine if student can submit
-    const canSubmit = !isPastDeadline && (!submission || submission.marks === null);
-    const canResubmit = !isPastDeadline && submission && submission.marks === null;
+    const canSubmit = deadlineStatus.canSubmit && (!submission || submission.marks === null);
+    const canResubmit = deadlineStatus.canSubmit && submission && submission.marks === null;
 
     res.render('student/assignment', {
       title: assignment.title,
@@ -413,10 +410,10 @@ export const getAssignmentDetail = async (req, res) => {
       assignment,
       submission,
       deadline: {
-        date: deadline,
-        isPastDeadline,
-        daysUntil,
-        isUrgent
+        date: deadlineStatus.deadline,
+        isPastDeadline: deadlineStatus.isPastDeadline,
+        daysUntil: deadlineStatus.daysUntil,
+        isUrgent: deadlineStatus.isUrgent
       },
       canSubmit,
       canResubmit
@@ -474,12 +471,8 @@ export const submitAssignment = async (req, res) => {
       });
     }
 
-    // Check deadline (server-side UTC validation)
-    const now = new Date();
-    const deadline = new Date(assignment.deadline);
-    const isPastDeadline = deadline < now;
-
-    if (isPastDeadline) {
+    // Check deadline using deadline service (server-side UTC validation)
+    if (isDeadlinePassed(assignment.deadline)) {
       return res.status(400).json({
         success: false,
         message: 'Deadline has passed. You can no longer submit or resubmit this assignment.'
