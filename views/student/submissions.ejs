@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - LMS EduManage</title>
+  <link rel="stylesheet" href="/css/output.css">
+  <link rel="stylesheet" href="/css/custom.css">
+  <!-- DataTables CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.tailwindcss.min.css">
+</head>
+<body class="bg-base-200 min-h-screen">
+  <%- include('../shared/navbar') %>
+
+  <div class="container mx-auto px-4 py-8">
+    <!-- Page Header -->
+    <div class="mb-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 class="text-4xl font-bold text-base-content mb-2">
+            📋 Submission History
+          </h1>
+          <p class="text-base-content/70">
+            View all your assignment submissions, grades, and feedback.
+          </p>
+        </div>
+        <a href="/student/dashboard" class="btn btn-ghost">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Dashboard
+        </a>
+      </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <!-- Total Submissions -->
+      <div class="stats shadow bg-primary text-primary-content">
+        <div class="stat">
+          <div class="stat-figure text-white/80">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <div class="stat-title text-primary-content/80">Total Submissions</div>
+          <div class="stat-value"><%= stats.total %></div>
+        </div>
+      </div>
+
+      <!-- Graded -->
+      <div class="stats shadow bg-success text-success-content">
+        <div class="stat">
+          <div class="stat-figure text-white/80">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="stat-title text-success-content/80">Graded</div>
+          <div class="stat-value"><%= stats.graded %></div>
+          <div class="stat-desc text-success-content/70">
+            <%= stats.total > 0 ? ((stats.graded / stats.total) * 100).toFixed(0) : 0 %>% graded
+          </div>
+        </div>
+      </div>
+
+      <!-- Pending -->
+      <div class="stats shadow bg-warning text-warning-content">
+        <div class="stat">
+          <div class="stat-figure text-white/80">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="stat-title text-warning-content/80">Pending</div>
+          <div class="stat-value"><%= stats.pending %></div>
+          <div class="stat-desc text-warning-content/70">Awaiting grades</div>
+        </div>
+      </div>
+
+      <!-- Average Score -->
+      <div class="stats shadow bg-info text-info-content">
+        <div class="stat">
+          <div class="stat-figure text-white/80">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+            </svg>
+          </div>
+          <div class="stat-title text-info-content/80">Average Score</div>
+          <div class="stat-value"><%= stats.averageScore ? stats.averageScore.toFixed(1) + '%' : 'N/A' %></div>
+          <div class="stat-desc text-info-content/70">From graded submissions</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="card bg-base-100 shadow-lg mb-6">
+      <div class="card-body py-4">
+        <div class="flex flex-col md:flex-row md:items-center gap-4">
+          <div class="flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <span class="font-medium">Filter by Course:</span>
+          </div>
+          <select id="courseFilter" class="select select-bordered select-sm w-full md:w-auto">
+            <option value="">All Courses</option>
+            <% courses.forEach(course => { %>
+              <option value="<%= course.id %>" <%= selectedCourseId == course.id ? 'selected' : '' %>>
+                <%= course.code %> - <%= course.title %>
+              </option>
+            <% }); %>
+          </select>
+          <div class="flex items-center gap-2">
+            <span class="font-medium">Status:</span>
+          </div>
+          <select id="statusFilter" class="select select-bordered select-sm w-full md:w-auto">
+            <option value="">All Statuses</option>
+            <option value="graded">Graded</option>
+            <option value="pending">Pending</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submissions Table -->
+    <div class="card bg-base-100 shadow-lg">
+      <div class="card-body">
+        <h2 class="card-title text-xl mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          Your Submissions
+        </h2>
+
+        <% if (submissions.length === 0) { %>
+          <div class="text-center py-12">
+            <div class="text-6xl mb-4">📭</div>
+            <h3 class="text-xl font-semibold text-base-content/70 mb-2">No Submissions Yet</h3>
+            <p class="text-base-content/50 mb-6">You haven't submitted any assignments yet.</p>
+            <a href="/student/courses" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              View My Courses
+            </a>
+          </div>
+        <% } else { %>
+          <div class="overflow-x-auto">
+            <table id="submissionsTable" class="table table-zebra w-full">
+              <thead>
+                <tr>
+                  <th>Assignment</th>
+                  <th>Course</th>
+                  <th>Submitted</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Score</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% submissions.forEach(submission => { %>
+                  <tr class="submission-row" data-course="<%= submission.assignment.course.id %>" data-status="<%= submission.marks !== null ? 'graded' : 'pending' %>">
+                    <td>
+                      <div class="flex items-center gap-3">
+                        <div class="avatar placeholder">
+                          <div class="bg-neutral text-neutral-content rounded-full w-10">
+                            <span class="text-lg">📝</span>
+                          </div>
+                        </div>
+                        <div>
+                          <div class="font-bold"><%= submission.assignment.title %></div>
+                          <div class="text-sm text-base-content/60">
+                            Due: <%= new Date(submission.assignment.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge badge-outline">
+                        <%= submission.assignment.course.code %>
+                      </span>
+                      <div class="text-sm text-base-content/60 mt-1">
+                        <%= submission.assignment.course.title %>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex flex-col">
+                        <span class="font-medium">
+                          <%= new Date(submission.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                        </span>
+                        <span class="text-sm text-base-content/60">
+                          <%= new Date(submission.submitted_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) %>
+                        </span>
+                        <% 
+                          const submittedDate = new Date(submission.submitted_at);
+                          const deadlineDate = new Date(submission.assignment.deadline);
+                          const isLate = submittedDate > deadlineDate;
+                        %>
+                        <% if (isLate) { %>
+                          <span class="badge badge-error badge-xs mt-1">Late</span>
+                        <% } %>
+                      </div>
+                    </td>
+                    <td>
+                      <% if (submission.file_url) { %>
+                        <span class="badge badge-info badge-sm">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                          File
+                        </span>
+                      <% } %>
+                      <% if (submission.submission_text) { %>
+                        <span class="badge badge-secondary badge-sm">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+                          </svg>
+                          Text
+                        </span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <% if (submission.marks !== null) { %>
+                        <span class="badge badge-success gap-1">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                          </svg>
+                          Graded
+                        </span>
+                      <% } else { %>
+                        <span class="badge badge-warning gap-1">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Pending
+                        </span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <% if (submission.marks !== null) { %>
+                        <div class="flex flex-col">
+                          <span class="font-bold text-lg <%= submission.marks >= 70 ? 'text-success' : submission.marks >= 50 ? 'text-warning' : 'text-error' %>">
+                            <%= submission.marks %>%
+                          </span>
+                          <% if (submission.feedback) { %>
+                            <button onclick="showFeedback('<%= submission.id %>')" class="text-xs text-info hover:underline">
+                              View Feedback
+                            </button>
+                          <% } %>
+                        </div>
+                      <% } else { %>
+                        <span class="text-base-content/50">—</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <div class="flex gap-2">
+                        <a href="/student/assignments/<%= submission.assignment.id %>" class="btn btn-ghost btn-xs" title="View Assignment">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </a>
+                        <% if (submission.file_url) { %>
+                          <a href="<%= submission.file_url %>" target="_blank" class="btn btn-ghost btn-xs" title="Download File">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                          </a>
+                        <% } %>
+                      </div>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feedback Modal -->
+  <dialog id="feedbackModal" class="modal">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+        </svg>
+        Teacher Feedback
+      </h3>
+      <div id="feedbackContent" class="prose max-w-none">
+        <!-- Feedback will be inserted here -->
+      </div>
+      <div class="modal-action">
+        <form method="dialog">
+          <button class="btn">Close</button>
+        </form>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
+
+  <%- include('../shared/footer') %>
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <!-- DataTables JS -->
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  
+  <script>
+    // Store feedback data for modal
+    const feedbackData = {
+      <% submissions.forEach(submission => { %>
+        <% if (submission.feedback) { %>
+          '<%= submission.id %>': `<%= submission.feedback.replace(/`/g, '\\`').replace(/\n/g, '<br>') %>`,
+        <% } %>
+      <% }); %>
+    };
+
+    // Show feedback modal
+    function showFeedback(submissionId) {
+      const feedback = feedbackData[submissionId];
+      if (feedback) {
+        document.getElementById('feedbackContent').innerHTML = `
+          <div class="bg-base-200 p-4 rounded-lg">
+            <p class="text-base-content">${feedback}</p>
+          </div>
+        `;
+        document.getElementById('feedbackModal').showModal();
+      }
+    }
+
+    // Initialize DataTable
+    $(document).ready(function() {
+      const table = $('#submissionsTable').DataTable({
+        pageLength: 10,
+        order: [[2, 'desc']], // Sort by submitted date descending
+        language: {
+          search: "Search:",
+          lengthMenu: "Show _MENU_ entries",
+          info: "Showing _START_ to _END_ of _TOTAL_ submissions",
+          infoEmpty: "No submissions found",
+          emptyTable: "No submissions available"
+        },
+        columnDefs: [
+          { orderable: false, targets: [6] } // Disable sorting on Actions column
+        ]
+      });
+
+      // Course filter
+      $('#courseFilter').on('change', function() {
+        filterTable();
+      });
+
+      // Status filter
+      $('#statusFilter').on('change', function() {
+        filterTable();
+      });
+
+      function filterTable() {
+        const courseId = $('#courseFilter').val();
+        const status = $('#statusFilter').val();
+
+        $('.submission-row').each(function() {
+          const row = $(this);
+          const rowCourse = row.data('course').toString();
+          const rowStatus = row.data('status');
+
+          let showRow = true;
+
+          if (courseId && rowCourse !== courseId) {
+            showRow = false;
+          }
+
+          if (status && rowStatus !== status) {
+            showRow = false;
+          }
+
+          if (showRow) {
+            row.show();
+          } else {
+            row.hide();
+          }
+        });
+
+        // Redraw DataTable to update pagination
+        table.draw();
+      }
+    });
+  </script>
+</body>
+</html>

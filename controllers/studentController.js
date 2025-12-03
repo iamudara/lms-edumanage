@@ -599,8 +599,79 @@ export const submitAssignment = async (req, res) => {
  * Display: all submissions, status, scores, feedback
  */
 export const getSubmissions = async (req, res) => {
-  // TODO: Implement in Task 5.7
-  res.send('Submission History - Coming Soon (Task 5.7)');
+  try {
+    const studentId = req.user.id;
+    const batchId = req.user.batch_id;
+    const { course: selectedCourseId } = req.query;
+
+    // Get student's enrolled courses for filter dropdown
+    const enrolledCourses = await Course.findAll({
+      include: [{
+        model: BatchEnrollment,
+        where: { batch_id: batchId },
+        attributes: []
+      }],
+      attributes: ['id', 'title', 'code'],
+      order: [['title', 'ASC']]
+    });
+
+    // Build submission query conditions
+    const submissionWhere = { student_id: studentId };
+
+    // Get all submissions for this student
+    const submissions = await Submission.findAll({
+      where: submissionWhere,
+      include: [{
+        model: Assignment,
+        as: 'assignment',  // Use the alias defined in model associations
+        attributes: ['id', 'title', 'deadline', 'course_id'],
+        include: [{
+          model: Course,
+          as: 'course',  // Use the alias defined in model associations
+          attributes: ['id', 'title', 'code'],
+          // Filter by course if selected
+          ...(selectedCourseId && {
+            where: { id: selectedCourseId }
+          })
+        }]
+      }],
+      order: [['submitted_at', 'DESC']]
+    });
+
+    // Filter out submissions where course doesn't match (when filter applied)
+    const filteredSubmissions = selectedCourseId 
+      ? submissions.filter(s => s.assignment && s.assignment.course)
+      : submissions;
+
+    // Calculate statistics
+    const total = filteredSubmissions.length;
+    const graded = filteredSubmissions.filter(s => s.marks !== null).length;
+    const pending = total - graded;
+    
+    // Calculate average score from graded submissions
+    const gradedSubmissions = filteredSubmissions.filter(s => s.marks !== null);
+    const averageScore = gradedSubmissions.length > 0
+      ? gradedSubmissions.reduce((sum, s) => sum + parseFloat(s.marks), 0) / gradedSubmissions.length
+      : null;
+
+    res.render('student/submissions', {
+      title: 'Submission History',
+      user: req.user,
+      submissions: filteredSubmissions,
+      courses: enrolledCourses,
+      selectedCourseId: selectedCourseId || '',
+      stats: {
+        total,
+        graded,
+        pending,
+        averageScore
+      }
+    });
+
+  } catch (error) {
+    console.error('Error loading submission history:', error);
+    res.status(500).send('Error loading submission history: ' + error.message);
+  }
 };
 
 /**
