@@ -13,6 +13,7 @@ import AdminJS from 'adminjs';
 import { ComponentLoader } from 'adminjs';
 import * as AdminJSExpress from '@adminjs/express';
 import * as AdminJSSequelize from '@adminjs/sequelize';
+import { v2 as cloudinary } from 'cloudinary';
 
 // ES module __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -184,6 +185,53 @@ const adminJs = new AdminJS({
       options: {
         listProperties: ['id', 'course_id', 'title', 'file_url'],
         editProperties: ['course_id', 'title', 'file_url', 'description'],
+        actions: {
+          delete: {
+            before: async (request, context) => {
+              if (request.method === 'post') {
+                const material = await Material.findByPk(context.record.id());
+                
+                // Delete material file from Cloudinary if exists
+                if (material && material.file_url) {
+                  try {
+                    const url = material.file_url;
+                    const urlParts = url.split('/');
+                    const uploadIndex = urlParts.indexOf('upload');
+                    
+                    if (uploadIndex !== -1) {
+                      const pathAfterUpload = urlParts.slice(uploadIndex + 1);
+                      const publicIdParts = pathAfterUpload[0].match(/^v\d+$/) 
+                        ? pathAfterUpload.slice(1) 
+                        : pathAfterUpload;
+                      
+                      const fullPath = publicIdParts.join('/');
+                      const isRawFile = url.includes('/raw/upload/');
+                      
+                      if (isRawFile) {
+                        await cloudinary.uploader.destroy(fullPath, { 
+                          resource_type: 'raw',
+                          invalidate: true 
+                        });
+                      } else {
+                        const publicIdNoExt = fullPath.replace(/\.[^.]+$/, '');
+                        await cloudinary.uploader.destroy(publicIdNoExt, { 
+                          resource_type: 'image',
+                          invalidate: true 
+                        });
+                      }
+                      console.log(`Deleted course material from Cloudinary: ${fullPath}`);
+                    }
+                  } catch (error) {
+                    console.error('Error deleting material file from Cloudinary:', error);
+                  }
+                }
+              }
+              
+              return request;
+            },
+            guard: 'Are you sure you want to delete this material? This will also delete the file from Cloudinary. This action cannot be undone!',
+          }
+        }
       }
     },
     {
@@ -191,6 +239,102 @@ const adminJs = new AdminJS({
       options: {
         listProperties: ['id', 'course_id', 'title', 'deadline', 'created_by'],
         editProperties: ['course_id', 'title', 'description', 'deadline', 'created_by'],
+        actions: {
+          delete: {
+            before: async (request, context) => {
+              if (request.method === 'post') {
+                const assignmentId = context.record.id();
+                
+                // Get all assignment materials to delete from Cloudinary
+                const materials = await AssignmentMaterial.findAll({
+                  where: { assignment_id: assignmentId }
+                });
+                
+                // Delete each material file from Cloudinary
+                for (const material of materials) {
+                  if (material.url && material.type === 'file') {
+                    try {
+                      const url = material.url;
+                      const urlParts = url.split('/');
+                      const uploadIndex = urlParts.indexOf('upload');
+                      
+                      if (uploadIndex !== -1) {
+                        const pathAfterUpload = urlParts.slice(uploadIndex + 1);
+                        const publicIdParts = pathAfterUpload[0].match(/^v\d+$/) 
+                          ? pathAfterUpload.slice(1) 
+                          : pathAfterUpload;
+                        
+                        const fullPath = publicIdParts.join('/');
+                        const isRawFile = url.includes('/raw/upload/');
+                        
+                        if (isRawFile) {
+                          await cloudinary.uploader.destroy(fullPath, { 
+                            resource_type: 'raw',
+                            invalidate: true 
+                          });
+                        } else {
+                          const publicIdNoExt = fullPath.replace(/\.[^.]+$/, '');
+                          await cloudinary.uploader.destroy(publicIdNoExt, { 
+                            resource_type: 'image',
+                            invalidate: true 
+                          });
+                        }
+                        console.log(`Deleted assignment material from Cloudinary: ${fullPath}`);
+                      }
+                    } catch (error) {
+                      console.error('Error deleting assignment material from Cloudinary:', error);
+                    }
+                  }
+                }
+                
+                // Get all submissions to delete their files from Cloudinary
+                const submissions = await Submission.findAll({
+                  where: { assignment_id: assignmentId }
+                });
+                
+                // Delete each submission file from Cloudinary
+                for (const submission of submissions) {
+                  if (submission.file_url) {
+                    try {
+                      const url = submission.file_url;
+                      const urlParts = url.split('/');
+                      const uploadIndex = urlParts.indexOf('upload');
+                      
+                      if (uploadIndex !== -1) {
+                        const pathAfterUpload = urlParts.slice(uploadIndex + 1);
+                        const publicIdParts = pathAfterUpload[0].match(/^v\d+$/) 
+                          ? pathAfterUpload.slice(1) 
+                          : pathAfterUpload;
+                        
+                        const fullPath = publicIdParts.join('/');
+                        const isRawFile = url.includes('/raw/upload/');
+                        
+                        if (isRawFile) {
+                          await cloudinary.uploader.destroy(fullPath, { 
+                            resource_type: 'raw',
+                            invalidate: true 
+                          });
+                        } else {
+                          const publicIdNoExt = fullPath.replace(/\.[^.]+$/, '');
+                          await cloudinary.uploader.destroy(publicIdNoExt, { 
+                            resource_type: 'image',
+                            invalidate: true 
+                          });
+                        }
+                        console.log(`Deleted submission file from Cloudinary: ${fullPath}`);
+                      }
+                    } catch (error) {
+                      console.error('Error deleting submission file from Cloudinary:', error);
+                    }
+                  }
+                }
+              }
+              
+              return request;
+            },
+            guard: 'Are you sure you want to delete this assignment? This will also delete all assignment materials, submissions, and their files from Cloudinary. This action cannot be undone!',
+          }
+        }
       }
     },
     {
@@ -198,6 +342,53 @@ const adminJs = new AdminJS({
       options: {
         listProperties: ['id', 'assignment_id', 'title', 'type', 'url'],
         editProperties: ['assignment_id', 'title', 'type', 'url', 'file_type', 'description'],
+        actions: {
+          delete: {
+            before: async (request, context) => {
+              if (request.method === 'post') {
+                const material = await AssignmentMaterial.findByPk(context.record.id());
+                
+                // Delete assignment material file from Cloudinary if exists and is a file type
+                if (material && material.url && material.type === 'file') {
+                  try {
+                    const url = material.url;
+                    const urlParts = url.split('/');
+                    const uploadIndex = urlParts.indexOf('upload');
+                    
+                    if (uploadIndex !== -1) {
+                      const pathAfterUpload = urlParts.slice(uploadIndex + 1);
+                      const publicIdParts = pathAfterUpload[0].match(/^v\d+$/) 
+                        ? pathAfterUpload.slice(1) 
+                        : pathAfterUpload;
+                      
+                      const fullPath = publicIdParts.join('/');
+                      const isRawFile = url.includes('/raw/upload/');
+                      
+                      if (isRawFile) {
+                        await cloudinary.uploader.destroy(fullPath, { 
+                          resource_type: 'raw',
+                          invalidate: true 
+                        });
+                      } else {
+                        const publicIdNoExt = fullPath.replace(/\.[^.]+$/, '');
+                        await cloudinary.uploader.destroy(publicIdNoExt, { 
+                          resource_type: 'image',
+                          invalidate: true 
+                        });
+                      }
+                      console.log(`Deleted assignment material from Cloudinary: ${fullPath}`);
+                    }
+                  } catch (error) {
+                    console.error('Error deleting assignment material file from Cloudinary:', error);
+                  }
+                }
+              }
+              
+              return request;
+            },
+            guard: 'Are you sure you want to delete this assignment material? If this is a file, it will also be deleted from Cloudinary. This action cannot be undone!',
+          }
+        }
       }
     },
     {
@@ -205,6 +396,52 @@ const adminJs = new AdminJS({
       options: {
         listProperties: ['id', 'assignment_id', 'student_id', 'submitted_at', 'marks'],
         editProperties: ['assignment_id', 'student_id', 'file_url', 'submission_text', 'marks', 'feedback', 'graded_by'],
+        actions: {
+          delete: {
+            before: async (request, context) => {
+              if (request.method === 'post') {
+                const submission = await Submission.findByPk(context.record.id());
+                
+                // Delete submission file from Cloudinary if exists
+                if (submission && submission.file_url) {
+                  try {
+                    const url = submission.file_url;
+                    const urlParts = url.split('/');
+                    const uploadIndex = urlParts.indexOf('upload');
+                    
+                    if (uploadIndex !== -1) {
+                      const pathAfterUpload = urlParts.slice(uploadIndex + 1);
+                      const publicIdParts = pathAfterUpload[0].match(/^v\d+$/) 
+                        ? pathAfterUpload.slice(1) 
+                        : pathAfterUpload;
+                      
+                      const fullPath = publicIdParts.join('/');
+                      const isRawFile = url.includes('/raw/upload/');
+                      
+                      if (isRawFile) {
+                        await cloudinary.uploader.destroy(fullPath, { 
+                          resource_type: 'raw',
+                          invalidate: true 
+                        });
+                      } else {
+                        const publicIdNoExt = fullPath.replace(/\.[^.]+$/, '');
+                        await cloudinary.uploader.destroy(publicIdNoExt, { 
+                          resource_type: 'image',
+                          invalidate: true 
+                        });
+                      }
+                    }
+                  } catch (error) {
+                    console.error('Error deleting submission file from Cloudinary:', error);
+                  }
+                }
+              }
+              
+              return request;
+            },
+            guard: 'Are you sure you want to delete this submission? This will also delete the submitted file from Cloudinary. This action cannot be undone!',
+          }
+        }
       }
     },
     {
