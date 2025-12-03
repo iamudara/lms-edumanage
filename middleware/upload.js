@@ -58,13 +58,15 @@ const assignmentMaterialStorage = new CloudinaryStorage({
 const submissionStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
-    // Generate unique filename
+    // Generate unique filename - DON'T include extension in public_id
+    const fileExtension = file.originalname.split('.').pop();
     const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
     
     return {
       folder: 'lms-uploads/submissions',
       resource_type: 'auto',
       public_id: uniqueName,
+      format: fileExtension, // Let Cloudinary add the extension
       use_filename: false,
       access_mode: 'public'
     };

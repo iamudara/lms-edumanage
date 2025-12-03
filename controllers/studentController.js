@@ -15,6 +15,7 @@ import {
   User 
 } from '../models/index.js';
 import { Op } from 'sequelize';
+import cloudinary from '../config/cloudinary.js';
 
 /**
  * Show Student Dashboard
@@ -433,8 +434,170 @@ export const getAssignmentDetail = async (req, res) => {
  * Validation: enrolled, deadline not passed, file/text provided
  */
 export const submitAssignment = async (req, res) => {
-  // TODO: Implement in Task 5.5
-  res.status(501).json({ error: 'Not implemented yet (Task 5.5)' });
+  try {
+    const assignmentId = req.params.id;
+    const studentId = req.user.id;
+    const batchId = req.user.batch_id;
+    const { submission_text } = req.body;
+
+    // Check if student has a batch assigned
+    if (!batchId) {
+      return res.status(400).json({
+        success: false,
+        message: 'You are not assigned to any batch. Please contact the administrator.'
+      });
+    }
+
+    // Get assignment with course enrollment check
+    const assignment = await Assignment.findByPk(assignmentId, {
+      include: [
+        {
+          model: Course,
+          as: 'course',
+          attributes: ['id', 'title', 'code'],
+          include: [
+            {
+              model: BatchEnrollment,
+              where: { batch_id: batchId },
+              required: true  // Only show if student's batch is enrolled
+            }
+          ]
+        }
+      ]
+    });
+
+    // Check if assignment exists and student's batch is enrolled
+    if (!assignment || !assignment.course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Assignment not found or you are not enrolled in this course.'
+      });
+    }
+
+    // Check deadline (server-side UTC validation)
+    const now = new Date();
+    const deadline = new Date(assignment.deadline);
+    const isPastDeadline = deadline < now;
+
+    if (isPastDeadline) {
+      return res.status(400).json({
+        success: false,
+        message: 'Deadline has passed. You can no longer submit or resubmit this assignment.'
+      });
+    }
+
+    // Validate that at least file OR text is provided
+    const file = req.file;
+    if (!file && !submission_text) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide either a file or text submission.'
+      });
+    }
+
+    // Check if student already has a submission (for resubmission)
+    const existingSubmission = await Submission.findOne({
+      where: {
+        assignment_id: assignmentId,
+        student_id: studentId
+      }
+    });
+
+    // If submission is already graded, prevent resubmission
+    if (existingSubmission && existingSubmission.marks !== null) {
+      return res.status(400).json({
+        success: false,
+        message: 'This assignment has already been graded. You cannot resubmit.'
+      });
+    }
+
+    // Prepare submission data
+    const submissionData = {
+      assignment_id: assignmentId,
+      student_id: studentId,
+      file_url: file ? file.path : null,
+      submission_text: submission_text || null,
+      submitted_at: new Date()
+    };
+
+    let submission;
+
+    if (existingSubmission) {
+      // RESUBMISSION: Delete old file from Cloudinary if exists and new file is being uploaded
+      if (existingSubmission.file_url && file) {
+        try {
+          // Extract public_id from Cloudinary URL
+          const url = existingSubmission.file_url;
+          const urlParts = url.split('/');
+          const uploadIndex = urlParts.indexOf('upload');
+          
+          if (uploadIndex !== -1) {
+            // Get path after 'upload', skip version number if present
+            const pathAfterUpload = urlParts.slice(uploadIndex + 1);
+            const publicIdParts = pathAfterUpload[0].match(/^v\d+$/) 
+              ? pathAfterUpload.slice(1) 
+              : pathAfterUpload;
+            
+            const fullPath = publicIdParts.join('/');
+            const isRawFile = url.includes('/raw/upload/');
+            
+            if (isRawFile) {
+              // Raw files (DOC, DOCX, TXT, ZIP): use full path WITH extension
+              await cloudinary.uploader.destroy(fullPath, { 
+                resource_type: 'raw',
+                invalidate: true 
+              });
+              console.log(`Deleted old submission file from Cloudinary: ${fullPath}`);
+            } else {
+              // Image files (PDF): use path WITHOUT extension
+              const publicIdNoExt = fullPath.replace(/\.[^.]+$/, '');
+              await cloudinary.uploader.destroy(publicIdNoExt, { 
+                resource_type: 'image',
+                invalidate: true 
+              });
+              console.log(`Deleted old submission file from Cloudinary: ${publicIdNoExt}`);
+            }
+          }
+        } catch (cloudinaryError) {
+          console.error('Error deleting old submission file from Cloudinary:', cloudinaryError);
+          // Continue with resubmission even if old file deletion fails
+        }
+      }
+
+      // Update existing submission
+      // The beforeUpdate hook will auto-update submitted_at
+      await existingSubmission.update({
+        file_url: submissionData.file_url,
+        submission_text: submissionData.submission_text,
+        submitted_at: submissionData.submitted_at
+      });
+      submission = existingSubmission;
+    } else {
+      // FIRST SUBMISSION: Create new submission
+      submission = await Submission.create(submissionData);
+    }
+
+    // Success response
+    return res.status(200).json({
+      success: true,
+      message: existingSubmission 
+        ? 'Assignment resubmitted successfully!' 
+        : 'Assignment submitted successfully!',
+      submission: {
+        id: submission.id,
+        submitted_at: submission.submitted_at,
+        has_file: !!submission.file_url,
+        has_text: !!submission.submission_text
+      }
+    });
+
+  } catch (error) {
+    console.error('Error submitting assignment:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to submit assignment. Please try again later.'
+    });
+  }
 };
 
 /**

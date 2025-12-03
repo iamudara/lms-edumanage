@@ -14,6 +14,7 @@ import {
   getSubmissions,
   getGrades
 } from '../controllers/studentController.js';
+import { uploadSubmission } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -53,8 +54,7 @@ router.get('/assignments/:id', getAssignmentDetail);
  * Upload to Cloudinary, store in submissions table
  * Note: Students can resubmit (UPDATE) before deadline
  */
-router.post('/assignments/:id/submit', submitAssignment);
-// TODO: Add upload middleware for file handling in Task 5.5
+router.post('/assignments/:id/submit', uploadSubmission, submitAssignment);
 
 /**
  * Submission History

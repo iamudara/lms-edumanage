@@ -348,21 +348,84 @@
           Submit your work for <strong><%= assignment.title %></strong>. You can upload a file or enter text.
         </p>
         
-        <div class="alert alert-warning mb-6">
-          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <span>Assignment submission functionality will be implemented in Task 5.5</span>
-        </div>
+        <form id="submitForm" enctype="multipart/form-data">
+          <!-- Submission Type Toggle -->
+          <div class="tabs tabs-boxed mb-6">
+            <a class="tab tab-active" onclick="switchSubmissionType('file')">File Upload</a>
+            <a class="tab" onclick="switchSubmissionType('text')">Text Submission</a>
+          </div>
 
-        <div class="modal-action">
-          <form method="dialog">
-            <button class="btn">Close</button>
-          </form>
-        </div>
+          <!-- File Upload Section -->
+          <div id="fileUploadSection" class="mb-6">
+            <label class="form-control w-full">
+              <div class="label">
+                <span class="label-text font-medium">Upload File</span>
+                <span class="label-text-alt text-base-content/60">Max 10MB</span>
+              </div>
+              <input type="file" name="submission" id="submissionFile" 
+                     class="file-input file-input-bordered w-full" 
+                     accept=".pdf,.doc,.docx,.txt,.zip" />
+              <div class="label">
+                <span class="label-text-alt">Allowed formats: PDF, DOC, DOCX, TXT, ZIP</span>
+              </div>
+            </label>
+            <div id="fileError" class="text-error text-sm mt-2 hidden"></div>
+          </div>
+
+          <!-- Text Submission Section -->
+          <div id="textSubmissionSection" class="mb-6 hidden">
+            <label class="form-control">
+              <div class="label">
+                <span class="label-text font-medium">Enter Your Submission</span>
+                <span class="label-text-alt text-base-content/60">Plain text or code</span>
+              </div>
+              <textarea name="submission_text" id="submissionText" 
+                        class="textarea textarea-bordered h-48" 
+                        placeholder="Type your submission here..."></textarea>
+              <div class="label">
+                <span class="label-text-alt">Min 10 characters required</span>
+              </div>
+            </label>
+            <div id="textError" class="text-error text-sm mt-2 hidden"></div>
+          </div>
+
+          <!-- Important Notes -->
+          <div class="alert alert-info mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <div class="font-bold">Important:</div>
+              <ul class="list-disc list-inside text-sm">
+                <li>You can resubmit before the deadline</li>
+                <li>Once graded, you cannot resubmit</li>
+                <li>Deadline: <%= deadline.date.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></li>
+              </ul>
+            </div>
+          </div>
+
+          <div id="submitError" class="alert alert-error mb-4 hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span id="submitErrorMessage"></span>
+          </div>
+
+          <div class="modal-action">
+            <button type="button" onclick="submitAssignment()" class="btn btn-primary" id="submitBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Submit Assignment
+            </button>
+            <form method="dialog">
+              <button type="button" class="btn" onclick="resetSubmitForm()">Cancel</button>
+            </form>
+          </div>
+        </form>
       </div>
       <form method="dialog" class="modal-backdrop">
-        <button>close</button>
+        <button type="button" onclick="resetSubmitForm()">close</button>
       </form>
     </dialog>
   <% } %>
@@ -376,24 +439,299 @@
           You are about to resubmit your work for <strong><%= assignment.title %></strong>. Your previous submission will be replaced.
         </p>
         
-        <div class="alert alert-warning mb-6">
-          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <span>Assignment submission functionality will be implemented in Task 5.5</span>
-        </div>
+        <form id="resubmitForm" enctype="multipart/form-data">
+          <!-- Submission Type Toggle -->
+          <div class="tabs tabs-boxed mb-6">
+            <a class="tab tab-active" onclick="switchResubmissionType('file')">File Upload</a>
+            <a class="tab" onclick="switchResubmissionType('text')">Text Submission</a>
+          </div>
 
-        <div class="modal-action">
-          <form method="dialog">
-            <button class="btn">Close</button>
-          </form>
-        </div>
+          <!-- File Upload Section -->
+          <div id="resubmitFileSection" class="mb-6">
+            <label class="form-control w-full">
+              <div class="label">
+                <span class="label-text font-medium">Upload New File</span>
+                <span class="label-text-alt text-base-content/60">Max 10MB</span>
+              </div>
+              <input type="file" name="submission" id="resubmissionFile" 
+                     class="file-input file-input-bordered w-full" 
+                     accept=".pdf,.doc,.docx,.txt,.zip" />
+              <div class="label">
+                <span class="label-text-alt">Allowed formats: PDF, DOC, DOCX, TXT, ZIP</span>
+              </div>
+            </label>
+            <div id="resubmitFileError" class="text-error text-sm mt-2 hidden"></div>
+          </div>
+
+          <!-- Text Submission Section -->
+          <div id="resubmitTextSection" class="mb-6 hidden">
+            <label class="form-control">
+              <div class="label">
+                <span class="label-text font-medium">Enter Your New Submission</span>
+                <span class="label-text-alt text-base-content/60">Plain text or code</span>
+              </div>
+              <textarea name="submission_text" id="resubmissionText" 
+                        class="textarea textarea-bordered h-48" 
+                        placeholder="Type your submission here..."></textarea>
+              <div class="label">
+                <span class="label-text-alt">Min 10 characters required</span>
+              </div>
+            </label>
+            <div id="resubmitTextError" class="text-error text-sm mt-2 hidden"></div>
+          </div>
+
+          <!-- Warning -->
+          <div class="alert alert-warning mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <div class="font-bold">Warning:</div>
+              <ul class="list-disc list-inside text-sm">
+                <li>This will replace your previous submission</li>
+                <li>You can only resubmit before the deadline</li>
+                <li>Time remaining: <%= deadline.daysUntil %> days</li>
+              </ul>
+            </div>
+          </div>
+
+          <div id="resubmitError" class="alert alert-error mb-4 hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span id="resubmitErrorMessage"></span>
+          </div>
+
+          <div class="modal-action">
+            <button type="button" onclick="resubmitAssignment()" class="btn btn-warning" id="resubmitBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Resubmit Assignment
+            </button>
+            <form method="dialog">
+              <button type="button" class="btn" onclick="resetResubmitForm()">Cancel</button>
+            </form>
+          </div>
+        </form>
       </div>
       <form method="dialog" class="modal-backdrop">
-        <button>close</button>
+        <button type="button" onclick="resetResubmitForm()">close</button>
       </form>
     </dialog>
   <% } %>
+
+  <script>
+    // Submit form type switching
+    function switchSubmissionType(type) {
+      const fileSection = document.getElementById('fileUploadSection');
+      const textSection = document.getElementById('textSubmissionSection');
+      const tabs = document.querySelectorAll('#submitModal .tab');
+      
+      if (type === 'file') {
+        fileSection.classList.remove('hidden');
+        textSection.classList.add('hidden');
+        tabs[0].classList.add('tab-active');
+        tabs[1].classList.remove('tab-active');
+      } else {
+        fileSection.classList.add('hidden');
+        textSection.classList.remove('hidden');
+        tabs[0].classList.remove('tab-active');
+        tabs[1].classList.add('tab-active');
+      }
+    }
+
+    // Resubmit form type switching
+    function switchResubmissionType(type) {
+      const fileSection = document.getElementById('resubmitFileSection');
+      const textSection = document.getElementById('resubmitTextSection');
+      const tabs = document.querySelectorAll('#resubmitModal .tab');
+      
+      if (type === 'file') {
+        fileSection.classList.remove('hidden');
+        textSection.classList.add('hidden');
+        tabs[0].classList.add('tab-active');
+        tabs[1].classList.remove('tab-active');
+      } else {
+        fileSection.classList.add('hidden');
+        textSection.classList.remove('hidden');
+        tabs[0].classList.remove('tab-active');
+        tabs[1].classList.add('tab-active');
+      }
+    }
+
+    // Submit assignment
+    async function submitAssignment() {
+      const form = document.getElementById('submitForm');
+      const fileInput = document.getElementById('submissionFile');
+      const textInput = document.getElementById('submissionText');
+      const submitBtn = document.getElementById('submitBtn');
+      const errorDiv = document.getElementById('submitError');
+      const errorMsg = document.getElementById('submitErrorMessage');
+      
+      // Hide previous errors
+      errorDiv.classList.add('hidden');
+      document.getElementById('fileError').classList.add('hidden');
+      document.getElementById('textError').classList.add('hidden');
+      
+      // Validate input
+      const isFileUpload = !document.getElementById('fileUploadSection').classList.contains('hidden');
+      
+      if (isFileUpload) {
+        if (!fileInput.files || fileInput.files.length === 0) {
+          document.getElementById('fileError').textContent = 'Please select a file to upload';
+          document.getElementById('fileError').classList.remove('hidden');
+          return;
+        }
+        
+        // Validate file size (10MB)
+        if (fileInput.files[0].size > 10 * 1024 * 1024) {
+          document.getElementById('fileError').textContent = 'File size must be less than 10MB';
+          document.getElementById('fileError').classList.remove('hidden');
+          return;
+        }
+      } else {
+        if (!textInput.value || textInput.value.trim().length < 10) {
+          document.getElementById('textError').textContent = 'Text submission must be at least 10 characters';
+          document.getElementById('textError').classList.remove('hidden');
+          return;
+        }
+      }
+      
+      // Prepare form data
+      const formData = new FormData();
+      if (isFileUpload && fileInput.files[0]) {
+        formData.append('submission', fileInput.files[0]);
+      } else if (textInput.value) {
+        formData.append('submission_text', textInput.value.trim());
+      }
+      
+      // Disable button and show loading
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="loading loading-spinner"></span> Submitting...';
+      
+      try {
+        const response = await fetch('/student/assignments/<%= assignment.id %>/submit', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Success - reload page to show submission
+          window.location.reload();
+        } else {
+          // Show error
+          errorMsg.textContent = data.message || 'Failed to submit assignment';
+          errorDiv.classList.remove('hidden');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Submit Assignment';
+        }
+      } catch (error) {
+        errorMsg.textContent = 'Network error. Please try again.';
+        errorDiv.classList.remove('hidden');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Submit Assignment';
+      }
+    }
+
+    // Resubmit assignment
+    async function resubmitAssignment() {
+      const form = document.getElementById('resubmitForm');
+      const fileInput = document.getElementById('resubmissionFile');
+      const textInput = document.getElementById('resubmissionText');
+      const resubmitBtn = document.getElementById('resubmitBtn');
+      const errorDiv = document.getElementById('resubmitError');
+      const errorMsg = document.getElementById('resubmitErrorMessage');
+      
+      // Hide previous errors
+      errorDiv.classList.add('hidden');
+      document.getElementById('resubmitFileError').classList.add('hidden');
+      document.getElementById('resubmitTextError').classList.add('hidden');
+      
+      // Validate input
+      const isFileUpload = !document.getElementById('resubmitFileSection').classList.contains('hidden');
+      
+      if (isFileUpload) {
+        if (!fileInput.files || fileInput.files.length === 0) {
+          document.getElementById('resubmitFileError').textContent = 'Please select a file to upload';
+          document.getElementById('resubmitFileError').classList.remove('hidden');
+          return;
+        }
+        
+        if (fileInput.files[0].size > 10 * 1024 * 1024) {
+          document.getElementById('resubmitFileError').textContent = 'File size must be less than 10MB';
+          document.getElementById('resubmitFileError').classList.remove('hidden');
+          return;
+        }
+      } else {
+        if (!textInput.value || textInput.value.trim().length < 10) {
+          document.getElementById('resubmitTextError').textContent = 'Text submission must be at least 10 characters';
+          document.getElementById('resubmitTextError').classList.remove('hidden');
+          return;
+        }
+      }
+      
+      // Confirm resubmission
+      if (!confirm('Are you sure you want to resubmit? This will replace your previous submission.')) {
+        return;
+      }
+      
+      // Prepare form data
+      const formData = new FormData();
+      if (isFileUpload && fileInput.files[0]) {
+        formData.append('submission', fileInput.files[0]);
+      } else if (textInput.value) {
+        formData.append('submission_text', textInput.value.trim());
+      }
+      
+      // Disable button and show loading
+      resubmitBtn.disabled = true;
+      resubmitBtn.innerHTML = '<span class="loading loading-spinner"></span> Resubmitting...';
+      
+      try {
+        const response = await fetch('/student/assignments/<%= assignment.id %>/submit', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Success - reload page
+          window.location.reload();
+        } else {
+          errorMsg.textContent = data.message || 'Failed to resubmit assignment';
+          errorDiv.classList.remove('hidden');
+          resubmitBtn.disabled = false;
+          resubmitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg> Resubmit Assignment';
+        }
+      } catch (error) {
+        errorMsg.textContent = 'Network error. Please try again.';
+        errorDiv.classList.remove('hidden');
+        resubmitBtn.disabled = false;
+        resubmitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg> Resubmit Assignment';
+      }
+    }
+
+    // Reset forms
+    function resetSubmitForm() {
+      document.getElementById('submitForm').reset();
+      document.getElementById('submitError').classList.add('hidden');
+      document.getElementById('fileError').classList.add('hidden');
+      document.getElementById('textError').classList.add('hidden');
+      switchSubmissionType('file');
+    }
+
+    function resetResubmitForm() {
+      document.getElementById('resubmitForm').reset();
+      document.getElementById('resubmitError').classList.add('hidden');
+      document.getElementById('resubmitFileError').classList.add('hidden');
+      document.getElementById('resubmitTextError').classList.add('hidden');
+      switchResubmissionType('file');
+    }
+  </script>
 
   <%- include('../shared/footer') %>
 </body>
