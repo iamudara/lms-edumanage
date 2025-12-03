@@ -655,3 +655,290 @@ export const getSubmissions = async (req, res) => {
     res.status(500).send('Error loading submissions: ' + error.message);
   }
 };
+
+/**
+ * Show Grade Submission Form
+ * GET /teacher/submissions/:id/grade
+ * 
+ * Displays the grading form with submission details
+ * Shows: student work, file download, current grade (if exists)
+ */
+export const showGradeForm = async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+    const submissionId = req.params.id;
+
+    // 1. Get submission with student, assignment, and course details
+    const submission = await Submission.findByPk(submissionId, {
+      include: [{
+        model: User,
+        as: 'student',
+        attributes: ['id', 'full_name', 'email']
+      }, {
+        model: Assignment,
+        as: 'assignment',
+        include: [{
+          model: Course,
+          as: 'course',
+          where: { teacher_id: teacherId } // Verify teacher owns the course
+        }]
+      }]
+    });
+
+    // Check if submission exists and teacher has access
+    if (!submission) {
+      return res.status(404).send('Submission not found or access denied');
+    }
+
+    const assignment = submission.assignment;
+    const course = assignment.course;
+
+    // 2. Render grading form
+    res.render('teacher/grade-submission', {
+      user: req.user,
+      submission,
+      assignment,
+      course,
+      error: req.query.error
+    });
+
+  } catch (error) {
+    console.error('Show Grade Form Error:', error);
+    res.status(500).send('Error loading grading form: ' + error.message);
+  }
+};
+
+/**
+ * Process Grading
+ * POST /teacher/submissions/:id/grade
+ * 
+ * Saves marks and feedback for a submission
+ * Validates: marks must be 0-100
+ */
+export const gradeSubmission = async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+    const submissionId = req.params.id;
+    const { marks, feedback } = req.body;
+
+    // 1. Get submission with assignment to verify teacher ownership
+    const submission = await Submission.findByPk(submissionId, {
+      include: [{
+        model: Assignment,
+        as: 'assignment',
+        include: [{
+          model: Course,
+          as: 'course',
+          where: { teacher_id: teacherId }
+        }]
+      }]
+    });
+
+    if (!submission) {
+      return res.status(404).send('Submission not found or access denied');
+    }
+
+    // 2. Validate marks
+    if (!marks || marks === '') {
+      return res.redirect(`/teacher/submissions/${submissionId}/grade?error=Score is required`);
+    }
+
+    const marksNum = parseFloat(marks);
+    if (isNaN(marksNum) || marksNum < 0 || marksNum > 100) {
+      return res.redirect(`/teacher/submissions/${submissionId}/grade?error=Score must be between 0 and 100`);
+    }
+
+    // 3. Update submission with grade
+    await submission.update({
+      marks: marksNum,
+      feedback: feedback ? feedback.trim() : null,
+      graded_by: teacherId
+    });
+
+    // 4. Redirect back to submissions list with success message
+    const assignmentId = submission.assignment.id;
+    res.redirect(`/teacher/assignments/${assignmentId}/submissions?success=Submission graded successfully`);
+
+  } catch (error) {
+    console.error('Grade Submission Error:', error);
+    res.redirect(`/teacher/submissions/${req.params.id}/grade?error=Error grading submission: ${error.message}`);
+  }
+};
+
+/**
+ * Get grades management page for a course
+ * Displays all students with their assignment scores and suggested grades
+ */
+export const getGrades = async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+    const courseId = req.params.id;
+
+    // 1. Fetch course and verify teacher ownership
+    const course = await Course.findOne({
+      where: {
+        id: courseId,
+        teacher_id: teacherId
+      },
+      include: [{
+        model: User,
+        as: 'teacher',
+        attributes: ['id', 'full_name', 'email']
+      }]
+    });
+
+    if (!course) {
+      return res.status(404).send('Course not found or you do not have permission to access it');
+    }
+
+    // 2. Import gradeService
+    const { calculateSuggestedGrade } = await import('../services/gradeService.js');
+
+    // 3. Get all students who have submitted assignments in this course
+    const submissions = await Submission.findAll({
+      include: [
+        {
+          model: Assignment,
+          as: 'assignment',
+          where: { course_id: courseId },
+          attributes: ['id', 'title', 'course_id']
+        },
+        {
+          model: User,
+          as: 'student',
+          attributes: ['id', 'full_name', 'email', 'username']
+        }
+      ],
+      attributes: ['student_id'],
+      raw: true
+    });
+
+    // Get unique student IDs
+    const uniqueStudentIds = [...new Set(submissions.map(s => s.student_id))];
+
+    // 4. For each student, calculate suggested grade and fetch current grade
+    const studentGrades = await Promise.all(
+      uniqueStudentIds.map(async (studentId) => {
+        // Find student info
+        const studentSubmission = submissions.find(s => s.student_id === studentId);
+        const studentName = studentSubmission['student.full_name'];
+        const studentEmail = studentSubmission['student.email'];
+
+        // Calculate suggested grade
+        const gradeData = await calculateSuggestedGrade(studentId, courseId);
+
+        // Fetch current grade if exists
+        const currentGrade = await Grade.findOne({
+          where: {
+            course_id: courseId,
+            student_id: studentId
+          }
+        });
+
+        return {
+          studentId,
+          studentName,
+          studentEmail,
+          ...gradeData,
+          currentGrade: currentGrade ? {
+            grade: currentGrade.grade,
+            remarks: currentGrade.remarks
+          } : null
+        };
+      })
+    );
+
+    // 5. Render grades page
+    res.render('teacher/grades', {
+      user: req.user,
+      course,
+      studentGrades,
+      success: req.query.success,
+      error: req.query.error
+    });
+
+  } catch (error) {
+    console.error('Get Grades Error:', error);
+    res.status(500).send('Error loading grades page: ' + error.message);
+  }
+};
+
+/**
+ * Save or update a student's final grade
+ */
+export const saveGrade = async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+    const courseId = req.params.id;
+    const { studentId, grade, remarks } = req.body;
+
+    // 1. Verify course ownership
+    const course = await Course.findOne({
+      where: {
+        id: courseId,
+        teacher_id: teacherId
+      }
+    });
+
+    if (!course) {
+      return res.redirect(`/teacher/courses/${courseId}/grades?error=Course not found or access denied`);
+    }
+
+    // 2. Validate grade input
+    if (!grade || grade.trim() === '') {
+      return res.redirect(`/teacher/courses/${courseId}/grades?error=Grade is required`);
+    }
+
+    const gradeTrimmed = grade.trim();
+
+    // Validate grade format (letter A-F with optional +/- or numeric 0-100)
+    const letterGradePattern = /^[A-Fa-f][+-]?$/;
+    const numericGradePattern = /^\d+(\.\d+)?$/;
+
+    if (!letterGradePattern.test(gradeTrimmed) && !numericGradePattern.test(gradeTrimmed)) {
+      return res.redirect(`/teacher/courses/${courseId}/grades?error=Invalid grade format. Use letter (A-F) or percentage (0-100)`);
+    }
+
+    // If numeric, validate range
+    if (numericGradePattern.test(gradeTrimmed)) {
+      const numGrade = parseFloat(gradeTrimmed);
+      if (numGrade < 0 || numGrade > 100) {
+        return res.redirect(`/teacher/courses/${courseId}/grades?error=Numeric grade must be between 0 and 100`);
+      }
+    }
+
+    // 3. Check if student exists
+    const student = await User.findByPk(studentId);
+    if (!student || student.role !== 'student') {
+      return res.redirect(`/teacher/courses/${courseId}/grades?error=Student not found`);
+    }
+
+    // 4. Create or update grade
+    const [gradeRecord, created] = await Grade.findOrCreate({
+      where: {
+        course_id: courseId,
+        student_id: studentId
+      },
+      defaults: {
+        grade: gradeTrimmed,
+        remarks: remarks ? remarks.trim() : null
+      }
+    });
+
+    if (!created) {
+      // Update existing grade
+      await gradeRecord.update({
+        grade: gradeTrimmed,
+        remarks: remarks ? remarks.trim() : null
+      });
+    }
+
+    // 5. Redirect with success message
+    const successMsg = created ? 'Grade saved successfully' : 'Grade updated successfully';
+    res.redirect(`/teacher/courses/${courseId}/grades?success=${successMsg}`);
+
+  } catch (error) {
+    console.error('Save Grade Error:', error);
+    res.redirect(`/teacher/courses/${req.params.id}/grades?error=Error saving grade: ${error.message}`);
+  }
+};

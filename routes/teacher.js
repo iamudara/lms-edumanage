@@ -16,7 +16,11 @@ import {
   deleteMaterial,
   showCreateAssignment,
   createAssignment,
-  getSubmissions
+  getSubmissions,
+  showGradeForm,
+  gradeSubmission,
+  getGrades,
+  saveGrade
 } from '../controllers/teacherController.js';
 import { uploadMaterial as uploadMiddleware } from '../middleware/upload.js';
 
@@ -142,18 +146,14 @@ router.get('/assignments/:id/submissions', getSubmissions);
  * GET /teacher/submissions/:id/grade
  * Shows submission details and grading form
  */
-router.get('/submissions/:id/grade', (req, res) => {
-  res.send(`Grade Submission Form - ID: ${req.params.id} - To be implemented in Task 4.7`);
-});
+router.get('/submissions/:id/grade', showGradeForm);
 
 /**
  * Grade a submission
  * POST /teacher/submissions/:id/grade
  * Assigns marks and feedback to a submission
  */
-router.post('/submissions/:id/grade', (req, res) => {
-  res.send(`Grade Submission Action - ID: ${req.params.id} - To be implemented in Task 4.7`);
-});
+router.post('/submissions/:id/grade', gradeSubmission);
 
 // ============================================
 // GRADE MANAGEMENT
@@ -164,18 +164,14 @@ router.post('/submissions/:id/grade', (req, res) => {
  * GET /teacher/courses/:id/grades
  * Shows all enrolled students with assignment marks and final grades
  */
-router.get('/courses/:id/grades', (req, res) => {
-  res.send(`Course Grades - ID: ${req.params.id} - To be implemented in Task 4.8`);
-});
+router.get('/courses/:id/grades', getGrades);
 
 /**
  * Save final grade for a student
  * POST /teacher/courses/:id/grades
  * Manually saves final grade for a student in a course
  */
-router.post('/courses/:id/grades', (req, res) => {
-  res.send(`Save Grade - Course ID: ${req.params.id} - To be implemented in Task 4.8`);
-});
+router.post('/courses/:id/grades', saveGrade);
 
 /**
  * Bulk grade upload via CSV

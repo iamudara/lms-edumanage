@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grade Submission | LMS EduManage</title>
+  <link rel="stylesheet" href="/css/output.css">
+  <link rel="stylesheet" href="/css/custom.css">
+</head>
+<body>
+  <%- include('../shared/navbar', { user }) %>
+
+  <main class="container mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs mb-6">
+      <ul>
+        <li><a href="/teacher/dashboard">Dashboard</a></li>
+        <li><a href="/teacher/courses">Courses</a></li>
+        <li><a href="/teacher/courses/<%= course.id %>"><%= course.title %></a></li>
+        <li><a href="/teacher/assignments/<%= assignment.id %>/submissions">Submissions</a></li>
+        <li>Grade Submission</li>
+      </ul>
+    </div>
+
+    <!-- Page Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold mb-2">Grade Submission</h1>
+      <div class="card bg-base-200 shadow-sm">
+        <div class="card-body p-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p class="text-sm text-base-content/70">Student</p>
+              <p class="font-semibold"><%= submission.student.full_name %></p>
+              <p class="text-sm text-base-content/60"><%= submission.student.email %></p>
+            </div>
+            <div>
+              <p class="text-sm text-base-content/70">Assignment</p>
+              <p class="font-semibold"><%= assignment.title %></p>
+            </div>
+            <div>
+              <p class="text-sm text-base-content/70">Submitted</p>
+              <p class="font-semibold">
+                <%= new Date(submission.submitted_at || submission.submittedAt).toLocaleString('en-US', { 
+                  year: 'numeric', month: 'short', day: 'numeric', 
+                  hour: '2-digit', minute: '2-digit' 
+                }) %>
+              </p>
+              <% 
+                const submittedDate = new Date(submission.submitted_at || submission.submittedAt);
+                const deadlineDate = new Date(assignment.deadline);
+                const isLate = submittedDate > deadlineDate;
+              %>
+              <% if (isLate) { %>
+                <span class="badge badge-error badge-sm">Late Submission</span>
+              <% } else { %>
+                <span class="badge badge-success badge-sm">On Time</span>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Messages -->
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="alert alert-error mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span><%= error %></span>
+      </div>
+    <% } %>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Student Work (2/3 width on large screens) -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Assignment Description -->
+        <div class="card bg-base-100 shadow-lg">
+          <div class="card-body">
+            <h2 class="card-title">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+              Assignment Description
+            </h2>
+            <div class="divider my-2"></div>
+            <% if (assignment.description) { %>
+              <p class="whitespace-pre-wrap"><%= assignment.description %></p>
+            <% } else { %>
+              <p class="text-base-content/50 italic">No description provided</p>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Submission Content -->
+        <div class="card bg-base-100 shadow-lg">
+          <div class="card-body">
+            <h2 class="card-title">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+              </svg>
+              Student Submission
+            </h2>
+            <div class="divider my-2"></div>
+
+            <!-- File Download -->
+            <% if (submission.file_url) { %>
+              <div class="bg-base-200 p-4 rounded-lg mb-4">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-primary">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    <div>
+                      <p class="font-semibold">Submitted File</p>
+                      <p class="text-sm text-base-content/60">Click to view or download</p>
+                    </div>
+                  </div>
+                  <a href="<%= submission.file_url %>" target="_blank" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    Open File
+                  </a>
+                </div>
+              </div>
+            <% } %>
+
+            <!-- Text Submission -->
+            <% if (submission.submission_text) { %>
+              <div>
+                <p class="font-semibold mb-2">Text Submission:</p>
+                <div class="bg-base-200 p-4 rounded-lg">
+                  <p class="whitespace-pre-wrap"><%= submission.submission_text %></p>
+                </div>
+              </div>
+            <% } %>
+
+            <% if (!submission.file_url && !submission.submission_text) { %>
+              <div class="alert alert-warning">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>No file or text content submitted</span>
+              </div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Previous Feedback (if exists) -->
+        <% if (submission.marks !== null || submission.feedback) { %>
+          <div class="card bg-warning/10 border border-warning shadow-lg">
+            <div class="card-body">
+              <h2 class="card-title text-warning">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                Current Grade
+              </h2>
+              <div class="divider my-2"></div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <p class="text-sm text-base-content/70">Score</p>
+                  <p class="text-2xl font-bold">
+                    <%= submission.marks !== null ? submission.marks + '%' : 'Not graded' %>
+                  </p>
+                </div>
+                <div>
+                  <p class="text-sm text-base-content/70">Graded By</p>
+                  <p class="font-semibold">
+                    <%= submission.graded_by ? 'Teacher' : 'N/A' %>
+                  </p>
+                </div>
+              </div>
+              <% if (submission.feedback) { %>
+                <div class="mt-4">
+                  <p class="text-sm text-base-content/70 mb-2">Previous Feedback:</p>
+                  <div class="bg-base-100 p-3 rounded-lg">
+                    <p class="whitespace-pre-wrap"><%= submission.feedback %></p>
+                  </div>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Grading Form (1/3 width on large screens) -->
+      <div class="lg:col-span-1">
+        <div class="card bg-base-100 shadow-lg sticky top-4">
+          <div class="card-body">
+            <h2 class="card-title">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+              </svg>
+              <% if (submission.marks !== null) { %>
+                Update Grade
+              <% } else { %>
+                Assign Grade
+              <% } %>
+            </h2>
+            <div class="divider my-2"></div>
+
+            <form method="POST" action="/teacher/submissions/<%= submission.id %>/grade" id="gradeForm">
+              <!-- Score Input -->
+              <div class="form-control mb-4">
+                <label class="label">
+                  <span class="label-text font-semibold">
+                    Score (0-100) <span class="text-error">*</span>
+                  </span>
+                </label>
+                <input 
+                  type="number" 
+                  name="marks" 
+                  class="input input-bordered w-full" 
+                  min="0" 
+                  max="100" 
+                  step="0.01"
+                  value="<%= submission.marks !== null ? submission.marks : '' %>"
+                  required
+                  placeholder="Enter score (e.g., 85.5)"
+                >
+                <label class="label">
+                  <span class="label-text-alt text-base-content/60">Enter a percentage score (0-100)</span>
+                </label>
+              </div>
+
+              <!-- Feedback Textarea -->
+              <div class="form-control mb-6">
+                <label class="label">
+                  <span class="label-text font-semibold">Feedback (Optional)</span>
+                </label>
+                <textarea 
+                  name="feedback" 
+                  class="textarea textarea-bordered h-32" 
+                  placeholder="Provide feedback to the student..."
+                ><%= submission.feedback || '' %></textarea>
+                <label class="label">
+                  <span class="label-text-alt text-base-content/60">Give constructive feedback</span>
+                </label>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex gap-2">
+                <button type="submit" class="btn btn-primary flex-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                  Save Grade
+                </button>
+                <a href="/teacher/assignments/<%= assignment.id %>/submissions" class="btn btn-outline">
+                  Cancel
+                </a>
+              </div>
+            </form>
+
+            <!-- Guidelines -->
+            <div class="divider my-4"></div>
+            <div class="alert alert-info text-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <div>
+                <p class="font-semibold">Grading Tips:</p>
+                <ul class="list-disc list-inside mt-2 space-y-1">
+                  <li>Score must be 0-100</li>
+                  <li>Feedback is optional but recommended</li>
+                  <li>You can update grades later</li>
+                  <li>Late submissions are marked</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="mt-6">
+      <a href="/teacher/assignments/<%= assignment.id %>/submissions" class="btn btn-outline">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        Back to Submissions
+      </a>
+    </div>
+  </main>
+
+  <%- include('../shared/footer') %>
+
+  <!-- Client-side Validation -->
+  <script>
+    document.getElementById('gradeForm').addEventListener('submit', function(e) {
+      const marks = parseFloat(document.querySelector('input[name="marks"]').value);
+      
+      if (isNaN(marks) || marks < 0 || marks > 100) {
+        e.preventDefault();
+        alert('Score must be between 0 and 100');
+        return false;
+      }
+    });
+  </script>
+</body>
+</html>

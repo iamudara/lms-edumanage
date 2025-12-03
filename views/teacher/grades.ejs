@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Grades - <%= course.title %></title>
+  <link rel="stylesheet" href="/css/output.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+</head>
+<body class="bg-base-200">
+  <%- include('../shared/navbar', { user }) %>
+
+  <div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs mb-6">
+      <ul>
+        <li><a href="/teacher/dashboard">Dashboard</a></li>
+        <li><a href="/teacher/courses">Courses</a></li>
+        <li><a href="/teacher/courses/<%= course.id %>"><%= course.title %></a></li>
+        <li>Grades</li>
+      </ul>
+    </div>
+
+    <!-- Page Header -->
+    <div class="mb-6">
+      <h1 class="text-3xl font-bold mb-2">Manage Grades</h1>
+      <p class="text-base-content/70"><%= course.title %> (<%= course.code %>)</p>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <% if (typeof success !== 'undefined' && success) { %>
+      <div class="alert alert-success mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span><%= success %></span>
+      </div>
+    <% } %>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="alert alert-error mb-6">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span><%= error %></span>
+      </div>
+    <% } %>
+
+    <!-- Grades Overview -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="card-title">Student Grades</h2>
+          <div class="badge badge-info gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-4 h-4 stroke-current">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <%= studentGrades.length %> Student<%= studentGrades.length !== 1 ? 's' : '' %>
+          </div>
+        </div>
+
+        <% if (studentGrades.length === 0) { %>
+          <div class="alert alert-info">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span>No students have submitted assignments in this course yet.</span>
+          </div>
+        <% } else { %>
+          <div class="overflow-x-auto">
+            <table id="gradesTable" class="table table-zebra w-full">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Email</th>
+                  <th>Assignments Graded</th>
+                  <th>Assignment Breakdown</th>
+                  <th>Suggested Grade</th>
+                  <th>Current Grade</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% studentGrades.forEach(student => { %>
+                  <tr>
+                    <!-- Student Name -->
+                    <td>
+                      <div class="flex items-center gap-3">
+                        <div class="avatar placeholder">
+                          <div class="bg-neutral text-neutral-content rounded-full w-10">
+                            <span class="text-sm"><%= student.studentName ? student.studentName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'ST' %></span>
+                          </div>
+                        </div>
+                        <div>
+                          <div class="font-bold"><%= student.studentName || 'Unknown Student' %></div>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- Email -->
+                    <td><%= student.studentEmail || 'N/A' %></td>
+
+                    <!-- Graded Count -->
+                    <td>
+                      <div class="badge badge-outline gap-2">
+                        <%= student.gradedCount %> / <%= student.totalAssignments %>
+                      </div>
+                    </td>
+
+                    <!-- Assignment Breakdown -->
+                    <td>
+                      <button class="btn btn-sm btn-ghost" onclick="showBreakdown(<%= student.studentId %>)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
+                        </svg>
+                        View Details
+                      </button>
+                      
+                      <!-- Hidden breakdown modal trigger data -->
+                      <div id="breakdown-<%= student.studentId %>" style="display:none;">
+                        <% student.assignmentScores.forEach(score => { %>
+                          <div class="breakdown-item" data-title="<%= score.title %>" data-marks="<%= score.marks !== null ? score.marks : 'Not graded' %>" data-submitted="<%= score.submitted %>" data-graded="<%= score.graded %>"></div>
+                        <% }); %>
+                      </div>
+                    </td>
+
+                    <!-- Suggested Grade -->
+                    <td>
+                      <% if (student.suggestedGrade !== null) { %>
+                        <div class="tooltip" data-tip="Average from <%= student.gradedCount %> assignment<%= student.gradedCount !== 1 ? 's' : '' %>">
+                          <span class="font-bold text-lg text-success"><%= student.suggestedGrade.toFixed(2) %>%</span>
+                        </div>
+                      <% } else { %>
+                        <span class="text-base-content/50">—</span>
+                      <% } %>
+                    </td>
+
+                    <!-- Current Grade -->
+                    <td>
+                      <% const currentGrade = student.currentGrade; %>
+                      <% if (currentGrade) { %>
+                        <div class="badge badge-success gap-2">
+                          <%= currentGrade.grade %>
+                        </div>
+                        <% if (currentGrade.remarks) { %>
+                          <div class="text-xs text-base-content/70 mt-1"><%= currentGrade.remarks.substring(0, 30) %><%= currentGrade.remarks.length > 30 ? '...' : '' %></div>
+                        <% } %>
+                      <% } else { %>
+                        <span class="text-base-content/50">Not set</span>
+                      <% } %>
+                    </td>
+
+                    <!-- Actions -->
+                    <td>
+                      <button class="btn btn-sm btn-primary" onclick="openGradeModal(<%= student.studentId %>, '<%= student.studentName %>', <%= student.suggestedGrade || 'null' %>, '<%= currentGrade ? currentGrade.grade : '' %>', '<%= currentGrade ? currentGrade.remarks?.replace(/'/g, "\\'") : '' %>')">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                        </svg>
+                        <%= currentGrade ? 'Edit' : 'Set' %> Grade
+                      </button>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grade Modal -->
+  <dialog id="gradeModal" class="modal">
+    <div class="modal-box w-11/12 max-w-2xl">
+      <h3 class="font-bold text-lg mb-4">Set Final Grade</h3>
+      
+      <form method="POST" action="/teacher/courses/<%= course.id %>/grades" id="gradeForm">
+        <input type="hidden" name="studentId" id="modalStudentId">
+        
+        <!-- Student Info -->
+        <div class="alert alert-info mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <div>
+            <div class="font-bold" id="modalStudentName"></div>
+            <div class="text-sm" id="modalSuggestedGrade"></div>
+          </div>
+        </div>
+
+        <!-- Grade Input -->
+        <div class="form-control mb-4">
+          <label class="label">
+            <span class="label-text font-semibold">Final Grade <span class="text-error">*</span></span>
+            <span class="label-text-alt">Letter grade or percentage</span>
+          </label>
+          <input 
+            type="text" 
+            name="grade" 
+            id="modalGradeInput"
+            placeholder="e.g., A, B+, 85, 92.5" 
+            class="input input-bordered w-full"
+            required
+          />
+          <label class="label">
+            <span class="label-text-alt">Enter letter grade (A-F) or numeric percentage (0-100)</span>
+          </label>
+        </div>
+
+        <!-- Remarks -->
+        <div class="form-control mb-4">
+          <label class="label">
+            <span class="label-text font-semibold">Remarks (Optional)</span>
+          </label>
+          <textarea 
+            name="remarks" 
+            id="modalRemarksInput"
+            class="textarea textarea-bordered h-24" 
+            placeholder="Additional comments about the student's performance..."
+          ></textarea>
+        </div>
+
+        <!-- Use Suggested Grade Button -->
+        <div class="mb-4" id="useSuggestedContainer" style="display: none;">
+          <button type="button" class="btn btn-sm btn-outline btn-success" onclick="useSuggestedGrade()">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Use Suggested Grade (<span id="suggestedGradeValue"></span>%)
+          </button>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="modal-action">
+          <button type="button" class="btn btn-ghost" onclick="closeGradeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Grade</button>
+        </div>
+      </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
+
+  <!-- Assignment Breakdown Modal -->
+  <dialog id="breakdownModal" class="modal">
+    <div class="modal-box w-11/12 max-w-xl">
+      <h3 class="font-bold text-lg mb-4">Assignment Breakdown</h3>
+      
+      <div id="breakdownContent" class="space-y-2">
+        <!-- Will be populated by JavaScript -->
+      </div>
+
+      <div class="modal-action">
+        <button class="btn" onclick="closeBreakdownModal()">Close</button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
+
+  <script>
+    // Initialize DataTable
+    $(document).ready(function() {
+      $('#gradesTable').DataTable({
+        order: [[0, 'asc']], // Sort by student name
+        pageLength: 25,
+        language: {
+          search: "Search students:",
+          lengthMenu: "Show _MENU_ students per page",
+          info: "Showing _START_ to _END_ of _TOTAL_ students"
+        }
+      });
+    });
+
+    let currentSuggestedGrade = null;
+
+    function openGradeModal(studentId, studentName, suggestedGrade, currentGrade, remarks) {
+      document.getElementById('modalStudentId').value = studentId;
+      document.getElementById('modalStudentName').textContent = studentName;
+      
+      // Set suggested grade info
+      currentSuggestedGrade = suggestedGrade;
+      if (suggestedGrade !== null) {
+        document.getElementById('modalSuggestedGrade').textContent = 
+          `Suggested grade from assignments: ${suggestedGrade.toFixed(2)}%`;
+        document.getElementById('useSuggestedContainer').style.display = 'block';
+        document.getElementById('suggestedGradeValue').textContent = suggestedGrade.toFixed(2);
+      } else {
+        document.getElementById('modalSuggestedGrade').textContent = 'No graded assignments yet';
+        document.getElementById('useSuggestedContainer').style.display = 'none';
+      }
+
+      // Pre-fill current grade if exists
+      if (currentGrade) {
+        document.getElementById('modalGradeInput').value = currentGrade;
+        document.getElementById('modalRemarksInput').value = remarks || '';
+      } else {
+        document.getElementById('modalGradeInput').value = '';
+        document.getElementById('modalRemarksInput').value = '';
+      }
+
+      document.getElementById('gradeModal').showModal();
+    }
+
+    function closeGradeModal() {
+      document.getElementById('gradeModal').close();
+      currentSuggestedGrade = null;
+    }
+
+    function useSuggestedGrade() {
+      if (currentSuggestedGrade !== null) {
+        document.getElementById('modalGradeInput').value = currentSuggestedGrade.toFixed(2);
+      }
+    }
+
+    function showBreakdown(studentId) {
+      const breakdownData = document.getElementById('breakdown-' + studentId);
+      const items = breakdownData.querySelectorAll('.breakdown-item');
+      
+      let html = '<div class="overflow-x-auto"><table class="table table-sm w-full">';
+      html += '<thead><tr><th>Assignment</th><th>Status</th><th>Score</th></tr></thead><tbody>';
+      
+      items.forEach(item => {
+        const title = item.dataset.title;
+        const marks = item.dataset.marks;
+        const submitted = item.dataset.submitted === 'true';
+        const graded = item.dataset.graded === 'true';
+        
+        let statusBadge = '';
+        if (!submitted) {
+          statusBadge = '<span class="badge badge-ghost badge-sm">Not submitted</span>';
+        } else if (!graded) {
+          statusBadge = '<span class="badge badge-warning badge-sm">Pending</span>';
+        } else {
+          statusBadge = '<span class="badge badge-success badge-sm">Graded</span>';
+        }
+        
+        let scoreDisplay = marks === 'Not graded' ? 
+          '<span class="text-base-content/50">—</span>' : 
+          '<span class="font-bold">' + marks + '%</span>';
+        
+        html += `<tr><td>${title}</td><td>${statusBadge}</td><td>${scoreDisplay}</td></tr>`;
+      });
+      
+      html += '</tbody></table></div>';
+      
+      document.getElementById('breakdownContent').innerHTML = html;
+      document.getElementById('breakdownModal').showModal();
+    }
+
+    function closeBreakdownModal() {
+      document.getElementById('breakdownModal').close();
+    }
+
+    // Form validation
+    document.getElementById('gradeForm').addEventListener('submit', function(e) {
+      const gradeInput = document.getElementById('modalGradeInput').value.trim();
+      
+      if (!gradeInput) {
+        e.preventDefault();
+        alert('Please enter a grade');
+        return;
+      }
+      
+      // Basic validation - allow letters (A-F with +/-) or numbers (0-100)
+      const letterGradePattern = /^[A-Fa-f][+-]?$/;
+      const numericGradePattern = /^\d+(\.\d+)?$/;
+      
+      if (!letterGradePattern.test(gradeInput) && !numericGradePattern.test(gradeInput)) {
+        e.preventDefault();
+        alert('Please enter a valid grade (e.g., A, B+, 85, 92.5)');
+        return;
+      }
+      
+      // If numeric, check range
+      if (numericGradePattern.test(gradeInput)) {
+        const numGrade = parseFloat(gradeInput);
+        if (numGrade < 0 || numGrade > 100) {
+          e.preventDefault();
+          alert('Numeric grade must be between 0 and 100');
+          return;
+        }
+      }
+    });
+  </script>
+
+  <%- include('../shared/footer') %>
+</body>
+</html>
