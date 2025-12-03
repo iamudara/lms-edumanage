@@ -472,16 +472,47 @@ export const deleteMaterial = async (req, res) => {
 
     const courseId = material.course_id;
 
-    // Delete from Cloudinary if it's a Cloudinary URL (same logic as assignment materials)
+    // Delete from Cloudinary if it's a Cloudinary URL
     if (material.file_url && material.file_url.includes('cloudinary.com')) {
       try {
-        // Extract public_id from URL - simple approach like assignment deletion
+        // Extract public_id from Cloudinary URL (handling version numbers)
         const urlParts = material.file_url.split('/');
-        const filename = urlParts[urlParts.length - 1];
-        const publicId = `lms-uploads/materials/${filename.split('.')[0]}`;
+        const uploadIndex = urlParts.indexOf('upload');
         
-        console.log(`Deleting from Cloudinary - Public ID: ${publicId}`);
-        await cloudinary.uploader.destroy(publicId);
+        // Get everything after 'upload', skip version if present
+        const pathAfterUpload = urlParts.slice(uploadIndex + 1);
+        const publicIdParts = pathAfterUpload[0].match(/^v\d+$/) 
+          ? pathAfterUpload.slice(1) // Skip version folder
+          : pathAfterUpload;
+        
+        // Get full path with extension
+        const fullPath = publicIdParts.join('/');
+        const isRawFile = material.file_url.includes('/raw/upload/');
+        
+        // Detect resource type from URL
+        let resourceType = 'raw';
+        if (material.file_url.includes('/image/upload/')) {
+          resourceType = 'image';
+        } else if (material.file_url.includes('/video/upload/')) {
+          resourceType = 'video';
+        }
+        
+        let result;
+        
+        if (isRawFile) {
+          // For raw files (DOCX, PPTX, TXT), use full path WITH extension
+          result = await cloudinary.uploader.destroy(fullPath, { 
+            resource_type: 'raw',
+            invalidate: true 
+          });
+        } else {
+          // For image/video files, use path WITHOUT extension
+          const publicIdNoExt = fullPath.replace(/\.[^.]+$/, '');
+          result = await cloudinary.uploader.destroy(publicIdNoExt, { 
+            resource_type: resourceType,
+            invalidate: true 
+          });
+        }
       } catch (cloudinaryError) {
         console.error('Cloudinary deletion error:', cloudinaryError);
         // Continue with database deletion even if Cloudinary fails
@@ -1374,12 +1405,42 @@ export const deleteAssignment = async (req, res) => {
     // 4. Delete files from Cloudinary
     for (const material of materials) {
       try {
-        // Extract public_id from URL
+        // Extract public_id from Cloudinary URL (handling version numbers)
         const urlParts = material.url.split('/');
-        const filename = urlParts[urlParts.length - 1];
-        const publicId = `lms-uploads/assignments/${filename.split('.')[0]}`;
+        const uploadIndex = urlParts.indexOf('upload');
         
-        await cloudinary.uploader.destroy(publicId);
+        // Get everything after 'upload', skip version if present
+        const pathAfterUpload = urlParts.slice(uploadIndex + 1);
+        const publicIdParts = pathAfterUpload[0].match(/^v\d+$/) 
+          ? pathAfterUpload.slice(1) // Skip version folder
+          : pathAfterUpload;
+        
+        // Get full path with extension
+        const fullPath = publicIdParts.join('/');
+        const isRawFile = material.url.includes('/raw/upload/');
+        
+        // Detect resource type from URL
+        let resourceType = 'raw';
+        if (material.url.includes('/image/upload/')) {
+          resourceType = 'image';
+        } else if (material.url.includes('/video/upload/')) {
+          resourceType = 'video';
+        }
+        
+        if (isRawFile) {
+          // For raw files (DOCX, PPTX, TXT), use full path WITH extension
+          await cloudinary.uploader.destroy(fullPath, { 
+            resource_type: 'raw',
+            invalidate: true 
+          });
+        } else {
+          // For image/video files, use path WITHOUT extension
+          const publicIdNoExt = fullPath.replace(/\.[^.]+$/, '');
+          await cloudinary.uploader.destroy(publicIdNoExt, { 
+            resource_type: resourceType,
+            invalidate: true 
+          });
+        }
       } catch (cloudinaryError) {
         console.error('Cloudinary deletion error:', cloudinaryError);
         // Continue even if Cloudinary deletion fails

@@ -14,7 +14,7 @@ import cloudinary from '../config/cloudinary.js';
 const materialStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
-    // Generate unique filename with original extension preserved
+    // Generate unique filename - DON'T include extension in public_id
     const fileExtension = file.originalname.split('.').pop();
     const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
     
@@ -22,7 +22,7 @@ const materialStorage = new CloudinaryStorage({
       folder: 'lms-uploads/materials',
       resource_type: 'auto',
       public_id: uniqueName,
-      format: fileExtension, // Preserve original file format
+      format: fileExtension, // Let Cloudinary add the extension
       use_filename: false,
       access_mode: 'public'
     };
@@ -36,13 +36,15 @@ const materialStorage = new CloudinaryStorage({
 const assignmentMaterialStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
-    // Generate unique filename
+    // Generate unique filename - DON'T include extension in public_id
+    const fileExtension = file.originalname.split('.').pop();
     const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
     
     return {
       folder: 'lms-uploads/assignments',
       resource_type: 'auto',
       public_id: uniqueName,
+      format: fileExtension, // Let Cloudinary add the extension
       use_filename: false,
       access_mode: 'public'
     };
