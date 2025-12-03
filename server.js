@@ -140,6 +140,36 @@ const adminJs = new AdminJS({
       options: {
         listProperties: ['id', 'title', 'code', 'teacher_id'],
         editProperties: ['title', 'code', 'description', 'teacher_id'],
+        actions: {
+          delete: {
+            before: async (request, context) => {
+              const { record, currentAdmin } = context;
+              
+              if (request.method === 'post') {
+                // Get course ID from the record
+                const courseId = record.id();
+                
+                // Count related records
+                const assignmentCount = await Assignment.count({ where: { course_id: courseId } });
+                const materialCount = await Material.count({ where: { course_id: courseId } });
+                const enrollmentCount = await BatchEnrollment.count({ where: { course_id: courseId } });
+                
+                // Add notice to the record
+                if (assignmentCount > 0 || materialCount > 0 || enrollmentCount > 0) {
+                  record.params.deleteWarning = `⚠️ WARNING: Deleting this course will also delete:\\n` +
+                    `- ${assignmentCount} assignment(s)\\n` +
+                    `- ${materialCount} material(s)\\n` +
+                    `- ${enrollmentCount} batch enrollment(s)\\n` +
+                    `This action cannot be undone!`;
+                }
+              }
+              
+              return request;
+            },
+            component: false,
+            guard: 'Are you sure you want to delete this course? This will also delete all assignments, materials, submissions, and batch enrollments associated with it. This action cannot be undone!',
+          }
+        }
       }
     },
     {
@@ -276,10 +306,6 @@ async function startServer() {
       console.log(`📍 Server running on: http://localhost:${PORT}`);
       console.log(`🔐 AdminJS panel: http://localhost:${PORT}/admin`);
       console.log(`📚 Environment: ${process.env.NODE_ENV}`);
-      console.log('\n⚠️  Next Steps (Phase 2):');
-      console.log('   - Implement authentication routes (Task 2.1-2.8)');
-      console.log('   - Create seed users for testing');
-      console.log('   - Build login/logout functionality\n');
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);

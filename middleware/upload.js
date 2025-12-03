@@ -96,14 +96,34 @@ const fileFilter = (allowedTypes) => {
 /**
  * Upload Middleware for Course Materials
  * Max file size: 10MB
- * Allowed formats: PDF, DOC, DOCX, PPT, PPTX
+ * Allowed formats: PDF, DOC, DOCX, PPT, PPTX, TXT, Images (JPG, PNG, GIF)
  */
 const uploadMaterial = multer({
   storage: materialStorage,
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB
   },
-  fileFilter: fileFilter(['pdf', 'doc', 'docx', 'ppt', 'pptx'])
+  fileFilter: (req, file, cb) => {
+    const allowedMimeTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'text/plain',
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/gif',
+      'image/webp'
+    ];
+    
+    if (allowedMimeTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Allowed: PDF, DOC, DOCX, PPT, PPTX, TXT, JPG, PNG, GIF'), false);
+    }
+  }
 }).single('material'); // Field name: 'material'
 
 /**

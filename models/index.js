@@ -64,22 +64,22 @@ Course.belongsTo(User, {
 
 Course.hasMany(BatchEnrollment, { 
   foreignKey: 'course_id', 
-  onDelete: 'RESTRICT' 
+  onDelete: 'CASCADE'  // Changed from RESTRICT - allows deleting course with enrollments
 });
 
 Course.hasMany(Assignment, { 
   foreignKey: 'course_id', 
-  onDelete: 'RESTRICT' 
+  onDelete: 'CASCADE'  // Changed from RESTRICT - allows deleting course with assignments
 });
 
 Course.hasMany(Material, {
   foreignKey: 'course_id',
-  onDelete: 'RESTRICT'
+  onDelete: 'CASCADE'  // Changed from RESTRICT - allows deleting course with materials
 });
 
 Course.hasMany(Grade, {
   foreignKey: 'course_id',
-  onDelete: 'RESTRICT'
+  onDelete: 'CASCADE'  // Changed from RESTRICT - allows deleting course with grades
 });
 
 // BatchEnrollment associations

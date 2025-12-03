@@ -472,17 +472,18 @@ export const deleteMaterial = async (req, res) => {
 
     const courseId = material.course_id;
 
-    // Delete from Cloudinary if it's a Cloudinary URL
+    // Delete from Cloudinary if it's a Cloudinary URL (same logic as assignment materials)
     if (material.file_url && material.file_url.includes('cloudinary.com')) {
       try {
-        // Extract public_id from Cloudinary URL
+        // Extract public_id from URL - simple approach like assignment deletion
         const urlParts = material.file_url.split('/');
         const filename = urlParts[urlParts.length - 1];
         const publicId = `lms-uploads/materials/${filename.split('.')[0]}`;
         
-        await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
+        console.log(`Deleting from Cloudinary - Public ID: ${publicId}`);
+        await cloudinary.uploader.destroy(publicId);
       } catch (cloudinaryError) {
-        console.error('Cloudinary delete error:', cloudinaryError);
+        console.error('Cloudinary deletion error:', cloudinaryError);
         // Continue with database deletion even if Cloudinary fails
       }
     }

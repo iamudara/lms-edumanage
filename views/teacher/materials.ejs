@@ -187,6 +187,9 @@
                   } else if (fileExt === 'txt') {
                     icon = 'fas fa-file-alt';
                     iconColor = 'text-accent';
+                  } else if (fileExt === 'jpg' || fileExt === 'jpeg' || fileExt === 'png' || fileExt === 'gif' || fileExt === 'webp') {
+                    icon = 'fas fa-file-image';
+                    iconColor = 'text-success';
                   }
                 %>
                   <div class="card bg-base-200 hover:shadow-md transition-shadow">
@@ -259,7 +262,7 @@
               <i class="fas fa-info-circle mr-2 text-info"></i>Upload Guidelines
             </h3>
             <ul class="text-sm space-y-1 text-base-content/80">
-              <li><i class="fas fa-check mr-2 text-success"></i>Supported formats: PDF, DOC, DOCX, PPT, PPTX</li>
+              <li><i class="fas fa-check mr-2 text-success"></i>Supported formats: PDF, DOC, DOCX, PPT, PPTX, TXT, Images (JPG, PNG, GIF)</li>
               <li><i class="fas fa-check mr-2 text-success"></i>Maximum file size: 10MB</li>
               <li><i class="fas fa-check mr-2 text-success"></i>You can upload files or provide external URLs</li>
               <li><i class="fas fa-check mr-2 text-success"></i>All enrolled students can access these materials</li>
