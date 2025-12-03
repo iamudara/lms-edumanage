@@ -20,9 +20,11 @@ import {
   showGradeForm,
   gradeSubmission,
   getGrades,
-  saveGrade
+  saveGrade,
+  bulkUploadGrades,
+  downloadGradeTemplate
 } from '../controllers/teacherController.js';
-import { uploadMaterial as uploadMiddleware } from '../middleware/upload.js';
+import { uploadMaterial as uploadMiddleware, uploadCsv } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -178,8 +180,13 @@ router.post('/courses/:id/grades', saveGrade);
  * POST /teacher/courses/:id/grades/bulk
  * Processes CSV file for bulk grade upload
  */
-router.post('/courses/:id/grades/bulk', (req, res) => {
-  res.send(`Bulk Grade Upload - Course ID: ${req.params.id} - To be implemented in Task 4.9`);
-});
+router.post('/courses/:id/grades/bulk', uploadCsv, bulkUploadGrades);
+
+/**
+ * Download CSV template for grade upload
+ * GET /teacher/courses/:id/grades/template
+ * Downloads a sample CSV file for bulk grade upload
+ */
+router.get('/courses/:id/grades/template', downloadGradeTemplate);
 
 export default router;

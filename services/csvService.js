@@ -417,6 +417,137 @@ export const validateGradeCsv = (rows) => {
 };
 
 /**
+ * Validate teacher grade upload CSV
+ * Expected columns: student_email OR username, grade, remarks (optional)
+ * @param {Array} rows - Parsed CSV rows
+ * @returns {Object} - { valid: boolean, errors: array }
+ */
+export const validateTeacherGradeCsv = (rows) => {
+  const errors = [];
+  const requiredHeaders = ['grade'];
+  const identifierHeaders = ['student_email', 'username', 'email'];
+  
+  // Check if CSV has data
+  if (!rows || rows.length === 0) {
+    errors.push({
+      row: 0,
+      message: 'CSV file is empty'
+    });
+    return { valid: false, errors };
+  }
+
+  // Check for required headers
+  const headers = Object.keys(rows[0]);
+  
+  // Check if at least one student identifier exists
+  const hasIdentifier = identifierHeaders.some(id => headers.includes(id));
+  if (!hasIdentifier) {
+    errors.push({
+      row: 0,
+      message: `CSV must include at least one student identifier column: ${identifierHeaders.join(', ')}`
+    });
+  }
+
+  // Check for grade column
+  if (!headers.includes('grade')) {
+    errors.push({
+      row: 0,
+      message: 'CSV must include "grade" column'
+    });
+  }
+
+  if (errors.length > 0) {
+    return { valid: false, errors };
+  }
+
+  // Validate each row
+  const studentIdentifiers = new Set();
+  
+  rows.forEach((row, index) => {
+    const rowNum = index + 2; // +2 because index starts at 0 and we skip header row
+
+    // Get student identifier
+    const studentId = row.student_email || row.username || row.email;
+    
+    if (!studentId || studentId === '') {
+      errors.push({
+        row: rowNum,
+        field: 'student identifier',
+        message: 'Student email/username is required'
+      });
+      return; // Skip further validation for this row
+    }
+
+    // Validate email format if email is used
+    if ((row.student_email || row.email) && !validator.isEmail(studentId)) {
+      errors.push({
+        row: rowNum,
+        field: 'student_email/email',
+        message: `Invalid email format: ${studentId}`
+      });
+    }
+
+    // Validate grade is not empty
+    if (!row.grade || row.grade === '') {
+      errors.push({
+        row: rowNum,
+        field: 'grade',
+        message: 'Grade is required'
+      });
+      return;
+    }
+
+    // Validate grade format (letter A-F with optional +/- or numeric 0-100)
+    const gradeTrimmed = row.grade.trim();
+    const letterGradePattern = /^[A-Fa-f][+-]?$/;
+    const numericGradePattern = /^\d+(\.\d+)?$/;
+
+    if (!letterGradePattern.test(gradeTrimmed) && !numericGradePattern.test(gradeTrimmed)) {
+      errors.push({
+        row: rowNum,
+        field: 'grade',
+        message: `Invalid grade format: ${row.grade}. Use letter grade (A-F) or percentage (0-100)`
+      });
+    } else if (numericGradePattern.test(gradeTrimmed)) {
+      // If numeric, validate range
+      const numGrade = parseFloat(gradeTrimmed);
+      if (numGrade < 0 || numGrade > 100) {
+        errors.push({
+          row: rowNum,
+          field: 'grade',
+          message: `Numeric grade must be between 0 and 100. Found: ${row.grade}`
+        });
+      }
+    }
+
+    // Check for duplicate student in CSV
+    const identifierKey = studentId.toLowerCase();
+    if (studentIdentifiers.has(identifierKey)) {
+      errors.push({
+        row: rowNum,
+        field: 'student identifier',
+        message: `Duplicate entry for student: ${studentId}`
+      });
+    }
+    studentIdentifiers.add(identifierKey);
+
+    // Validate remarks length (optional field)
+    if (row.remarks && row.remarks.length > 500) {
+      errors.push({
+        row: rowNum,
+        field: 'remarks',
+        message: 'Remarks must not exceed 500 characters'
+      });
+    }
+  });
+
+  return {
+    valid: errors.length === 0,
+    errors: errors
+  };
+};
+
+/**
  * Generate CSV error report for display
  * @param {Array} errors - Array of error objects
  * @returns {String} - Formatted error message

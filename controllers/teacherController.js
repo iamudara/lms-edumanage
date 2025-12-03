@@ -942,3 +942,211 @@ export const saveGrade = async (req, res) => {
     res.redirect(`/teacher/courses/${req.params.id}/grades?error=Error saving grade: ${error.message}`);
   }
 };
+
+/**
+ * Bulk upload grades from CSV file
+ * Only students in this course can be graded
+ */
+export const bulkUploadGrades = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
+  try {
+    const teacherId = req.user.id;
+    const courseId = req.params.id;
+
+    // 1. Verify course ownership
+    const course = await Course.findOne({
+      where: {
+        id: courseId,
+        teacher_id: teacherId
+      }
+    });
+
+    if (!course) {
+      return res.redirect(`/teacher/courses/${courseId}/grades?error=Course not found or access denied`);
+    }
+
+    // 2. Check if file was uploaded
+    if (!req.file) {
+      return res.redirect(`/teacher/courses/${courseId}/grades?error=No CSV file uploaded`);
+    }
+
+    // 3. Parse CSV
+    const { parseCsv, validateTeacherGradeCsv } = await import('../services/csvService.js');
+    const parseResult = parseCsv(req.file.buffer);
+
+    if (!parseResult.success) {
+      const { formatErrors } = await import('../services/csvService.js');
+      const errorMsg = formatErrors(parseResult.errors);
+      return res.redirect(`/teacher/courses/${courseId}/grades?error=${encodeURIComponent('CSV Parse Error: ' + errorMsg)}`);
+    }
+
+    // 4. Validate CSV structure
+    const validation = validateTeacherGradeCsv(parseResult.data);
+    if (!validation.valid) {
+      const { formatErrors } = await import('../services/csvService.js');
+      const errorMsg = formatErrors(validation.errors);
+      return res.redirect(`/teacher/courses/${courseId}/grades?error=${encodeURIComponent('CSV Validation Error: ' + errorMsg)}`);
+    }
+
+    // 5. Get all students who have submitted in this course
+    const submissions = await Submission.findAll({
+      include: [
+        {
+          model: Assignment,
+          as: 'assignment',
+          where: { course_id: courseId },
+          attributes: ['id', 'course_id']
+        },
+        {
+          model: User,
+          as: 'student',
+          attributes: ['id', 'email', 'username', 'full_name']
+        }
+      ],
+      attributes: ['student_id'],
+      raw: true
+    });
+
+    const eligibleStudents = [...new Set(submissions.map(s => s.student_id))];
+    
+    // Create student lookup map by email and username
+    const studentMap = new Map();
+    for (const submission of submissions) {
+      const studentId = submission.student_id;
+      const studentEmail = submission['student.email'];
+      const studentUsername = submission['student.username'];
+      
+      if (studentEmail) studentMap.set(studentEmail.toLowerCase(), studentId);
+      if (studentUsername) studentMap.set(studentUsername.toLowerCase(), studentId);
+    }
+
+    // 6. Process each row
+    const results = {
+      success: [],
+      skipped: [],
+      failed: []
+    };
+
+    for (const row of parseResult.data) {
+      try {
+        // Get student identifier
+        const identifier = (row.student_email || row.username || row.email).toLowerCase();
+        const studentId = studentMap.get(identifier);
+
+        if (!studentId) {
+          results.skipped.push({
+            identifier: row.student_email || row.username || row.email,
+            reason: 'Student not found in this course or has not submitted any assignments'
+          });
+          continue;
+        }
+
+        // Validate grade format
+        const gradeTrimmed = row.grade.trim();
+        const letterGradePattern = /^[A-Fa-f][+-]?$/;
+        const numericGradePattern = /^\d+(\.\d+)?$/;
+
+        if (!letterGradePattern.test(gradeTrimmed) && !numericGradePattern.test(gradeTrimmed)) {
+          results.failed.push({
+            identifier: row.student_email || row.username || row.email,
+            reason: `Invalid grade format: ${row.grade}`
+          });
+          continue;
+        }
+
+        // If numeric, validate range
+        if (numericGradePattern.test(gradeTrimmed)) {
+          const numGrade = parseFloat(gradeTrimmed);
+          if (numGrade < 0 || numGrade > 100) {
+            results.failed.push({
+              identifier: row.student_email || row.username || row.email,
+              reason: `Grade out of range (0-100): ${row.grade}`
+            });
+            continue;
+          }
+        }
+
+        // Create or update grade
+        const [gradeRecord, created] = await Grade.findOrCreate({
+          where: {
+            course_id: courseId,
+            student_id: studentId
+          },
+          defaults: {
+            grade: gradeTrimmed,
+            remarks: row.remarks ? row.remarks.trim() : null
+          },
+          transaction
+        });
+
+        if (!created) {
+          await gradeRecord.update({
+            grade: gradeTrimmed,
+            remarks: row.remarks ? row.remarks.trim() : null
+          }, { transaction });
+        }
+
+        results.success.push({
+          identifier: row.student_email || row.username || row.email,
+          grade: gradeTrimmed,
+          action: created ? 'created' : 'updated'
+        });
+
+      } catch (rowError) {
+        console.error('Row processing error:', rowError);
+        results.failed.push({
+          identifier: row.student_email || row.username || row.email,
+          reason: rowError.message
+        });
+      }
+    }
+
+    // 7. Commit transaction
+    await transaction.commit();
+
+    // 8. Build success message
+    let successMsg = `Bulk upload complete: ${results.success.length} grade(s) processed`;
+    if (results.skipped.length > 0) {
+      successMsg += `, ${results.skipped.length} skipped`;
+    }
+    if (results.failed.length > 0) {
+      successMsg += `, ${results.failed.length} failed`;
+    }
+
+    // Log details for debugging
+    console.log('Bulk Grade Upload Results:', {
+      success: results.success.length,
+      skipped: results.skipped.length,
+      failed: results.failed.length
+    });
+
+    res.redirect(`/teacher/courses/${courseId}/grades?success=${encodeURIComponent(successMsg)}`);
+
+  } catch (error) {
+    await transaction.rollback();
+    console.error('Bulk Upload Grades Error:', error);
+    res.redirect(`/teacher/courses/${req.params.id}/grades?error=Error processing bulk upload: ${error.message}`);
+  }
+};
+
+/**
+ * Download CSV template for bulk grade upload
+ */
+export const downloadGradeTemplate = async (req, res) => {
+  try {
+    const csvContent = `student_email,grade,remarks
+student1@example.com,A,Excellent performance
+student2@example.com,85.5,Good work
+student3@example.com,B+,Well done`;
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=grade-upload-template.csv');
+    res.send(csvContent);
+
+  } catch (error) {
+    console.error('Download Template Error:', error);
+    res.status(500).send('Error generating template');
+  }
+};
+
