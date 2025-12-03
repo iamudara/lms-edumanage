@@ -1,103 +1,94 @@
 /**
  * Student Routes
- * Handles student-specific routes (dashboard, courses, assignments, etc.)
- * Phase 5: Full implementation pending
+ * Handles student-specific routes (dashboard, courses, assignments, submissions, grades)
+ * Phase 5: Student Features Implementation
  */
 
 import express from 'express';
+// Import student controller (will be created in Task 5.2)
+// import {
+//   showDashboard,
+//   getCourseView,
+//   getAssignmentDetail,
+//   submitAssignment,
+//   getSubmissions,
+//   getGrades
+// } from '../controllers/studentController.js';
 
 const router = express.Router();
 
 /**
- * Student Dashboard (Placeholder)
+ * Student Dashboard
  * GET /student/dashboard
+ * Display: enrolled courses, upcoming deadlines, recent grades, pending assignments
  */
 router.get('/dashboard', (req, res) => {
-  res.send(`
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Student Dashboard - LMS EduManage</title>
-      <style>
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-          max-width: 800px;
-          margin: 50px auto;
-          padding: 20px;
-          background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-          min-height: 100vh;
-        }
-        .container {
-          background: white;
-          border-radius: 10px;
-          padding: 40px;
-          box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        }
-        h1 { color: #333; margin-top: 0; }
-        .info { background: #dbeafe; padding: 15px; border-radius: 5px; margin: 20px 0; }
-        .user-info { background: #ecfdf5; padding: 15px; border-radius: 5px; margin: 20px 0; }
-        .links { margin: 20px 0; }
-        .links a { 
-          display: inline-block;
-          margin: 5px 10px 5px 0;
-          padding: 10px 20px;
-          background: #3b82f6;
-          color: white;
-          text-decoration: none;
-          border-radius: 5px;
-          transition: background 0.3s;
-        }
-        .links a:hover { background: #2563eb; }
-        .logout { background: #dc2626 !important; }
-        .logout:hover { background: #b91c1c !important; }
-        .status { color: #3b82f6; font-weight: bold; }
-        ul { line-height: 1.8; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <h1>👨‍🎓 Student Dashboard</h1>
-        
-        <div class="user-info">
-          <p><strong>Welcome, ${req.user.full_name}!</strong></p>
-          <p>Role: <span class="status">${req.user.role.toUpperCase()}</span></p>
-          <p>Email: ${req.user.email}</p>
-          <p>Username: ${req.user.username}</p>
-          ${req.user.batch_id ? `<p>Batch ID: ${req.user.batch_id}</p>` : ''}
-        </div>
+  // Placeholder - will be implemented in Task 5.2
+  res.send('Student Dashboard - Coming Soon (Task 5.2)');
+  // TODO: Replace with: showDashboard
+});
 
-        <div class="info">
-          <h3>✅ Authentication Working!</h3>
-          <p>You have successfully logged in as a student. The role-based redirect is working correctly.</p>
-        </div>
+/**
+ * Course View (Student)
+ * GET /student/courses/:id
+ * Display: course info, materials, assignments list, course grade
+ * Must check: student's batch is enrolled in this course
+ */
+router.get('/courses/:id', (req, res) => {
+  // Placeholder - will be implemented in Task 5.3
+  res.send(`Course View - Course ID: ${req.params.id} - Coming Soon (Task 5.3)`);
+  // TODO: Replace with: getCourseView
+});
 
-        <div class="info">
-          <h3>🚀 Coming Soon in Phase 5</h3>
-          <p>Student features will include:</p>
-          <ul>
-            <li>View Enrolled Courses</li>
-            <li>Access Course Materials</li>
-            <li>View Assignments</li>
-            <li>Submit Assignments</li>
-            <li>View Submission History</li>
-            <li>Check Grades</li>
-          </ul>
-        </div>
+/**
+ * Assignment Detail View
+ * GET /student/assignments/:id
+ * Display: assignment description, deadline, submission status, submit button
+ */
+router.get('/assignments/:id', (req, res) => {
+  // Placeholder - will be implemented in Task 5.4
+  res.send(`Assignment Detail - Assignment ID: ${req.params.id} - Coming Soon (Task 5.4)`);
+  // TODO: Replace with: getAssignmentDetail
+});
 
-        <div class="links">
-          <a href="/auth/change-password">Change Password</a>
-          <a href="/auth/logout" class="logout">Logout</a>
-        </div>
+/**
+ * Submit Assignment
+ * POST /student/assignments/:id/submit
+ * Validation: enrolled, deadline not passed, file/text provided
+ * Upload to Cloudinary, store in submissions table
+ * Note: Students can resubmit (UPDATE) before deadline
+ */
+router.post('/assignments/:id/submit', (req, res) => {
+  // Placeholder - will be implemented in Task 5.5
+  res.status(501).json({ 
+    error: 'Assignment submission not yet implemented (Task 5.5)',
+    assignment_id: req.params.id 
+  });
+  // TODO: Replace with: submitAssignment
+  // TODO: Add upload middleware for file handling
+});
 
-        <p style="color: #666; font-size: 14px; margin-top: 30px;">
-          <em>This is a temporary placeholder. Full student dashboard will be implemented in Phase 5.</em>
-        </p>
-      </div>
-    </body>
-    </html>
-  `);
+/**
+ * Submission History
+ * GET /student/submissions
+ * Display: all submissions, status, scores, feedback
+ * Optional: filter by course
+ */
+router.get('/submissions', (req, res) => {
+  // Placeholder - will be implemented in Task 5.7
+  res.send('Submission History - Coming Soon (Task 5.7)');
+  // TODO: Replace with: getSubmissions
+});
+
+/**
+ * Grades View
+ * GET /student/grades
+ * Display: all course grades, assignment scores breakdown, GPA/average
+ */
+router.get('/grades', (req, res) => {
+  // Placeholder - will be implemented in Task 5.8
+  res.send('Grades View - Coming Soon (Task 5.8)');
+  // TODO: Replace with: getGrades
 });
 
 export default router;
