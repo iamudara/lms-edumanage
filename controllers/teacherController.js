@@ -597,6 +597,128 @@ export const createAssignment = async (req, res) => {
 };
 
 /**
+ * Show Edit Assignment Form
+ * GET /teacher/assignments/:id/edit
+ * 
+ * Shows form to edit assignment deadline only
+ * Displays submission stats and warnings
+ */
+export const showEditAssignment = async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+    const assignmentId = req.params.id;
+
+    // Get assignment with course details
+    const assignment = await Assignment.findByPk(assignmentId, {
+      include: [{
+        model: Course,
+        as: 'course',
+        where: { teacher_id: teacherId } // Verify teacher owns the course
+      }]
+    });
+
+    // Check if assignment exists and teacher has access
+    if (!assignment) {
+      return res.status(404).send('Assignment not found or you do not have permission to access it');
+    }
+
+    const course = assignment.course;
+
+    // Get submission statistics
+    const submissionCount = await Submission.count({
+      where: { assignment_id: assignmentId }
+    });
+
+    const gradedCount = await Submission.count({
+      where: { 
+        assignment_id: assignmentId,
+        marks: { [Op.not]: null }
+      }
+    });
+
+    const hasSubmissions = submissionCount > 0;
+
+    res.render('teacher/assignment-edit', {
+      user: req.user,
+      assignment,
+      course,
+      submissionCount,
+      gradedCount,
+      hasSubmissions,
+      pageTitle: `Edit Assignment - ${assignment.title}`,
+      error: req.query.error
+    });
+
+  } catch (error) {
+    console.error('Show Edit Assignment Error:', error);
+    res.status(500).send('Error loading assignment: ' + error.message);
+  }
+};
+
+/**
+ * Edit Assignment
+ * POST /teacher/assignments/:id/edit
+ * 
+ * Updates assignment deadline only
+ * Validates: future date, teacher ownership
+ */
+export const editAssignment = async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+    const assignmentId = req.params.id;
+    const { deadline, change_reason } = req.body;
+
+    // Get assignment with course details
+    const assignment = await Assignment.findByPk(assignmentId, {
+      include: [{
+        model: Course,
+        as: 'course',
+        where: { teacher_id: teacherId } // Verify teacher owns the course
+      }]
+    });
+
+    // Check if assignment exists and teacher has access
+    if (!assignment) {
+      return res.status(404).send('Assignment not found or you do not have permission to access it');
+    }
+
+    // Validation
+    if (!deadline) {
+      return res.redirect(`/teacher/assignments/${assignmentId}/edit?error=Deadline is required`);
+    }
+
+    // Server-side deadline validation - must be in the future
+    const newDeadline = new Date(deadline);
+    const now = new Date();
+
+    if (newDeadline <= now) {
+      return res.redirect(`/teacher/assignments/${assignmentId}/edit?error=Deadline must be in the future`);
+    }
+
+    // Optional: Check if new deadline is actually different
+    const oldDeadline = new Date(assignment.deadline);
+    if (newDeadline.getTime() === oldDeadline.getTime()) {
+      return res.redirect(`/teacher/courses/${assignment.course_id}?error=No changes made - deadline is the same`);
+    }
+
+    // Update assignment deadline
+    assignment.deadline = newDeadline;
+    await assignment.save();
+
+    // Log change reason if provided (for future audit trail feature)
+    if (change_reason && change_reason.trim() !== '') {
+      console.log(`Assignment ${assignmentId} deadline changed by teacher ${teacherId}: ${change_reason.trim()}`);
+    }
+
+    res.redirect(`/teacher/courses/${assignment.course_id}?success=Assignment deadline updated successfully`);
+
+  } catch (error) {
+    console.error('Edit Assignment Error:', error);
+    res.redirect(`/teacher/assignments/${req.params.id}/edit?error=Error updating assignment: ${error.message}`);
+  }
+};
+
+/**
  * Get Submissions for Assignment
  * GET /teacher/assignments/:id/submissions
  * 

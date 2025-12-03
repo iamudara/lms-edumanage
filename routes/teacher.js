@@ -16,6 +16,8 @@ import {
   deleteMaterial,
   showCreateAssignment,
   createAssignment,
+  showEditAssignment,
+  editAssignment,
   getSubmissions,
   showGradeForm,
   gradeSubmission,
@@ -119,18 +121,14 @@ router.post('/courses/:id/assignments', createAssignment);
  * GET /teacher/assignments/:id/edit
  * Form to edit assignment deadline
  */
-router.get('/assignments/:id/edit', (req, res) => {
-  res.send(`Edit Assignment - ID: ${req.params.id} - To be implemented in Task 4.10`);
-});
+router.get('/assignments/:id/edit', showEditAssignment);
 
 /**
  * Update assignment deadline
- * PUT /teacher/assignments/:id
+ * POST /teacher/assignments/:id/edit
  * Updates assignment deadline only
  */
-router.put('/assignments/:id', (req, res) => {
-  res.send(`Update Assignment - ID: ${req.params.id} - To be implemented in Task 4.10`);
-});
+router.post('/assignments/:id/edit', editAssignment);
 
 // ============================================
 // SUBMISSION MANAGEMENT

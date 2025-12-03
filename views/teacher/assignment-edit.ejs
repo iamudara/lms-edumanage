@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= pageTitle || 'Edit Assignment' %> - LMS</title>
+  
+  <!-- Tailwind + DaisyUI -->
+  <link href="/css/output.css" rel="stylesheet">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom CSS -->
+  <link href="/css/custom.css" rel="stylesheet">
+</head>
+<body>
+  <%- include('../shared/navbar', { user }) %>
+  
+  <div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs mb-6">
+      <ul>
+        <li><a href="/teacher/dashboard"><i class="fas fa-home mr-1"></i>Dashboard</a></li>
+        <li><a href="/teacher/courses/<%= course.id %>"><%= course.title %></a></li>
+        <li>Edit Assignment</li>
+      </ul>
+    </div>
+
+    <!-- Page Header -->
+    <div class="mb-6">
+      <h1 class="text-3xl font-bold mb-2">
+        <i class="fas fa-edit mr-2 text-primary"></i>Edit Assignment Deadline
+      </h1>
+      <p class="text-base-content/70">Update the deadline for this assignment</p>
+    </div>
+
+    <!-- Flash Messages -->
+    <% if (locals.error) { %>
+      <div class="alert alert-error mb-6 shadow-lg">
+        <i class="fas fa-exclamation-circle"></i>
+        <span><%= error %></span>
+      </div>
+    <% } %>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Main Content (2/3 width) -->
+      <div class="lg:col-span-2">
+        <!-- Assignment Details Card -->
+        <div class="card bg-base-100 shadow-xl mb-6">
+          <div class="card-body">
+            <h2 class="card-title text-xl mb-4">
+              <i class="fas fa-file-alt mr-2"></i>Assignment Details
+            </h2>
+
+            <div class="space-y-3">
+              <div>
+                <label class="text-sm font-semibold text-base-content/70">Title</label>
+                <div class="text-lg font-medium"><%= assignment.title %></div>
+              </div>
+
+              <% if (assignment.description) { %>
+                <div>
+                  <label class="text-sm font-semibold text-base-content/70">Description</label>
+                  <div class="prose max-w-none"><%= assignment.description %></div>
+                </div>
+              <% } %>
+
+              <div>
+                <label class="text-sm font-semibold text-base-content/70">Current Deadline</label>
+                <div class="text-lg">
+                  <i class="far fa-calendar-alt mr-2 text-primary"></i>
+                  <%= new Date(assignment.deadline).toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }) %>
+                </div>
+              </div>
+
+              <div>
+                <label class="text-sm font-semibold text-base-content/70">Created</label>
+                <div class="text-sm text-base-content/70">
+                  <%= new Date(assignment.created_at).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric'
+                  }) %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Edit Form Card -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title text-xl mb-4">
+              <i class="fas fa-clock mr-2"></i>Update Deadline
+            </h2>
+
+            <% if (hasSubmissions) { %>
+              <div class="alert alert-warning mb-4">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div>
+                  <h3 class="font-bold">Submissions exist for this assignment</h3>
+                  <div class="text-sm">
+                    <%= submissionCount %> student<%= submissionCount === 1 ? ' has' : 's have' %> already submitted. 
+                    You can only modify the deadline to give more time if needed.
+                  </div>
+                </div>
+              </div>
+            <% } %>
+
+            <form action="/teacher/assignments/<%= assignment.id %>/edit" method="POST" id="editForm">
+              <div class="form-control mb-4">
+                <label class="label">
+                  <span class="label-text font-semibold">
+                    New Deadline <span class="text-error">*</span>
+                  </span>
+                </label>
+                <input 
+                  type="datetime-local" 
+                  name="deadline" 
+                  id="deadline"
+                  class="input input-bordered w-full" 
+                  value="<%= assignment.deadline.toISOString().slice(0, 16) %>"
+                  required
+                >
+                <label class="label">
+                  <span class="label-text-alt text-base-content/70">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    The deadline must be in the future
+                  </span>
+                </label>
+              </div>
+
+              <div class="form-control mb-6">
+                <label class="label">
+                  <span class="label-text font-semibold">Reason for Change (optional)</span>
+                </label>
+                <textarea 
+                  name="change_reason" 
+                  class="textarea textarea-bordered h-24" 
+                  placeholder="Explain why you're changing the deadline (this is for your records)"
+                  maxlength="500"
+                ></textarea>
+                <label class="label">
+                  <span class="label-text-alt text-base-content/70">
+                    Max 500 characters
+                  </span>
+                </label>
+              </div>
+
+              <div class="flex gap-3">
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                  <i class="fas fa-save mr-2"></i>Save Changes
+                </button>
+                <a href="/teacher/courses/<%= course.id %>" class="btn btn-ghost">
+                  <i class="fas fa-times mr-2"></i>Cancel
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar (1/3 width) -->
+      <div class="space-y-6">
+        <!-- Submission Stats -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title text-lg mb-4">
+              <i class="fas fa-chart-bar mr-2"></i>Submission Statistics
+            </h2>
+
+            <div class="stats stats-vertical shadow bg-base-200 w-full">
+              <div class="stat py-4">
+                <div class="stat-title text-xs">Total Submissions</div>
+                <div class="stat-value text-2xl text-primary"><%= submissionCount %></div>
+              </div>
+
+              <% if (submissionCount > 0) { %>
+                <div class="stat py-4">
+                  <div class="stat-title text-xs">Graded</div>
+                  <div class="stat-value text-2xl text-success"><%= gradedCount %></div>
+                </div>
+
+                <div class="stat py-4">
+                  <div class="stat-title text-xs">Pending Review</div>
+                  <div class="stat-value text-2xl text-warning"><%= submissionCount - gradedCount %></div>
+                </div>
+              <% } %>
+            </div>
+
+            <% if (submissionCount > 0) { %>
+              <a href="/teacher/assignments/<%= assignment.id %>/submissions" class="btn btn-sm btn-primary mt-4 w-full">
+                <i class="fas fa-eye mr-2"></i>View All Submissions
+              </a>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Important Notes -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title text-lg mb-4">
+              <i class="fas fa-lightbulb mr-2 text-warning"></i>Important Notes
+            </h2>
+
+            <div class="space-y-3 text-sm">
+              <div class="flex items-start gap-2">
+                <i class="fas fa-check-circle text-success mt-1"></i>
+                <div>Only the deadline can be edited after assignment creation</div>
+              </div>
+
+              <div class="flex items-start gap-2">
+                <i class="fas fa-check-circle text-success mt-1"></i>
+                <div>The new deadline must be set to a future date and time</div>
+              </div>
+
+              <% if (hasSubmissions) { %>
+                <div class="flex items-start gap-2">
+                  <i class="fas fa-info-circle text-info mt-1"></i>
+                  <div>Students who have already submitted will not be affected, but they can still resubmit before the new deadline</div>
+                </div>
+              <% } else { %>
+                <div class="flex items-start gap-2">
+                  <i class="fas fa-info-circle text-info mt-1"></i>
+                  <div>No submissions yet, so you have full flexibility in setting the deadline</div>
+                </div>
+              <% } %>
+
+              <div class="flex items-start gap-2">
+                <i class="fas fa-exclamation-triangle text-warning mt-1"></i>
+                <div>Students will see the updated deadline immediately</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%- include('../shared/footer') %>
+
+  <script>
+    // Client-side validation
+    document.getElementById('editForm').addEventListener('submit', function(e) {
+      const deadlineInput = document.getElementById('deadline');
+      const selectedDate = new Date(deadlineInput.value);
+      const now = new Date();
+
+      // Check if deadline is in the future
+      if (selectedDate <= now) {
+        e.preventDefault();
+        alert('The deadline must be set to a future date and time. Please select a date/time after the current moment.');
+        deadlineInput.focus();
+        return false;
+      }
+
+      // Confirm submission
+      const confirmMsg = 'Are you sure you want to update the assignment deadline?\n\n' +
+                        'New deadline: ' + selectedDate.toLocaleString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        });
+      
+      if (!confirm(confirmMsg)) {
+        e.preventDefault();
+        return false;
+      }
+
+      // Disable submit button to prevent double submission
+      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('submitBtn').innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+    });
+
+    // Set minimum date/time to now
+    const now = new Date();
+    const minDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    document.getElementById('deadline').min = minDateTime;
+  </script>
+</body>
+</html>
