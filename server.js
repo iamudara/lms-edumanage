@@ -34,6 +34,7 @@ import {
   BatchEnrollment,
   Material,
   Assignment,
+  AssignmentMaterial,
   Submission,
   Grade,
   syncDatabase
@@ -160,6 +161,13 @@ const adminJs = new AdminJS({
       options: {
         listProperties: ['id', 'course_id', 'title', 'deadline', 'created_by'],
         editProperties: ['course_id', 'title', 'description', 'deadline', 'created_by'],
+      }
+    },
+    {
+      resource: AssignmentMaterial,
+      options: {
+        listProperties: ['id', 'assignment_id', 'title', 'type', 'url'],
+        editProperties: ['assignment_id', 'title', 'type', 'url', 'file_type', 'description'],
       }
     },
     {

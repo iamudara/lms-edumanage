@@ -8,7 +8,8 @@ import {
   User, 
   Course, 
   BatchEnrollment, 
-  Assignment, 
+  Assignment,
+  AssignmentMaterial,
   Submission, 
   Batch, 
   Grade,
@@ -286,6 +287,9 @@ export const getCourseDetail = async (req, res) => {
         model: Assignment,
         include: [{
           model: Submission
+        }, {
+          model: AssignmentMaterial,
+          as: 'materials'
         }]
       }]
     });
@@ -541,14 +545,15 @@ export const showCreateAssignment = async (req, res) => {
  * Create New Assignment
  * POST /teacher/courses/:id/assignments
  * 
- * Creates a new assignment for a course
+ * Creates a new assignment for a course with optional materials (files/URLs)
  * Validates: deadline must be in the future
  */
 export const createAssignment = async (req, res) => {
   try {
     const courseId = req.params.id;
     const teacherId = req.user.id;
-    const { title, description, deadline } = req.body;
+    const { title, description, deadline, material_titles, url_titles, material_urls } = req.body;
+    const uploadedFiles = req.files || [];
 
     // Verify teacher owns the course
     const course = await Course.findOne({
@@ -588,7 +593,44 @@ export const createAssignment = async (req, res) => {
       created_by: teacherId
     });
 
-    res.redirect(`/teacher/courses/${courseId}?success=Assignment created successfully`);
+    // Process uploaded files
+    if (uploadedFiles && uploadedFiles.length > 0) {
+      const fileTitles = Array.isArray(material_titles) ? material_titles : [material_titles].filter(Boolean);
+      
+      for (let i = 0; i < uploadedFiles.length; i++) {
+        const file = uploadedFiles[i];
+        const fileTitle = fileTitles[i] || file.originalname;
+
+        await AssignmentMaterial.create({
+          assignment_id: assignment.id,
+          title: fileTitle,
+          type: 'file',
+          url: file.path, // Cloudinary URL
+          file_type: file.mimetype
+        });
+      }
+    }
+
+    // Process URL links
+    if (material_urls) {
+      const urls = Array.isArray(material_urls) ? material_urls : [material_urls];
+      const urlTitlesArray = Array.isArray(url_titles) ? url_titles : [url_titles].filter(Boolean);
+      
+      for (let i = 0; i < urls.length; i++) {
+        if (urls[i] && urls[i].trim() !== '') {
+          const urlTitle = urlTitlesArray[i] || urls[i];
+          
+          await AssignmentMaterial.create({
+            assignment_id: assignment.id,
+            title: urlTitle,
+            type: 'url',
+            url: urls[i].trim()
+          });
+        }
+      }
+    }
+
+    res.redirect(`/teacher/courses/${courseId}?success=Assignment created successfully with materials`);
 
   } catch (error) {
     console.error('Create Assignment Error:', error);
@@ -659,14 +701,14 @@ export const showEditAssignment = async (req, res) => {
  * Edit Assignment
  * POST /teacher/assignments/:id/edit
  * 
- * Updates assignment deadline only
+ * Updates assignment details (title, description, deadline)
  * Validates: future date, teacher ownership
  */
 export const editAssignment = async (req, res) => {
   try {
     const teacherId = req.user.id;
     const assignmentId = req.params.id;
-    const { deadline, change_reason } = req.body;
+    const { title, description, deadline, change_reason } = req.body;
 
     // Get assignment with course details
     const assignment = await Assignment.findByPk(assignmentId, {
@@ -683,8 +725,8 @@ export const editAssignment = async (req, res) => {
     }
 
     // Validation
-    if (!deadline) {
-      return res.redirect(`/teacher/assignments/${assignmentId}/edit?error=Deadline is required`);
+    if (!title || !deadline) {
+      return res.redirect(`/teacher/assignments/${assignmentId}/edit?error=Title and deadline are required`);
     }
 
     // Server-side deadline validation - must be in the future
@@ -695,22 +737,37 @@ export const editAssignment = async (req, res) => {
       return res.redirect(`/teacher/assignments/${assignmentId}/edit?error=Deadline must be in the future`);
     }
 
-    // Optional: Check if new deadline is actually different
+    // Update assignment fields
+    let hasChanges = false;
+    
+    if (assignment.title !== title.trim()) {
+      assignment.title = title.trim();
+      hasChanges = true;
+    }
+    
+    if (assignment.description !== (description || '').trim()) {
+      assignment.description = (description || '').trim();
+      hasChanges = true;
+    }
+    
     const oldDeadline = new Date(assignment.deadline);
-    if (newDeadline.getTime() === oldDeadline.getTime()) {
-      return res.redirect(`/teacher/courses/${assignment.course_id}?error=No changes made - deadline is the same`);
+    if (newDeadline.getTime() !== oldDeadline.getTime()) {
+      assignment.deadline = newDeadline;
+      hasChanges = true;
     }
 
-    // Update assignment deadline
-    assignment.deadline = newDeadline;
+    if (!hasChanges) {
+      return res.redirect(`/teacher/courses/${assignment.course_id}?info=No changes made to assignment`);
+    }
+
     await assignment.save();
 
     // Log change reason if provided (for future audit trail feature)
     if (change_reason && change_reason.trim() !== '') {
-      console.log(`Assignment ${assignmentId} deadline changed by teacher ${teacherId}: ${change_reason.trim()}`);
+      console.log(`Assignment ${assignmentId} updated by teacher ${teacherId}: ${change_reason.trim()}`);
     }
 
-    res.redirect(`/teacher/courses/${assignment.course_id}?success=Assignment deadline updated successfully`);
+    res.redirect(`/teacher/courses/${assignment.course_id}?success=Assignment updated successfully`);
 
   } catch (error) {
     console.error('Edit Assignment Error:', error);
@@ -1269,6 +1326,101 @@ student3@example.com,B+,Well done`;
   } catch (error) {
     console.error('Download Template Error:', error);
     res.status(500).send('Error generating template');
+  }
+};
+
+/**
+ * Delete an assignment
+ * DELETE /teacher/assignments/:id
+ * Deletes assignment and all associated materials and submissions
+ */
+export const deleteAssignment = async (req, res) => {
+  try {
+    const assignmentId = req.params.id;
+    const teacherId = req.user.id;
+
+    // 1. Fetch assignment with course
+    const assignment = await Assignment.findByPk(assignmentId, {
+      include: [{
+        model: Course,
+        as: 'course'
+      }]
+    });
+
+    if (!assignment) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Assignment not found' 
+      });
+    }
+
+    // 2. Verify course ownership
+    if (assignment.course.teacher_id !== teacherId) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Unauthorized: You can only delete your own assignments' 
+      });
+    }
+
+    // 3. Get all assignment materials to delete from Cloudinary
+    const materials = await AssignmentMaterial.findAll({
+      where: { 
+        assignment_id: assignmentId,
+        type: 'file' // Only files have Cloudinary URLs
+      }
+    });
+
+    // 4. Delete files from Cloudinary
+    for (const material of materials) {
+      try {
+        // Extract public_id from URL
+        const urlParts = material.url.split('/');
+        const filename = urlParts[urlParts.length - 1];
+        const publicId = `lms-uploads/assignments/${filename.split('.')[0]}`;
+        
+        await cloudinary.uploader.destroy(publicId);
+      } catch (cloudinaryError) {
+        console.error('Cloudinary deletion error:', cloudinaryError);
+        // Continue even if Cloudinary deletion fails
+      }
+    }
+
+    // 5. Get all submissions to delete files from Cloudinary
+    const submissions = await Submission.findAll({
+      where: { assignment_id: assignmentId }
+    });
+
+    for (const submission of submissions) {
+      if (submission.file_url) {
+        try {
+          const urlParts = submission.file_url.split('/');
+          const filename = urlParts[urlParts.length - 1];
+          const publicId = `lms-uploads/submissions/${filename.split('.')[0]}`;
+          
+          await cloudinary.uploader.destroy(publicId);
+        } catch (cloudinaryError) {
+          console.error('Cloudinary deletion error:', cloudinaryError);
+        }
+      }
+    }
+
+    const courseId = assignment.course_id;
+
+    // 6. Delete assignment (CASCADE will delete materials and submissions)
+    await assignment.destroy();
+
+    res.json({ 
+      success: true, 
+      message: 'Assignment deleted successfully',
+      redirectUrl: `/teacher/courses/${courseId}`
+    });
+
+  } catch (error) {
+    console.error('Delete Assignment Error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: `Error deleting assignment: ${error.message}` 
+    });
   }
 };
 

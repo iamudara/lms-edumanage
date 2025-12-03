@@ -48,7 +48,7 @@
               <i class="fas fa-edit mr-2"></i>Assignment Details
             </h2>
 
-            <form action="/teacher/courses/<%= course.id %>/assignments" method="POST" id="assignmentForm">
+            <form action="/teacher/courses/<%= course.id %>/assignments" method="POST" id="assignmentForm" enctype="multipart/form-data">
               <!-- Title -->
               <div class="form-control mb-4">
                 <label class="label">
@@ -103,6 +103,90 @@
                   <span class="label-text-alt text-base-content/60">Students must submit before this date and time</span>
                 </label>
               </div>
+
+              <!-- Assignment Materials Section -->
+              <div class="divider">Assignment Materials (Optional)</div>
+              
+              <div class="alert alert-info mb-4">
+                <i class="fas fa-info-circle"></i>
+                <span>Attach files or links to help students with this assignment (e.g., instructions PDF, reference materials, example code)</span>
+              </div>
+
+              <!-- File Uploads -->
+              <div class="form-control mb-4">
+                <label class="label">
+                  <span class="label-text font-semibold">
+                    <i class="fas fa-file-upload mr-2"></i>Upload Files
+                  </span>
+                </label>
+                <div id="fileUploadsContainer" class="space-y-3">
+                  <div class="file-upload-row">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div class="md:col-span-2">
+                        <input 
+                          type="file" 
+                          name="materials" 
+                          class="file-input file-input-bordered file-input-primary w-full" 
+                          accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.zip"
+                        >
+                      </div>
+                      <div>
+                        <input 
+                          type="text" 
+                          name="material_titles[]" 
+                          placeholder="File title (optional)"
+                          class="input input-bordered w-full"
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline mt-2" onclick="addFileUpload()">
+                  <i class="fas fa-plus mr-2"></i>Add Another File
+                </button>
+                <label class="label">
+                  <span class="label-text-alt text-base-content/60">Supported: PDF, DOC, DOCX, PPT, PPTX, TXT, ZIP (Max 10MB each)</span>
+                </label>
+              </div>
+
+              <!-- URL Links -->
+              <div class="form-control mb-6">
+                <label class="label">
+                  <span class="label-text font-semibold">
+                    <i class="fas fa-link mr-2"></i>Add Links
+                  </span>
+                </label>
+                <div id="urlLinksContainer" class="space-y-3">
+                  <div class="url-link-row">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div class="md:col-span-2">
+                        <input 
+                          type="url" 
+                          name="material_urls[]" 
+                          placeholder="https://example.com/resource"
+                          class="input input-bordered w-full"
+                        >
+                      </div>
+                      <div>
+                        <input 
+                          type="text" 
+                          name="url_titles[]" 
+                          placeholder="Link title (optional)"
+                          class="input input-bordered w-full"
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline mt-2" onclick="addUrlLink()">
+                  <i class="fas fa-plus mr-2"></i>Add Another Link
+                </button>
+                <label class="label">
+                  <span class="label-text-alt text-base-content/60">External resources, documentation, tutorials, etc.</span>
+                </label>
+              </div>
+
+              <div class="divider"></div>
 
               <!-- Submit Buttons -->
               <div class="flex gap-3">
@@ -176,6 +260,68 @@
   <%- include('../shared/footer') %>
 
   <script>
+    // Add file upload row
+    function addFileUpload() {
+      const container = document.getElementById('fileUploadsContainer');
+      const newRow = document.createElement('div');
+      newRow.className = 'file-upload-row';
+      newRow.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="md:col-span-2">
+            <input 
+              type="file" 
+              name="materials" 
+              class="file-input file-input-bordered file-input-primary w-full" 
+              accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.zip"
+            >
+          </div>
+          <div class="flex gap-2">
+            <input 
+              type="text" 
+              name="material_titles[]" 
+              placeholder="File title (optional)"
+              class="input input-bordered w-full"
+            >
+            <button type="button" class="btn btn-error btn-sm" onclick="this.closest('.file-upload-row').remove()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      `;
+      container.appendChild(newRow);
+    }
+
+    // Add URL link row
+    function addUrlLink() {
+      const container = document.getElementById('urlLinksContainer');
+      const newRow = document.createElement('div');
+      newRow.className = 'url-link-row';
+      newRow.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="md:col-span-2">
+            <input 
+              type="url" 
+              name="material_urls[]" 
+              placeholder="https://example.com/resource"
+              class="input input-bordered w-full"
+            >
+          </div>
+          <div class="flex gap-2">
+            <input 
+              type="text" 
+              name="url_titles[]" 
+              placeholder="Link title (optional)"
+              class="input input-bordered w-full"
+            >
+            <button type="button" class="btn btn-error btn-sm" onclick="this.closest('.url-link-row').remove()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      `;
+      container.appendChild(newRow);
+    }
+  
     // Set minimum datetime to current time
     document.addEventListener('DOMContentLoaded', function() {
       const deadlineInput = document.getElementById('deadlineInput');

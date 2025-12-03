@@ -18,6 +18,7 @@ import {
   createAssignment,
   showEditAssignment,
   editAssignment,
+  deleteAssignment,
   getSubmissions,
   showGradeForm,
   gradeSubmission,
@@ -26,7 +27,7 @@ import {
   bulkUploadGrades,
   downloadGradeTemplate
 } from '../controllers/teacherController.js';
-import { uploadMaterial as uploadMiddleware, uploadCsv } from '../middleware/upload.js';
+import { uploadMaterial as uploadMiddleware, uploadAssignmentMaterials, uploadCsv } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -112,9 +113,9 @@ router.get('/courses/:id/assignments/create', showCreateAssignment);
 /**
  * Create new assignment
  * POST /teacher/courses/:id/assignments
- * Processes assignment creation (title, description, deadline)
+ * Processes assignment creation (title, description, deadline, materials)
  */
-router.post('/courses/:id/assignments', createAssignment);
+router.post('/courses/:id/assignments', uploadAssignmentMaterials, createAssignment);
 
 /**
  * Get assignment edit form
@@ -129,6 +130,13 @@ router.get('/assignments/:id/edit', showEditAssignment);
  * Updates assignment deadline only
  */
 router.post('/assignments/:id/edit', editAssignment);
+
+/**
+ * Delete assignment
+ * DELETE /teacher/assignments/:id
+ * Deletes assignment and all associated data
+ */
+router.delete('/assignments/:id', deleteAssignment);
 
 // ============================================
 // SUBMISSION MANAGEMENT

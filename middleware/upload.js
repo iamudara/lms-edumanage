@@ -28,6 +28,26 @@ const materialStorage = new CloudinaryStorage({
 });
 
 /**
+ * Cloudinary Storage Configuration for Assignment Materials
+ * Used by teachers to upload assignment reference materials
+ */
+const assignmentMaterialStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    // Generate unique filename
+    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
+    
+    return {
+      folder: 'lms-uploads/assignments',
+      resource_type: 'auto',
+      public_id: uniqueName,
+      use_filename: false,
+      access_mode: 'public'
+    };
+  }
+});
+
+/**
  * Cloudinary Storage Configuration for Assignment Submissions
  * Used by students to submit assignment files
  */
@@ -85,6 +105,19 @@ const uploadMaterial = multer({
   },
   fileFilter: fileFilter(['pdf', 'doc', 'docx', 'ppt', 'pptx'])
 }).single('material'); // Field name: 'material'
+
+/**
+ * Upload Middleware for Assignment Materials (multiple files)
+ * Max file size: 10MB per file
+ * Allowed formats: PDF, DOC, DOCX, PPT, PPTX, TXT, ZIP
+ */
+const uploadAssignmentMaterials = multer({
+  storage: assignmentMaterialStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB per file
+  },
+  fileFilter: fileFilter(['pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt', 'zip'])
+}).array('materials', 10); // Field name: 'materials', max 10 files
 
 /**
  * Upload Middleware for Assignment Submissions
@@ -154,10 +187,11 @@ const handleUpload = (uploadMiddleware) => {
 /**
  * Export upload middleware with error handling
  */
-export { uploadMaterial, uploadSubmission, uploadCsv };
+export { uploadMaterial, uploadAssignmentMaterials, uploadSubmission, uploadCsv };
 
 export default {
   uploadMaterial: handleUpload(uploadMaterial),
+  uploadAssignmentMaterials: handleUpload(uploadAssignmentMaterials),
   uploadSubmission: handleUpload(uploadSubmission),
   uploadCsv: handleUpload(uploadCsv)
 };

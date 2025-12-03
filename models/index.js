@@ -7,6 +7,7 @@ import CourseModel from './Course.js';
 import BatchEnrollmentModel from './BatchEnrollment.js';
 import MaterialModel from './Material.js';
 import AssignmentModel from './Assignment.js';
+import AssignmentMaterialModel from './AssignmentMaterial.js';
 import SubmissionModel from './Submission.js';
 import GradeModel from './Grade.js';
 
@@ -17,6 +18,7 @@ const Course = CourseModel(sequelize);
 const BatchEnrollment = BatchEnrollmentModel(sequelize);
 const Material = MaterialModel(sequelize);
 const Assignment = AssignmentModel(sequelize);
+const AssignmentMaterial = AssignmentMaterialModel(sequelize);
 const Submission = SubmissionModel(sequelize);
 const Grade = GradeModel(sequelize);
 
@@ -113,6 +115,18 @@ Assignment.hasMany(Submission, {
   onDelete: 'RESTRICT' 
 });
 
+Assignment.hasMany(AssignmentMaterial, {
+  foreignKey: 'assignment_id',
+  onDelete: 'CASCADE',
+  as: 'materials'
+});
+
+// AssignmentMaterial associations
+AssignmentMaterial.belongsTo(Assignment, {
+  foreignKey: 'assignment_id',
+  as: 'assignment'
+});
+
 // Submission associations
 Submission.belongsTo(Assignment, { 
   foreignKey: 'assignment_id',
@@ -163,7 +177,9 @@ export {
   BatchEnrollment,
   Material,
   Assignment,
+  AssignmentMaterial,
   Submission,
   Grade,
   syncDatabase
 };
+
