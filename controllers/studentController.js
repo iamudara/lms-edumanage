@@ -7,7 +7,8 @@ import {
   Course, 
   Batch,
   BatchEnrollment, 
-  Assignment, 
+  Assignment,
+  AssignmentMaterial,
   Submission, 
   Grade,
   Material,
@@ -27,10 +28,7 @@ export const showDashboard = async (req, res) => {
 
     // Check if student has a batch assigned
     if (!batchId) {
-      return res.status(400).render('error', {
-        message: 'You are not assigned to any batch. Please contact the administrator.',
-        user: req.user
-      });
+      return res.status(400).send('You are not assigned to any batch. Please contact the administrator.');
     }
 
     // Get enrolled courses (via batch enrollments)
@@ -146,11 +144,7 @@ export const showDashboard = async (req, res) => {
 
   } catch (error) {
     console.error('Error loading student dashboard:', error);
-    res.status(500).render('error', {
-      message: 'Failed to load dashboard. Please try again later.',
-      error: process.env.NODE_ENV === 'development' ? error : {},
-      user: req.user
-    });
+    res.status(500).send('Error loading dashboard: ' + error.message);
   }
 };
 
@@ -166,10 +160,7 @@ export const getAllCourses = async (req, res) => {
 
     // Check if student has a batch assigned
     if (!batchId) {
-      return res.status(400).render('error', {
-        message: 'You are not assigned to any batch. Please contact the administrator.',
-        user: req.user
-      });
+      return res.status(400).send('You are not assigned to any batch. Please contact the administrator.');
     }
 
     // Get enrolled courses (via batch enrollments)
@@ -227,11 +218,7 @@ export const getAllCourses = async (req, res) => {
 
   } catch (error) {
     console.error('Error loading courses:', error);
-    res.status(500).render('error', {
-      message: 'Failed to load courses. Please try again later.',
-      error: process.env.NODE_ENV === 'development' ? error : {},
-      user: req.user
-    });
+    res.status(500).send('Error loading courses: ' + error.message);
   }
 };
 
@@ -248,10 +235,7 @@ export const getCourseView = async (req, res) => {
 
     // Check if student has a batch assigned
     if (!batchId) {
-      return res.status(400).render('error', {
-        message: 'You are not assigned to any batch. Please contact the administrator.',
-        user: req.user
-      });
+      return res.status(400).send('You are not assigned to any batch. Please contact the administrator.');
     }
 
     // Get course with all details
@@ -292,10 +276,7 @@ export const getCourseView = async (req, res) => {
 
     // Check if course exists and student's batch is enrolled
     if (!course) {
-      return res.status(404).render('error', {
-        message: 'Course not found or you are not enrolled in this course.',
-        user: req.user
-      });
+      return res.status(404).send('Course not found or you are not enrolled in this course.');
     }
 
     // Get student's grade for this course
@@ -341,11 +322,7 @@ export const getCourseView = async (req, res) => {
 
   } catch (error) {
     console.error('Error loading course view:', error);
-    res.status(500).render('error', {
-      message: 'Failed to load course details. Please try again later.',
-      error: process.env.NODE_ENV === 'development' ? error : {},
-      user: req.user
-    });
+    res.status(500).send('Error loading course details: ' + error.message);
   }
 };
 
@@ -355,8 +332,99 @@ export const getCourseView = async (req, res) => {
  * Display: assignment description, deadline, submission status, submit button
  */
 export const getAssignmentDetail = async (req, res) => {
-  // TODO: Implement in Task 5.4
-  res.send('Assignment Detail - Coming Soon (Task 5.4)');
+  try {
+    const assignmentId = req.params.id;
+    const studentId = req.user.id;
+    const batchId = req.user.batch_id;
+
+    // Check if student has a batch assigned
+    if (!batchId) {
+      return res.status(400).send('You are not assigned to any batch. Please contact the administrator.');
+    }
+
+    // Get assignment with course and submission details
+    const assignment = await Assignment.findByPk(assignmentId, {
+      include: [
+        {
+          model: Course,
+          as: 'course',
+          attributes: ['id', 'title', 'code'],
+          include: [
+            {
+              model: User,
+              as: 'teacher',
+              attributes: ['id', 'full_name', 'email']
+            },
+            {
+              model: BatchEnrollment,
+              where: { batch_id: batchId },
+              required: true  // Only show if student's batch is enrolled
+            }
+          ]
+        },
+        {
+          model: Submission,
+          required: false,
+          where: { student_id: studentId },
+          attributes: ['id', 'file_url', 'submission_text', 'submitted_at', 'marks', 'feedback', 'graded_by'],
+          include: [
+            {
+              model: User,
+              as: 'grader',
+              attributes: ['full_name'],
+              required: false
+            }
+          ]
+        },
+        {
+          model: AssignmentMaterial,
+          as: 'materials',
+          required: false,
+          attributes: ['id', 'url', 'title', 'type', 'file_type', 'description']
+        }
+      ]
+    });
+
+    // Check if assignment exists and student's batch is enrolled in the course
+    if (!assignment || !assignment.course) {
+      return res.status(404).send('Assignment not found or you are not enrolled in this course.');
+    }
+
+    // Get submission if exists
+    const submission = assignment.Submissions && assignment.Submissions.length > 0 
+      ? assignment.Submissions[0] 
+      : null;
+
+    // Calculate deadline status
+    const now = new Date();
+    const deadline = new Date(assignment.deadline);
+    const isPastDeadline = deadline < now;
+    const daysUntil = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
+    const isUrgent = daysUntil <= 2 && daysUntil >= 0;
+
+    // Determine if student can submit
+    const canSubmit = !isPastDeadline && (!submission || submission.marks === null);
+    const canResubmit = !isPastDeadline && submission && submission.marks === null;
+
+    res.render('student/assignment', {
+      title: assignment.title,
+      user: req.user,
+      assignment,
+      submission,
+      deadline: {
+        date: deadline,
+        isPastDeadline,
+        daysUntil,
+        isUrgent
+      },
+      canSubmit,
+      canResubmit
+    });
+
+  } catch (error) {
+    console.error('Error loading assignment detail:', error);
+    res.status(500).send('Error loading assignment details: ' + error.message);
+  }
 };
 
 /**
