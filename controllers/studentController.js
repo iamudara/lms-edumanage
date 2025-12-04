@@ -10,7 +10,6 @@ import {
   Assignment,
   AssignmentMaterial,
   Submission, 
-  Grade,
   Material,
   User 
 } from '../models/index.js';
@@ -91,14 +90,22 @@ export const showDashboard = async (req, res) => {
       assignment => !assignment.Submissions || assignment.Submissions.length === 0
     );
 
-    // Get recent grades (last 5)
-    const recentGrades = await Grade.findAll({
-      where: { student_id: studentId },
+    // Get recent graded submissions (last 5)
+    const recentGradedSubmissions = await Submission.findAll({
+      where: { 
+        student_id: studentId,
+        marks: { [Op.ne]: null }  // Only graded submissions
+      },
       include: [
         {
-          model: Course,
-          as: 'course',
-          attributes: ['id', 'title', 'code']
+          model: Assignment,
+          as: 'assignment',
+          attributes: ['id', 'title'],
+          include: [{
+            model: Course,
+            as: 'course',
+            attributes: ['id', 'title', 'code']
+          }]
         }
       ],
       order: [['updated_at', 'DESC']],
@@ -113,19 +120,26 @@ export const showDashboard = async (req, res) => {
     const submittedCount = await Submission.count({
       where: { student_id: studentId }
     });
-    const pendingCount = totalAssignments - submittedCount;
-    const gradedCoursesCount = recentGrades.length;
-
-    // Calculate average grade (if any grades exist)
-    let averageGrade = null;
-    if (recentGrades.length > 0) {
-      const numericGrades = recentGrades
-        .map(g => parseFloat(g.grade))
-        .filter(g => !isNaN(g));
-      
-      if (numericGrades.length > 0) {
-        averageGrade = (numericGrades.reduce((a, b) => a + b, 0) / numericGrades.length).toFixed(2);
+    const gradedSubmissionsCount = await Submission.count({
+      where: { 
+        student_id: studentId,
+        marks: { [Op.ne]: null }
       }
+    });
+    const pendingCount = totalAssignments - submittedCount;
+
+    // Calculate average score from graded submissions
+    let averageScore = null;
+    if (gradedSubmissionsCount > 0) {
+      const gradedSubmissions = await Submission.findAll({
+        where: { 
+          student_id: studentId,
+          marks: { [Op.ne]: null }
+        },
+        attributes: ['marks']
+      });
+      const totalScore = gradedSubmissions.reduce((sum, s) => sum + parseFloat(s.marks), 0);
+      averageScore = (totalScore / gradedSubmissionsCount).toFixed(1);
     }
 
     res.render('student/dashboard', {
@@ -133,14 +147,14 @@ export const showDashboard = async (req, res) => {
       user: req.user,
       enrolledCourses,
       pendingAssignments,
-      recentGrades,
+      recentGradedSubmissions,
       stats: {
         totalCourses,
         totalAssignments,
         submittedCount,
         pendingCount,
-        gradedCoursesCount,
-        averageGrade
+        gradedSubmissionsCount,
+        averageScore
       }
     });
 
@@ -199,23 +213,10 @@ export const getAllCourses = async (req, res) => {
       order: [['created_at', 'DESC']]
     });
 
-    // Get grades for all courses
-    const grades = await Grade.findAll({
-      where: { student_id: studentId },
-      attributes: ['course_id', 'grade']
-    });
-
-    // Create a map of course grades
-    const gradeMap = {};
-    grades.forEach(grade => {
-      gradeMap[grade.course_id] = grade.grade;
-    });
-
     res.render('student/courses', {
       title: 'My Courses',
       user: req.user,
-      courses: enrolledCourses,
-      gradeMap
+      courses: enrolledCourses
     });
 
   } catch (error) {
@@ -281,14 +282,6 @@ export const getCourseView = async (req, res) => {
       return res.status(404).send('Course not found or you are not enrolled in this course.');
     }
 
-    // Get student's grade for this course
-    const grade = await Grade.findOne({
-      where: {
-        course_id: courseId,
-        student_id: studentId
-      }
-    });
-
     // Calculate assignment statistics
     const totalAssignments = course.Assignments ? course.Assignments.length : 0;
     const submittedAssignments = course.Assignments 
@@ -312,7 +305,6 @@ export const getCourseView = async (req, res) => {
       title: course.title,
       user: req.user,
       course,
-      grade,
       stats: {
         totalMaterials: course.Materials ? course.Materials.length : 0,
         totalAssignments,
@@ -677,7 +669,7 @@ export const getSubmissions = async (req, res) => {
 /**
  * Get Grades View
  * GET /student/grades
- * Display: all course grades, assignment scores breakdown, GPA/average
+ * Display: assignment scores breakdown by course
  */
 export const getGrades = async (req, res) => {
   try {
@@ -702,22 +694,6 @@ export const getGrades = async (req, res) => {
       order: [['title', 'ASC']]
     });
 
-    // Get all grades for this student
-    const grades = await Grade.findAll({
-      where: { student_id: studentId },
-      include: [{
-        model: Course,
-        as: 'course',
-        attributes: ['id', 'title', 'code']
-      }]
-    });
-
-    // Create a map of course grades
-    const gradeMap = {};
-    grades.forEach(grade => {
-      gradeMap[grade.course_id] = grade;
-    });
-
     // Get all submissions for this student
     const submissions = await Submission.findAll({
       where: { student_id: studentId },
@@ -738,8 +714,6 @@ export const getGrades = async (req, res) => {
     const courseGrades = [];
     let totalGradedAssignments = 0;
     let totalAssignmentScore = 0;
-    let gpaPoints = 0;
-    let gradedCoursesForGpa = 0;
 
     for (const course of enrolledCourses) {
       // Get all assignments for this course
@@ -783,18 +757,6 @@ export const getGrades = async (req, res) => {
         totalAssignmentScore += totalScore;
       }
 
-      // Get final grade if exists
-      const finalGrade = gradeMap[course.id] || null;
-
-      // Calculate GPA contribution
-      if (finalGrade) {
-        const gpaPoint = gradeToGPA(finalGrade.grade);
-        if (gpaPoint !== null) {
-          gpaPoints += gpaPoint;
-          gradedCoursesForGpa++;
-        }
-      }
-
       courseGrades.push({
         course: {
           id: course.id,
@@ -802,10 +764,6 @@ export const getGrades = async (req, res) => {
           code: course.code,
           teacher: course.teacher
         },
-        finalGrade: finalGrade ? {
-          grade: finalGrade.grade,
-          remarks: finalGrade.remarks
-        } : null,
         assignments: assignmentsWithSubmissions,
         totalAssignments,
         gradedAssignments: gradedCount,
@@ -816,13 +774,9 @@ export const getGrades = async (req, res) => {
     // Calculate overall statistics
     const stats = {
       totalCourses: enrolledCourses.length,
-      gradedCourses: gradedCoursesForGpa,
       totalGradedAssignments,
       averageAssignmentScore: totalGradedAssignments > 0 
         ? totalAssignmentScore / totalGradedAssignments 
-        : null,
-      gpa: gradedCoursesForGpa > 0 
-        ? gpaPoints / gradedCoursesForGpa 
         : null
     };
 
@@ -838,40 +792,3 @@ export const getGrades = async (req, res) => {
     res.status(500).send('Error loading grades: ' + error.message);
   }
 };
-
-/**
- * Convert letter grade to GPA points
- * @param {string} grade - Letter grade (A+, A, A-, B+, etc.)
- * @returns {number|null} - GPA points or null if invalid
- */
-function gradeToGPA(grade) {
-  const gpaScale = {
-    'A+': 4.0, 'A': 4.0, 'A-': 3.7,
-    'B+': 3.3, 'B': 3.0, 'B-': 2.7,
-    'C+': 2.3, 'C': 2.0, 'C-': 1.7,
-    'D+': 1.3, 'D': 1.0, 'D-': 0.7,
-    'F': 0.0
-  };
-  
-  // Handle numeric grades (convert to letter grade equivalent)
-  const numericGrade = parseFloat(grade);
-  if (!isNaN(numericGrade)) {
-    if (numericGrade >= 97) return 4.0;
-    if (numericGrade >= 93) return 4.0;
-    if (numericGrade >= 90) return 3.7;
-    if (numericGrade >= 87) return 3.3;
-    if (numericGrade >= 83) return 3.0;
-    if (numericGrade >= 80) return 2.7;
-    if (numericGrade >= 77) return 2.3;
-    if (numericGrade >= 73) return 2.0;
-    if (numericGrade >= 70) return 1.7;
-    if (numericGrade >= 67) return 1.3;
-    if (numericGrade >= 63) return 1.0;
-    if (numericGrade >= 60) return 0.7;
-    return 0.0;
-  }
-  
-  // Handle letter grades
-  const upperGrade = grade.toUpperCase().trim();
-  return gpaScale[upperGrade] !== undefined ? gpaScale[upperGrade] : null;
-}

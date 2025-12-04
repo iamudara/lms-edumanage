@@ -35,9 +35,6 @@
                   </h2>
                   <div class="flex gap-2 mb-3">
                     <span class="badge badge-primary"><%= course.code %></span>
-                    <% if (gradeMap[course.id]) { %>
-                      <span class="badge badge-success">Grade: <%= gradeMap[course.id] %></span>
-                    <% } %>
                   </div>
                 </div>
               </div>
@@ -109,14 +106,6 @@
               <div class="stat-title">Total Enrolled</div>
               <div class="stat-value text-primary"><%= courses.length %></div>
               <div class="stat-desc">Active courses</div>
-            </div>
-            
-            <div class="stat">
-              <div class="stat-title">Graded Courses</div>
-              <div class="stat-value text-success">
-                <%= Object.keys(gradeMap).length %>
-              </div>
-              <div class="stat-desc">With final grades</div>
             </div>
             
             <div class="stat">

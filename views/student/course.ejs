@@ -31,11 +31,6 @@
             </h1>
             <div class="flex flex-wrap gap-3 mb-4">
               <span class="badge badge-primary badge-lg"><%= course.code %></span>
-              <% if (grade) { %>
-                <span class="badge badge-success badge-lg">Grade: <%= grade.grade %></span>
-              <% } else { %>
-                <span class="badge badge-ghost badge-lg">Not Graded Yet</span>
-              <% } %>
             </div>
             <p class="text-base-content/70 mb-4">
               <%= course.description || 'No description available.' %>
@@ -251,86 +246,59 @@
       </div>
     </div>
 
-    <!-- Course Grade Section -->
+    <!-- Assignment Scores Section -->
+    <% if (stats.gradedAssignments > 0) { %>
     <div class="card bg-base-100 shadow-lg mb-8">
       <div class="card-body">
-        <h2 class="text-2xl font-bold mb-6">🎓 Course Grade</h2>
+        <h2 class="text-2xl font-bold mb-6">🎓 Assignment Scores</h2>
         
-        <% if (grade) { %>
-          <div class="card bg-gradient-to-br from-success to-success-focus text-success-content shadow-xl mb-6">
-            <div class="card-body text-center">
-              <h3 class="text-lg font-medium opacity-90">Your Final Grade</h3>
-              <p class="text-6xl font-bold my-4"><%= grade.grade %></p>
-              <% if (grade.remarks) { %>
-                <div class="divider"></div>
-                <div class="text-left bg-base-100/20 p-4 rounded-lg">
-                  <p class="text-sm font-medium mb-2">Instructor's Remarks:</p>
-                  <p class="opacity-90"><%= grade.remarks %></p>
-                </div>
-              <% } %>
-            </div>
-          </div>
-        <% } else { %>
-          <div class="alert alert-info">
-            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>Your final course grade has not been assigned yet. Keep submitting assignments and check back later!</span>
-          </div>
-        <% } %>
-
-        <!-- Assignment Breakdown -->
-        <% if (stats.gradedAssignments > 0) { %>
-          <div class="mt-6">
-            <h3 class="text-xl font-bold mb-4">Assignment Scores</h3>
-            <div class="overflow-x-auto">
-              <table class="table table-zebra">
-                <thead>
-                  <tr>
-                    <th>Assignment</th>
-                    <th>Score</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% course.Assignments.forEach(assignment => { %>
-                    <% const submission = assignment.Submissions && assignment.Submissions.length > 0 ? assignment.Submissions[0] : null; %>
-                    <tr>
-                      <td><%= assignment.title %></td>
-                      <td>
-                        <% if (submission && submission.marks !== null) { %>
-                          <span class="font-bold text-lg <%= submission.marks >= 70 ? 'text-success' : submission.marks >= 50 ? 'text-warning' : 'text-error' %>">
-                            <%= submission.marks %>%
-                          </span>
-                        <% } else { %>
-                          <span class="text-base-content/50">-</span>
-                        <% } %>
-                      </td>
-                      <td>
-                        <% if (submission && submission.marks !== null) { %>
-                          <span class="badge badge-success">Graded</span>
-                        <% } else if (submission) { %>
-                          <span class="badge badge-warning">Pending</span>
-                        <% } else { %>
-                          <span class="badge badge-ghost">Not Submitted</span>
-                        <% } %>
-                      </td>
-                    </tr>
-                  <% }) %>
-                </tbody>
-              </table>
-            </div>
-            
-            <% if (stats.averageScore) { %>
-              <div class="mt-4 flex items-center justify-end gap-2">
-                <span class="text-base-content/70">Average Score:</span>
-                <span class="text-2xl font-bold text-primary"><%= stats.averageScore %>%</span>
-              </div>
-            <% } %>
+        <div class="overflow-x-auto">
+          <table class="table table-zebra">
+            <thead>
+              <tr>
+                <th>Assignment</th>
+                <th>Score</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% course.Assignments.forEach(assignment => { %>
+                <% const submission = assignment.Submissions && assignment.Submissions.length > 0 ? assignment.Submissions[0] : null; %>
+                <tr>
+                  <td><%= assignment.title %></td>
+                  <td>
+                    <% if (submission && submission.marks !== null) { %>
+                      <span class="font-bold text-lg <%= submission.marks >= 70 ? 'text-success' : submission.marks >= 50 ? 'text-warning' : 'text-error' %>">
+                        <%= submission.marks %>%
+                      </span>
+                    <% } else { %>
+                      <span class="text-base-content/50">-</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <% if (submission && submission.marks !== null) { %>
+                      <span class="badge badge-success">Graded</span>
+                    <% } else if (submission) { %>
+                      <span class="badge badge-warning">Pending</span>
+                    <% } else { %>
+                      <span class="badge badge-ghost">Not Submitted</span>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+        
+        <% if (stats.averageScore) { %>
+          <div class="mt-4 flex items-center justify-end gap-2">
+            <span class="text-base-content/70">Average Score:</span>
+            <span class="text-2xl font-bold text-primary"><%= stats.averageScore %>%</span>
           </div>
         <% } %>
       </div>
     </div>
+    <% } %>
 
     <!-- Quick Actions -->
     <div class="card bg-base-100 shadow-lg">
