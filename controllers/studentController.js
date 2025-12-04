@@ -680,6 +680,198 @@ export const getSubmissions = async (req, res) => {
  * Display: all course grades, assignment scores breakdown, GPA/average
  */
 export const getGrades = async (req, res) => {
-  // TODO: Implement in Task 5.8
-  res.send('Grades View - Coming Soon (Task 5.8)');
+  try {
+    const studentId = req.user.id;
+    const batchId = req.user.batch_id;
+
+    // Get student's enrolled courses with teacher info
+    const enrolledCourses = await Course.findAll({
+      include: [
+        {
+          model: BatchEnrollment,
+          where: { batch_id: batchId },
+          attributes: []
+        },
+        {
+          model: User,
+          as: 'teacher',
+          attributes: ['id', 'full_name']
+        }
+      ],
+      attributes: ['id', 'title', 'code'],
+      order: [['title', 'ASC']]
+    });
+
+    // Get all grades for this student
+    const grades = await Grade.findAll({
+      where: { student_id: studentId },
+      include: [{
+        model: Course,
+        as: 'course',
+        attributes: ['id', 'title', 'code']
+      }]
+    });
+
+    // Create a map of course grades
+    const gradeMap = {};
+    grades.forEach(grade => {
+      gradeMap[grade.course_id] = grade;
+    });
+
+    // Get all submissions for this student
+    const submissions = await Submission.findAll({
+      where: { student_id: studentId },
+      include: [{
+        model: Assignment,
+        as: 'assignment',
+        attributes: ['id', 'title', 'deadline', 'course_id']
+      }]
+    });
+
+    // Create a map of submissions by assignment_id
+    const submissionMap = {};
+    submissions.forEach(sub => {
+      submissionMap[sub.assignment_id] = sub;
+    });
+
+    // Build course grades data
+    const courseGrades = [];
+    let totalGradedAssignments = 0;
+    let totalAssignmentScore = 0;
+    let gpaPoints = 0;
+    let gradedCoursesForGpa = 0;
+
+    for (const course of enrolledCourses) {
+      // Get all assignments for this course
+      const assignments = await Assignment.findAll({
+        where: { course_id: course.id },
+        attributes: ['id', 'title', 'deadline'],
+        order: [['deadline', 'ASC']]
+      });
+
+      // Add submission info to each assignment
+      const assignmentsWithSubmissions = assignments.map(assignment => {
+        const submission = submissionMap[assignment.id] || null;
+        return {
+          id: assignment.id,
+          title: assignment.title,
+          deadline: assignment.deadline,
+          submission: submission ? {
+            id: submission.id,
+            submitted_at: submission.submitted_at,
+            marks: submission.marks,
+            feedback: submission.feedback
+          } : null
+        };
+      });
+
+      // Calculate stats for this course
+      const gradedAssignments = assignmentsWithSubmissions.filter(
+        a => a.submission && a.submission.marks !== null
+      );
+      const gradedCount = gradedAssignments.length;
+      const totalAssignments = assignments.length;
+
+      // Calculate average score for this course
+      let averageScore = null;
+      if (gradedCount > 0) {
+        const totalScore = gradedAssignments.reduce(
+          (sum, a) => sum + parseFloat(a.submission.marks), 0
+        );
+        averageScore = totalScore / gradedCount;
+        totalGradedAssignments += gradedCount;
+        totalAssignmentScore += totalScore;
+      }
+
+      // Get final grade if exists
+      const finalGrade = gradeMap[course.id] || null;
+
+      // Calculate GPA contribution
+      if (finalGrade) {
+        const gpaPoint = gradeToGPA(finalGrade.grade);
+        if (gpaPoint !== null) {
+          gpaPoints += gpaPoint;
+          gradedCoursesForGpa++;
+        }
+      }
+
+      courseGrades.push({
+        course: {
+          id: course.id,
+          title: course.title,
+          code: course.code,
+          teacher: course.teacher
+        },
+        finalGrade: finalGrade ? {
+          grade: finalGrade.grade,
+          remarks: finalGrade.remarks
+        } : null,
+        assignments: assignmentsWithSubmissions,
+        totalAssignments,
+        gradedAssignments: gradedCount,
+        averageScore
+      });
+    }
+
+    // Calculate overall statistics
+    const stats = {
+      totalCourses: enrolledCourses.length,
+      gradedCourses: gradedCoursesForGpa,
+      totalGradedAssignments,
+      averageAssignmentScore: totalGradedAssignments > 0 
+        ? totalAssignmentScore / totalGradedAssignments 
+        : null,
+      gpa: gradedCoursesForGpa > 0 
+        ? gpaPoints / gradedCoursesForGpa 
+        : null
+    };
+
+    res.render('student/grades', {
+      title: 'My Grades',
+      user: req.user,
+      courseGrades,
+      stats
+    });
+
+  } catch (error) {
+    console.error('Error loading grades:', error);
+    res.status(500).send('Error loading grades: ' + error.message);
+  }
 };
+
+/**
+ * Convert letter grade to GPA points
+ * @param {string} grade - Letter grade (A+, A, A-, B+, etc.)
+ * @returns {number|null} - GPA points or null if invalid
+ */
+function gradeToGPA(grade) {
+  const gpaScale = {
+    'A+': 4.0, 'A': 4.0, 'A-': 3.7,
+    'B+': 3.3, 'B': 3.0, 'B-': 2.7,
+    'C+': 2.3, 'C': 2.0, 'C-': 1.7,
+    'D+': 1.3, 'D': 1.0, 'D-': 0.7,
+    'F': 0.0
+  };
+  
+  // Handle numeric grades (convert to letter grade equivalent)
+  const numericGrade = parseFloat(grade);
+  if (!isNaN(numericGrade)) {
+    if (numericGrade >= 97) return 4.0;
+    if (numericGrade >= 93) return 4.0;
+    if (numericGrade >= 90) return 3.7;
+    if (numericGrade >= 87) return 3.3;
+    if (numericGrade >= 83) return 3.0;
+    if (numericGrade >= 80) return 2.7;
+    if (numericGrade >= 77) return 2.3;
+    if (numericGrade >= 73) return 2.0;
+    if (numericGrade >= 70) return 1.7;
+    if (numericGrade >= 67) return 1.3;
+    if (numericGrade >= 63) return 1.0;
+    if (numericGrade >= 60) return 0.7;
+    return 0.0;
+  }
+  
+  // Handle letter grades
+  const upperGrade = grade.toUpperCase().trim();
+  return gpaScale[upperGrade] !== undefined ? gpaScale[upperGrade] : null;
+}

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - LMS EduManage</title>
+  <link rel="stylesheet" href="/css/output.css">
+  <link rel="stylesheet" href="/css/custom.css">
+</head>
+<body class="bg-base-200 min-h-screen">
+  <%- include('../shared/navbar') %>
+
+  <div class="container mx-auto px-4 py-8">
+    <!-- Page Header -->
+    <div class="mb-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 class="text-4xl font-bold text-base-content mb-2">
+            🎓 My Grades
+          </h1>
+          <p class="text-base-content/70">
+            View your course grades and assignment scores breakdown.
+          </p>
+        </div>
+        <a href="/student/dashboard" class="btn btn-ghost">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Dashboard
+        </a>
+      </div>
+    </div>
+
+    <!-- Overall Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <!-- Total Courses -->
+      <div class="stats shadow bg-primary text-primary-content">
+        <div class="stat">
+          <div class="stat-figure text-white/80">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          </div>
+          <div class="stat-title text-primary-content/80">Enrolled Courses</div>
+          <div class="stat-value"><%= stats.totalCourses %></div>
+        </div>
+      </div>
+
+      <!-- Graded Courses (Final Grades) -->
+      <div class="stats shadow bg-success text-success-content" title="Courses with final grades assigned by your teacher">
+        <div class="stat">
+          <div class="stat-figure text-white/80">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="stat-title text-success-content/80">Final Grades</div>
+          <div class="stat-value"><%= stats.gradedCourses %></div>
+          <div class="stat-desc text-success-content/70">
+            <%= stats.gradedCourses %>/<%= stats.totalCourses %> courses graded
+          </div>
+        </div>
+      </div>
+
+      <!-- Average Assignment Score -->
+      <div class="stats shadow bg-info text-info-content">
+        <div class="stat">
+          <div class="stat-figure text-white/80">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <div class="stat-title text-info-content/80">Avg. Assignment Score</div>
+          <div class="stat-value"><%= stats.averageAssignmentScore ? stats.averageAssignmentScore.toFixed(1) + '%' : 'N/A' %></div>
+          <div class="stat-desc text-info-content/70">From all graded assignments</div>
+        </div>
+      </div>
+
+      <!-- GPA (from Final Course Grades) -->
+      <div class="stats shadow bg-secondary text-secondary-content" title="GPA calculated from final course grades">
+        <div class="stat">
+          <div class="stat-figure text-white/80">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+            </svg>
+          </div>
+          <div class="stat-title text-secondary-content/80">GPA</div>
+          <div class="stat-value"><%= stats.gpa ? stats.gpa.toFixed(2) : 'N/A' %></div>
+          <div class="stat-desc text-secondary-content/70">
+            <% if (stats.gpa) { %>
+              Based on <%= stats.gradedCourses %> course<%= stats.gradedCourses !== 1 ? 's' : '' %>
+            <% } else { %>
+              Awaiting final grades
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <% if (courseGrades.length === 0) { %>
+      <!-- No Grades Yet -->
+      <div class="card bg-base-100 shadow-lg">
+        <div class="card-body text-center py-16">
+          <div class="text-6xl mb-4">📊</div>
+          <h3 class="text-xl font-semibold text-base-content/70 mb-2">No Grades Yet</h3>
+          <p class="text-base-content/50 mb-6">You don't have any course grades yet. Complete assignments to see your grades here.</p>
+          <a href="/student/courses" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            View My Courses
+          </a>
+        </div>
+      </div>
+    <% } else { %>
+      <!-- Course Grades -->
+      <div class="space-y-6">
+        <% courseGrades.forEach(courseData => { %>
+          <div class="card bg-base-100 shadow-lg">
+            <div class="card-body">
+              <!-- Course Header -->
+              <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+                <div class="flex items-center gap-4">
+                  <div class="avatar placeholder">
+                    <div class="bg-primary text-primary-content rounded-xl w-14 h-14">
+                      <span class="text-xl font-bold"><%= courseData.course.code.substring(0, 2) %></span>
+                    </div>
+                  </div>
+                  <div>
+                    <h2 class="text-xl font-bold"><%= courseData.course.title %></h2>
+                    <div class="flex items-center gap-2 text-base-content/70">
+                      <span class="badge badge-outline"><%= courseData.course.code %></span>
+                      <span>•</span>
+                      <span><%= courseData.course.teacher ? courseData.course.teacher.full_name : 'Unknown Instructor' %></span>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Final Grade Display -->
+                <div class="flex items-center gap-4">
+                  <% if (courseData.finalGrade) { %>
+                    <div class="text-center">
+                      <div class="text-sm text-base-content/60 mb-1">Final Grade</div>
+                      <div class="badge badge-lg <%= 
+                        courseData.finalGrade.grade.startsWith('A') ? 'badge-success' : 
+                        courseData.finalGrade.grade.startsWith('B') ? 'badge-info' : 
+                        courseData.finalGrade.grade.startsWith('C') ? 'badge-warning' : 
+                        courseData.finalGrade.grade.startsWith('D') ? 'badge-warning' : 'badge-error' 
+                      %> text-lg font-bold px-4 py-3">
+                        <%= courseData.finalGrade.grade %>
+                      </div>
+                    </div>
+                  <% } else { %>
+                    <div class="text-center">
+                      <div class="text-sm text-base-content/60 mb-1">Final Grade</div>
+                      <div class="badge badge-ghost badge-lg px-4 py-3">Not Graded</div>
+                    </div>
+                  <% } %>
+                  
+                  <div class="text-center">
+                    <div class="text-sm text-base-content/60 mb-1">Avg. Score</div>
+                    <div class="text-xl font-bold <%= 
+                      courseData.averageScore >= 70 ? 'text-success' : 
+                      courseData.averageScore >= 50 ? 'text-warning' : 
+                      courseData.averageScore !== null ? 'text-error' : 'text-base-content/50'
+                    %>">
+                      <%= courseData.averageScore !== null ? courseData.averageScore.toFixed(1) + '%' : 'N/A' %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Progress Bar -->
+              <div class="mb-4">
+                <div class="flex justify-between text-sm mb-1">
+                  <span class="text-base-content/70">Assignments Completed</span>
+                  <span class="font-medium"><%= courseData.gradedAssignments %>/<%= courseData.totalAssignments %></span>
+                </div>
+                <progress class="progress progress-primary w-full" value="<%= courseData.gradedAssignments %>" max="<%= courseData.totalAssignments %>"></progress>
+              </div>
+
+              <!-- Assignment Scores Breakdown -->
+              <% if (courseData.assignments.length > 0) { %>
+                <div class="collapse collapse-arrow bg-base-200 rounded-lg">
+                  <input type="checkbox" />
+                  <div class="collapse-title font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Assignment Scores Breakdown (<%= courseData.gradedAssignments %> graded)
+                  </div>
+                  <div class="collapse-content">
+                    <div class="overflow-x-auto mt-2">
+                      <table class="table table-sm">
+                        <thead>
+                          <tr>
+                            <th>Assignment</th>
+                            <th>Deadline</th>
+                            <th>Submitted</th>
+                            <th>Score</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <% courseData.assignments.forEach(assignment => { %>
+                            <tr>
+                              <td>
+                                <a href="/student/assignments/<%= assignment.id %>" class="link link-hover font-medium">
+                                  <%= assignment.title %>
+                                </a>
+                              </td>
+                              <td class="text-sm text-base-content/70">
+                                <%= new Date(assignment.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>
+                              </td>
+                              <td>
+                                <% if (assignment.submission) { %>
+                                  <span class="text-sm">
+                                    <%= new Date(assignment.submission.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>
+                                  </span>
+                                  <% 
+                                    const submittedDate = new Date(assignment.submission.submitted_at);
+                                    const deadlineDate = new Date(assignment.deadline);
+                                    const isLate = submittedDate > deadlineDate;
+                                  %>
+                                  <% if (isLate) { %>
+                                    <span class="badge badge-error badge-xs ml-1">Late</span>
+                                  <% } %>
+                                <% } else { %>
+                                  <span class="text-base-content/50">—</span>
+                                <% } %>
+                              </td>
+                              <td>
+                                <% if (assignment.submission && assignment.submission.marks !== null) { %>
+                                  <span class="font-bold <%= 
+                                    assignment.submission.marks >= 70 ? 'text-success' : 
+                                    assignment.submission.marks >= 50 ? 'text-warning' : 'text-error'
+                                  %>">
+                                    <%= assignment.submission.marks %>%
+                                  </span>
+                                <% } else { %>
+                                  <span class="text-base-content/50">—</span>
+                                <% } %>
+                              </td>
+                              <td>
+                                <% if (!assignment.submission) { %>
+                                  <% const isPastDeadline = new Date(assignment.deadline) < new Date(); %>
+                                  <% if (isPastDeadline) { %>
+                                    <span class="badge badge-error badge-sm">Missing</span>
+                                  <% } else { %>
+                                    <span class="badge badge-warning badge-sm">Pending</span>
+                                  <% } %>
+                                <% } else if (assignment.submission.marks !== null) { %>
+                                  <span class="badge badge-success badge-sm">Graded</span>
+                                <% } else { %>
+                                  <span class="badge badge-info badge-sm">Submitted</span>
+                                <% } %>
+                              </td>
+                            </tr>
+                          <% }); %>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              <% } else { %>
+                <div class="text-center py-4 text-base-content/50">
+                  No assignments in this course yet.
+                </div>
+              <% } %>
+
+              <!-- Remarks Section -->
+              <% if (courseData.finalGrade && courseData.finalGrade.remarks) { %>
+                <div class="mt-4 p-4 bg-base-200 rounded-lg">
+                  <div class="flex items-start gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-info mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                    </svg>
+                    <div>
+                      <div class="text-sm font-medium text-base-content/70 mb-1">Instructor Remarks</div>
+                      <p class="text-base-content"><%= courseData.finalGrade.remarks %></p>
+                    </div>
+                  </div>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+
+    <!-- GPA Information Card -->
+    <% if (stats.gradedCourses > 0) { %>
+      <div class="card bg-gradient-to-r from-primary to-secondary text-primary-content mt-8">
+        <div class="card-body">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div>
+              <h3 class="text-2xl font-bold mb-2">📈 Academic Performance Summary</h3>
+              <p class="text-primary-content/80">
+                Based on <%= stats.gradedCourses %> graded course<%= stats.gradedCourses !== 1 ? 's' : '' %> 
+                and <%= stats.totalGradedAssignments %> graded assignment<%= stats.totalGradedAssignments !== 1 ? 's' : '' %>.
+              </p>
+            </div>
+            <div class="flex gap-8">
+              <div class="text-center">
+                <div class="text-4xl font-bold"><%= stats.gpa ? stats.gpa.toFixed(2) : 'N/A' %></div>
+                <div class="text-sm text-primary-content/70">GPA (4.0)</div>
+              </div>
+              <div class="text-center">
+                <div class="text-4xl font-bold"><%= stats.averageAssignmentScore ? stats.averageAssignmentScore.toFixed(0) + '%' : 'N/A' %></div>
+                <div class="text-sm text-primary-content/70">Avg. Score</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- Grade Scale Reference -->
+    <div class="card bg-base-100 shadow-lg mt-8">
+      <div class="card-body">
+        <h3 class="card-title text-lg mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Grade Scale Reference
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Letter Grade</th>
+                <th>Percentage</th>
+                <th>GPA Points</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="font-bold text-success">A+</td><td>97-100%</td><td>4.0</td><td>Exceptional</td></tr>
+              <tr><td class="font-bold text-success">A</td><td>93-96%</td><td>4.0</td><td>Excellent</td></tr>
+              <tr><td class="font-bold text-success">A-</td><td>90-92%</td><td>3.7</td><td>Very Good</td></tr>
+              <tr><td class="font-bold text-info">B+</td><td>87-89%</td><td>3.3</td><td>Good</td></tr>
+              <tr><td class="font-bold text-info">B</td><td>83-86%</td><td>3.0</td><td>Above Average</td></tr>
+              <tr><td class="font-bold text-info">B-</td><td>80-82%</td><td>2.7</td><td>Satisfactory</td></tr>
+              <tr><td class="font-bold text-warning">C+</td><td>77-79%</td><td>2.3</td><td>Average</td></tr>
+              <tr><td class="font-bold text-warning">C</td><td>73-76%</td><td>2.0</td><td>Acceptable</td></tr>
+              <tr><td class="font-bold text-warning">C-</td><td>70-72%</td><td>1.7</td><td>Below Average</td></tr>
+              <tr><td class="font-bold text-warning">D+</td><td>67-69%</td><td>1.3</td><td>Poor</td></tr>
+              <tr><td class="font-bold text-warning">D</td><td>63-66%</td><td>1.0</td><td>Barely Passing</td></tr>
+              <tr><td class="font-bold text-error">D-</td><td>60-62%</td><td>0.7</td><td>Minimum Passing</td></tr>
+              <tr><td class="font-bold text-error">F</td><td>Below 60%</td><td>0.0</td><td>Failing</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%- include('../shared/footer') %>
+</body>
+</html>
