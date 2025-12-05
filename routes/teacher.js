@@ -30,6 +30,7 @@ import {
   createFolder,
   renameFolder,
   deleteFolder,
+  getFolderSharedCourses,
   shareFolderWithCourses,
   unshareFolder,
   moveMaterialToFolder,
@@ -230,6 +231,13 @@ router.put('/folders/:id', renameFolder);
  * Deletes folder (with option to delete or move contents)
  */
 router.delete('/folders/:id', deleteFolder);
+
+/**
+ * Get shared courses for a folder
+ * GET /teacher/folders/:id/shared-courses
+ * Returns list of course IDs this folder is shared with
+ */
+router.get('/folders/:id/shared-courses', getFolderSharedCourses);
 
 /**
  * Share folder with courses

@@ -88,10 +88,7 @@
             <div class="flex items-center justify-between mb-2 pb-2 border-b">
               <span class="font-bold text-xs uppercase tracking-wide text-base-content/60">Explorer</span>
               <div class="flex gap-1">
-                <button onclick="openAddExistingFolderModal()" class="btn btn-ghost btn-xs" title="Add Existing Folder">
-                  <i class="fas fa-folder-open text-info"></i>
-                </button>
-                <button onclick="openCreateFolderModal(currentFolderId)" class="btn btn-ghost btn-xs" title="New Folder">
+                <button onclick="openCreateFolderModal(currentFolderId, currentFolderSharedCount)" class="btn btn-ghost btn-xs" title="New Folder">
                   <i class="fas fa-folder-plus text-warning"></i>
                 </button>
               </div>
@@ -102,7 +99,7 @@
               <!-- Root Folder -->
               <div class="folder-item flex items-center gap-2 selected" 
                    data-folder-id="" 
-                   onclick="selectFolder(this, '', 'Root', <%= materials.length %>)">
+                   onclick="selectFolder(this, '', 'Root', <%= materials.length %>, 0)">
                 <i class="fas fa-chevron-right chevron text-xs text-base-content/30 invisible"></i>
                 <i class="fas fa-folder text-warning text-sm"></i>
                 <span class="flex-1">Root</span>
@@ -111,49 +108,43 @@
 
               <!-- Folders -->
               <% 
-              var sharedIdsArray = typeof sharedFolderIds !== 'undefined' ? sharedFolderIds : [];
               if (folderTree && folderTree.length > 0) { 
                 function renderTree(folder, indent) {
                   var count = folder.materials ? folder.materials.length : 0;
                   var hasKids = folder.children && folder.children.length > 0;
-                  var sharedIds = folder.sharedCourseIds || [];
-                  var isSharedHere = sharedIdsArray.includes(folder.id);
-                  var isOwner = folder.isOwner || false; // Check if current teacher owns this folder
+                  var sharedCount = folder.sharedCourseCount || 0;
+                  var isShared = sharedCount > 1; // Shared with more than 1 course
               %>
-                <div class="folder-item flex items-center gap-2 <%= isSharedHere ? 'shared-here' : 'not-shared' %>" 
+                <div class="folder-item flex items-center gap-2" 
                      style="padding-left: <%= indent %>px;"
                      data-folder-id="<%= folder.id %>"
-                     data-shared-courses="<%= JSON.stringify(sharedIds) %>"
-                     data-is-shared="<%= isSharedHere %>"
-                     data-is-owner="<%= isOwner %>"
-                     onclick="selectFolder(this, '<%= folder.id %>', '<%= folder.name.replace(/'/g, "\\'") %>', <%= count %>, <%= isOwner %>)">
+                     data-shared-count="<%= sharedCount %>"
+                     onclick="selectFolder(this, '<%= folder.id %>', '<%= folder.name.replace(/'/g, "\\'") %>', <%= count %>, <%= sharedCount %>)">
                   <% if (hasKids) { %>
                     <i class="fas fa-chevron-right chevron text-xs text-base-content/30" onclick="event.stopPropagation(); toggleExpand(this.parentElement)"></i>
                   <% } else { %>
                     <i class="fas fa-chevron-right chevron text-xs text-base-content/30 invisible"></i>
                   <% } %>
-                  <i class="fas fa-folder <%= isSharedHere ? 'text-success' : 'text-base-content/30' %> text-sm"></i>
-                  <span class="flex-1 truncate <%= isSharedHere ? '' : 'text-base-content/50' %>"><%= folder.name %></span>
-                  <% if (!isOwner) { %>
-                    <i class="fas fa-users text-info text-xs" title="Shared by another teacher"></i>
+                  <% if (isShared) { %>
+                    <i class="fas fa-folder text-success text-sm" title="Shared folder"></i>
+                  <% } else { %>
+                    <i class="fas fa-folder text-warning text-sm"></i>
                   <% } %>
-                  <% if (isSharedHere) { %>
-                    <span class="text-xs text-base-content/50"><%= count %></span>
+                  <span class="flex-1 truncate"><%= folder.name %></span>
+                  <% if (isShared) { %>
+                    <span class="badge badge-success badge-xs" title="Shared with <%= sharedCount %> courses"><%= sharedCount %></span>
                   <% } %>
+                  <span class="text-xs text-base-content/50"><%= count %></span>
                   <div class="folder-actions flex gap-0.5">
-                    <% if (canEdit) { %>
-                      <button onclick="event.stopPropagation(); openCreateFolderModal('<%= folder.id %>')" class="btn btn-ghost btn-xs px-1" title="Add Subfolder">
-                        <i class="fas fa-plus text-success text-xs"></i>
-                      </button>
-                    <% } %>
-                    <% if (isOwner) { %>
-                      <button onclick="event.stopPropagation(); openRenameModal('<%= folder.id %>', '<%= folder.name.replace(/'/g, "\\'") %>', '')" class="btn btn-ghost btn-xs px-1" title="Rename">
-                        <i class="fas fa-pen text-info text-xs"></i>
-                      </button>
-                      <button onclick="event.stopPropagation(); deleteFolder('<%= folder.id %>', '<%= folder.name.replace(/'/g, "\\'") %>')" class="btn btn-ghost btn-xs px-1" title="Delete">
-                        <i class="fas fa-trash text-error text-xs"></i>
-                      </button>
-                    <% } %>
+                    <button onclick="event.stopPropagation(); openCreateFolderModal('<%= folder.id %>', <%= sharedCount %>)" class="btn btn-ghost btn-xs px-1" title="Add Subfolder">
+                      <i class="fas fa-plus text-success text-xs"></i>
+                    </button>
+                    <button onclick="event.stopPropagation(); openRenameModal('<%= folder.id %>', '<%= folder.name.replace(/'/g, "\\'") %>', <%= sharedCount %>)" class="btn btn-ghost btn-xs px-1" title="Rename">
+                      <i class="fas fa-pen text-info text-xs"></i>
+                    </button>
+                    <button onclick="event.stopPropagation(); deleteFolder('<%= folder.id %>', '<%= folder.name.replace(/'/g, "\\'") %>', <%= sharedCount %>)" class="btn btn-ghost btn-xs px-1" title="Delete">
+                      <i class="fas fa-trash text-error text-xs"></i>
+                    </button>
                   </div>
                 </div>
                 <% if (hasKids) { %>
@@ -176,10 +167,13 @@
           <div class="card-body p-4">
             <!-- Header -->
             <div class="flex items-center justify-between mb-4 pb-3 border-b">
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
                 <i class="fas fa-folder-open text-warning"></i>
                 <h2 class="font-bold text-lg" id="folderTitle">Root</h2>
                 <span class="badge badge-primary" id="countBadge"><%= materials.length %></span>
+                <span id="sharedIndicator" class="badge badge-success badge-sm hidden">
+                  <i class="fas fa-share-alt mr-1"></i>Shared
+                </span>
               </div>
               <div class="flex gap-2">
                 <button id="shareFolderBtn" onclick="openShareModal()" class="btn btn-outline btn-secondary btn-sm hidden">
@@ -397,57 +391,12 @@
     <form method="dialog" class="modal-backdrop"><button>close</button></form>
   </dialog>
 
-  <!-- Add Existing Folder Modal -->
-  <dialog id="addExistingModal" class="modal">
-    <div class="modal-box">
-      <h3 class="font-bold text-lg mb-4">
-        <i class="fas fa-folder-open text-info mr-2"></i>Add Existing Folder
-      </h3>
-      <p class="text-sm text-base-content/70 mb-4">
-        Select a folder from your other courses to add to this course:
-      </p>
-      <div class="space-y-2 max-h-60 overflow-y-auto border rounded-lg p-2" id="existingFoldersContainer">
-        <% 
-        // Filter to folders NOT already shared with this course
-        const unsharedFolders = teacherFolders.filter(f => !f.isSharedHere && !f.parent_id);
-        if (unsharedFolders.length > 0) { 
-          unsharedFolders.forEach(f => { 
-        %>
-          <label class="flex items-center gap-3 p-2 hover:bg-base-200 rounded cursor-pointer">
-            <input type="checkbox" name="folder_to_add" value="<%= f.id %>" class="checkbox checkbox-info checkbox-sm existing-folder-checkbox">
-            <i class="fas fa-folder text-warning"></i>
-            <span class="text-sm"><%= f.name %></span>
-            <% if (f.sharedCourseIds && f.sharedCourseIds.length > 0) { %>
-              <span class="badge badge-ghost badge-xs">shared in <%= f.sharedCourseIds.length %> course(s)</span>
-            <% } %>
-          </label>
-        <% }); } else { %>
-          <p class="text-center text-base-content/50 py-4">
-            <i class="fas fa-check-circle text-success mr-1"></i>
-            All your folders are already shared with this course, or you have no other folders.
-          </p>
-        <% } %>
-      </div>
-      <div class="alert alert-info mt-3 py-2">
-        <i class="fas fa-info-circle"></i>
-        <span class="text-xs">Adding a folder will make its materials visible in this course.</span>
-      </div>
-      <div class="modal-action">
-        <button type="button" class="btn btn-sm" onclick="addExistingModal.close()">Cancel</button>
-        <button type="button" class="btn btn-info btn-sm" onclick="submitAddExisting()">
-          <i class="fas fa-plus mr-1"></i>Add Selected
-        </button>
-      </div>
-    </div>
-    <form method="dialog" class="modal-backdrop"><button>close</button></form>
-  </dialog>
-
   <%- include('../shared/footer') %>
 
   <script>
     let currentFolderId = '';
     let currentFolderName = 'Root';
-    let currentFolderIsOwner = true; // Track if current user owns selected folder
+    let currentFolderSharedCount = 0; // Track how many courses share this folder
     const STORAGE_KEY = 'materials_expanded_<%= course.id %>';
 
     // Restore expanded state on page load
@@ -482,10 +431,10 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
 
-    function selectFolder(el, id, name, count, isOwner) {
+    function selectFolder(el, id, name, count, sharedCount) {
       currentFolderId = id;
       currentFolderName = name;
-      currentFolderIsOwner = isOwner !== false; // default true for root
+      currentFolderSharedCount = sharedCount || 0;
       
       // Update selection
       document.querySelectorAll('.folder-item').forEach(f => f.classList.remove('selected'));
@@ -505,14 +454,21 @@
       document.getElementById('uploadTo').textContent = name;
       document.getElementById('uploadFolderId').value = id;
       
-      // Update toolbar buttons based on ownership
+      // Update shared indicator in header
+      const sharedIndicator = document.getElementById('sharedIndicator');
+      if (sharedIndicator) {
+        if (currentFolderSharedCount > 1) {
+          sharedIndicator.classList.remove('hidden');
+          sharedIndicator.textContent = 'Shared with ' + currentFolderSharedCount + ' courses';
+        } else {
+          sharedIndicator.classList.add('hidden');
+        }
+      }
+      
+      // Share button: show for any folder (not root)
       const shareBtn = document.getElementById('shareFolderBtn');
       if (shareBtn) {
-        if (id && currentFolderIsOwner) {
-          shareBtn.classList.remove('hidden');
-        } else {
-          shareBtn.classList.add('hidden');
-        }
+        shareBtn.classList.toggle('hidden', !id);
       }
       
       // Show content
@@ -527,18 +483,32 @@
     }
 
     function openUploadModal() {
+      // Warn if uploading to a shared folder
+      if (currentFolderSharedCount > 1) {
+        if (!confirm('⚠️ This folder is shared with ' + currentFolderSharedCount + ' courses.\n\nUploaded materials will appear in ALL shared courses.\n\nContinue?')) {
+          return;
+        }
+      }
       document.getElementById('uploadTo').textContent = currentFolderName;
       document.getElementById('uploadFolderId').value = currentFolderId;
       uploadModal.showModal();
     }
 
-    function openCreateFolderModal(parentId) {
+    function openCreateFolderModal(parentId, sharedCount) {
+      // Warn if creating subfolder in a shared folder
+      if (sharedCount && sharedCount > 1) {
+        if (!confirm('⚠️ This folder is shared with ' + sharedCount + ' courses.\n\nNew subfolders will appear in ALL shared courses.\n\nContinue?')) {
+          return;
+        }
+      }
       document.getElementById('parentId').value = parentId || '';
       document.getElementById('createTitle').textContent = parentId ? 'New Subfolder' : 'New Folder';
       createModal.showModal();
     }
 
-    function openRenameModal(id, name) {
+    let renameSharedCount = 0;
+    function openRenameModal(id, name, sharedCount) {
+      renameSharedCount = sharedCount || 0;
       document.getElementById('renameId').value = id;
       document.getElementById('renameName').value = name;
       renameModal.showModal();
@@ -547,6 +517,14 @@
     async function submitRename() {
       const id = document.getElementById('renameId').value;
       const name = document.getElementById('renameName').value;
+      
+      // Warn if renaming a shared folder
+      if (renameSharedCount > 1) {
+        if (!confirm('⚠️ This folder is shared with ' + renameSharedCount + ' courses.\n\nRenaming will change it in ALL shared courses.\n\nContinue?')) {
+          return;
+        }
+      }
+      
       try {
         const res = await fetch('/teacher/folders/' + id, {
           method: 'PUT',
@@ -558,8 +536,14 @@
       } catch(e) { alert('Error'); }
     }
 
-    async function deleteFolder(id, name) {
-      if (!confirm('Delete "' + name + '" and all contents?')) return;
+    async function deleteFolder(id, name, sharedCount) {
+      let msg = 'Delete "' + name + '" and all contents?';
+      if (sharedCount > 1) {
+        msg = '⚠️ WARNING: This folder is shared with ' + sharedCount + ' courses!\n\n' +
+              'Deleting will remove it from ALL shared courses.\n\n' +
+              'Are you sure you want to delete "' + name + '"?';
+      }
+      if (!confirm(msg)) return;
       try {
         const res = await fetch('/teacher/folders/' + id, { method: 'DELETE' });
         if ((await res.json()).success) location.reload();
@@ -568,7 +552,13 @@
     }
 
     async function deleteMaterial(id, name) {
-      if (!confirm('Delete "' + name + '"?')) return;
+      let msg = 'Delete "' + name + '"?';
+      if (currentFolderSharedCount > 1) {
+        msg = '⚠️ WARNING: This material is in a shared folder (' + currentFolderSharedCount + ' courses)!\n\n' +
+              'Deleting will remove it from ALL shared courses.\n\n' +
+              'Are you sure you want to delete "' + name + '"?';
+      }
+      if (!confirm(msg)) return;
       try {
         const res = await fetch('/teacher/courses/<%= course.id %>/materials/' + id, { method: 'DELETE' });
         if ((await res.json()).success) location.reload();
@@ -576,31 +566,31 @@
       } catch(e) { alert('Error'); }
     }
 
-    function openShareModal() {
+    async function openShareModal() {
       if (!currentFolderId) {
         alert('Please select a folder to share (Root cannot be shared)');
-        return;
-      }
-      if (!currentFolderIsOwner) {
-        alert('Only the folder owner can share this folder');
         return;
       }
       document.getElementById('shareFolderName').textContent = currentFolderName;
       document.getElementById('shareFolderId').value = currentFolderId;
       
-      // Get shared course IDs from the selected folder element
-      const folderEl = document.querySelector(`.folder-item[data-folder-id="${currentFolderId}"]`);
-      let sharedCourseIds = [];
-      if (folderEl && folderEl.dataset.sharedCourses) {
-        try {
-          sharedCourseIds = JSON.parse(folderEl.dataset.sharedCourses);
-        } catch(e) {}
+      // Fetch current shared courses for this folder
+      try {
+        const res = await fetch('/teacher/folders/' + currentFolderId + '/shared-courses');
+        const data = await res.json();
+        const sharedCourseIds = data.success ? data.courseIds : [];
+        
+        // Pre-check the courses this folder is already shared with
+        document.querySelectorAll('.course-checkbox').forEach(cb => {
+          cb.checked = sharedCourseIds.includes(parseInt(cb.value));
+        });
+      } catch (e) {
+        // Fallback: just check the current course
+        const currentCourseId = <%= course.id %>;
+        document.querySelectorAll('.course-checkbox').forEach(cb => {
+          cb.checked = (parseInt(cb.value) === currentCourseId);
+        });
       }
-      
-      // Reset all checkboxes first, then check already shared courses
-      document.querySelectorAll('.course-checkbox').forEach(cb => {
-        cb.checked = sharedCourseIds.includes(parseInt(cb.value));
-      });
       
       shareModal.showModal();
     }
@@ -635,52 +625,6 @@
       } catch (error) {
         console.error('Share error:', error);
         alert('Error sharing folder');
-      }
-    }
-
-    function openAddExistingFolderModal() {
-      addExistingModal.showModal();
-    }
-
-    async function submitAddExisting() {
-      const checkedBoxes = document.querySelectorAll('.existing-folder-checkbox:checked');
-      const folderIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
-      
-      if (folderIds.length === 0) {
-        alert('Please select at least one folder to add');
-        return;
-      }
-
-      // Share each selected folder with this course
-      const courseId = <%= course.id %>;
-      let successCount = 0;
-      let errorCount = 0;
-
-      for (const folderId of folderIds) {
-        try {
-          const response = await fetch('/teacher/folders/' + folderId + '/share', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ course_ids: [courseId] })
-          });
-
-          const data = await response.json();
-          if (data.success) {
-            successCount++;
-          } else {
-            errorCount++;
-          }
-        } catch (error) {
-          errorCount++;
-        }
-      }
-
-      addExistingModal.close();
-      
-      if (successCount > 0) {
-        location.reload();
-      } else if (errorCount > 0) {
-        alert('Error adding folders');
       }
     }
   </script>
