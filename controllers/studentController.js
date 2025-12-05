@@ -14,7 +14,7 @@ import {
   User 
 } from '../models/index.js';
 import { Op } from 'sequelize';
-import cloudinary from '../config/cloudinary.js';
+import cloudinary, { generateSignedUrl, signUrlsInArray, deleteCloudinaryFile } from '../config/cloudinary.js';
 import { checkDeadline, isDeadlinePassed } from '../services/deadlineService.js';
 
 /**
@@ -282,6 +282,11 @@ export const getCourseView = async (req, res) => {
       return res.status(404).send('Course not found or you are not enrolled in this course.');
     }
 
+    // Sign material URLs for authenticated access (24-hour expiry)
+    if (course.Materials && course.Materials.length > 0) {
+      course.Materials = signUrlsInArray(course.Materials, 'file_url', 'material');
+    }
+
     // Calculate assignment statistics
     const totalAssignments = course.Assignments ? course.Assignments.length : 0;
     const submittedAssignments = course.Assignments 
@@ -388,6 +393,17 @@ export const getAssignmentDetail = async (req, res) => {
     const submission = assignment.Submissions && assignment.Submissions.length > 0 
       ? assignment.Submissions[0] 
       : null;
+
+    // Sign URLs for authenticated access
+    // Sign submission file URL (1-hour expiry for submissions)
+    if (submission && submission.file_url) {
+      submission.file_url = generateSignedUrl(submission.file_url, { type: 'submission' });
+    }
+
+    // Sign assignment materials URLs (12-hour expiry)
+    if (assignment.materials && assignment.materials.length > 0) {
+      assignment.materials = signUrlsInArray(assignment.materials, 'url', 'assignment');
+    }
 
     // Calculate deadline status using deadline service
     const deadlineStatus = checkDeadline(assignment.deadline);
@@ -511,38 +527,8 @@ export const submitAssignment = async (req, res) => {
       // RESUBMISSION: Delete old file from Cloudinary if exists and new file is being uploaded
       if (existingSubmission.file_url && file) {
         try {
-          // Extract public_id from Cloudinary URL
-          const url = existingSubmission.file_url;
-          const urlParts = url.split('/');
-          const uploadIndex = urlParts.indexOf('upload');
-          
-          if (uploadIndex !== -1) {
-            // Get path after 'upload', skip version number if present
-            const pathAfterUpload = urlParts.slice(uploadIndex + 1);
-            const publicIdParts = pathAfterUpload[0].match(/^v\d+$/) 
-              ? pathAfterUpload.slice(1) 
-              : pathAfterUpload;
-            
-            const fullPath = publicIdParts.join('/');
-            const isRawFile = url.includes('/raw/upload/');
-            
-            if (isRawFile) {
-              // Raw files (DOC, DOCX, TXT, ZIP): use full path WITH extension
-              await cloudinary.uploader.destroy(fullPath, { 
-                resource_type: 'raw',
-                invalidate: true 
-              });
-              console.log(`Deleted old submission file from Cloudinary: ${fullPath}`);
-            } else {
-              // Image files (PDF): use path WITHOUT extension
-              const publicIdNoExt = fullPath.replace(/\.[^.]+$/, '');
-              await cloudinary.uploader.destroy(publicIdNoExt, { 
-                resource_type: 'image',
-                invalidate: true 
-              });
-              console.log(`Deleted old submission file from Cloudinary: ${publicIdNoExt}`);
-            }
-          }
+          await deleteCloudinaryFile(existingSubmission.file_url);
+          console.log(`Deleted old submission file from Cloudinary`);
         } catch (cloudinaryError) {
           console.error('Error deleting old submission file from Cloudinary:', cloudinaryError);
           // Continue with resubmission even if old file deletion fails
@@ -635,13 +621,16 @@ export const getSubmissions = async (req, res) => {
       ? submissions.filter(s => s.assignment && s.assignment.course)
       : submissions;
 
+    // Sign submission file URLs for authenticated access (1-hour expiry)
+    const signedSubmissions = signUrlsInArray(filteredSubmissions, 'file_url', 'submission');
+
     // Calculate statistics
-    const total = filteredSubmissions.length;
-    const graded = filteredSubmissions.filter(s => s.marks !== null).length;
+    const total = signedSubmissions.length;
+    const graded = signedSubmissions.filter(s => s.marks !== null).length;
     const pending = total - graded;
     
     // Calculate average score from graded submissions
-    const gradedSubmissions = filteredSubmissions.filter(s => s.marks !== null);
+    const gradedSubmissions = signedSubmissions.filter(s => s.marks !== null);
     const averageScore = gradedSubmissions.length > 0
       ? gradedSubmissions.reduce((sum, s) => sum + parseFloat(s.marks), 0) / gradedSubmissions.length
       : null;
@@ -649,7 +638,7 @@ export const getSubmissions = async (req, res) => {
     res.render('student/submissions', {
       title: 'Submission History',
       user: req.user,
-      submissions: filteredSubmissions,
+      submissions: signedSubmissions,
       courses: enrolledCourses,
       selectedCourseId: selectedCourseId || '',
       stats: {

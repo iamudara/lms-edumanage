@@ -23,7 +23,7 @@ const __dirname = path.dirname(__filename);
 const MySQLStore = MySQLStoreFactory(session);
 
 // 3. Configuration files (ORDER MATTERS - cloudinary BEFORE upload middleware)
-import './config/cloudinary.js';  // Initialize Cloudinary first
+import cloudinaryConfig, { deleteCloudinaryFile } from './config/cloudinary.js';  // Initialize Cloudinary first
 import sequelize from './config/database.js';
 import './config/passport.js';  // Initialize Passport strategies
 
@@ -255,33 +255,8 @@ const adminJs = new AdminJS({
                 // Delete material file from Cloudinary if exists
                 if (material && material.file_url) {
                   try {
-                    const url = material.file_url;
-                    const urlParts = url.split('/');
-                    const uploadIndex = urlParts.indexOf('upload');
-                    
-                    if (uploadIndex !== -1) {
-                      const pathAfterUpload = urlParts.slice(uploadIndex + 1);
-                      const publicIdParts = pathAfterUpload[0].match(/^v\d+$/) 
-                        ? pathAfterUpload.slice(1) 
-                        : pathAfterUpload;
-                      
-                      const fullPath = publicIdParts.join('/');
-                      const isRawFile = url.includes('/raw/upload/');
-                      
-                      if (isRawFile) {
-                        await cloudinary.uploader.destroy(fullPath, { 
-                          resource_type: 'raw',
-                          invalidate: true 
-                        });
-                      } else {
-                        const publicIdNoExt = fullPath.replace(/\.[^.]+$/, '');
-                        await cloudinary.uploader.destroy(publicIdNoExt, { 
-                          resource_type: 'image',
-                          invalidate: true 
-                        });
-                      }
-                      console.log(`Deleted course material from Cloudinary: ${fullPath}`);
-                    }
+                    await deleteCloudinaryFile(material.file_url);
+                    console.log(`Deleted course material from Cloudinary`);
                   } catch (error) {
                     console.error('Error deleting material file from Cloudinary:', error);
                   }
@@ -315,33 +290,8 @@ const adminJs = new AdminJS({
                 for (const material of materials) {
                   if (material.url && material.type === 'file') {
                     try {
-                      const url = material.url;
-                      const urlParts = url.split('/');
-                      const uploadIndex = urlParts.indexOf('upload');
-                      
-                      if (uploadIndex !== -1) {
-                        const pathAfterUpload = urlParts.slice(uploadIndex + 1);
-                        const publicIdParts = pathAfterUpload[0].match(/^v\d+$/) 
-                          ? pathAfterUpload.slice(1) 
-                          : pathAfterUpload;
-                        
-                        const fullPath = publicIdParts.join('/');
-                        const isRawFile = url.includes('/raw/upload/');
-                        
-                        if (isRawFile) {
-                          await cloudinary.uploader.destroy(fullPath, { 
-                            resource_type: 'raw',
-                            invalidate: true 
-                          });
-                        } else {
-                          const publicIdNoExt = fullPath.replace(/\.[^.]+$/, '');
-                          await cloudinary.uploader.destroy(publicIdNoExt, { 
-                            resource_type: 'image',
-                            invalidate: true 
-                          });
-                        }
-                        console.log(`Deleted assignment material from Cloudinary: ${fullPath}`);
-                      }
+                      await deleteCloudinaryFile(material.url);
+                      console.log(`Deleted assignment material from Cloudinary`);
                     } catch (error) {
                       console.error('Error deleting assignment material from Cloudinary:', error);
                     }
@@ -357,33 +307,8 @@ const adminJs = new AdminJS({
                 for (const submission of submissions) {
                   if (submission.file_url) {
                     try {
-                      const url = submission.file_url;
-                      const urlParts = url.split('/');
-                      const uploadIndex = urlParts.indexOf('upload');
-                      
-                      if (uploadIndex !== -1) {
-                        const pathAfterUpload = urlParts.slice(uploadIndex + 1);
-                        const publicIdParts = pathAfterUpload[0].match(/^v\d+$/) 
-                          ? pathAfterUpload.slice(1) 
-                          : pathAfterUpload;
-                        
-                        const fullPath = publicIdParts.join('/');
-                        const isRawFile = url.includes('/raw/upload/');
-                        
-                        if (isRawFile) {
-                          await cloudinary.uploader.destroy(fullPath, { 
-                            resource_type: 'raw',
-                            invalidate: true 
-                          });
-                        } else {
-                          const publicIdNoExt = fullPath.replace(/\.[^.]+$/, '');
-                          await cloudinary.uploader.destroy(publicIdNoExt, { 
-                            resource_type: 'image',
-                            invalidate: true 
-                          });
-                        }
-                        console.log(`Deleted submission file from Cloudinary: ${fullPath}`);
-                      }
+                      await deleteCloudinaryFile(submission.file_url);
+                      console.log(`Deleted submission file from Cloudinary`);
                     } catch (error) {
                       console.error('Error deleting submission file from Cloudinary:', error);
                     }
@@ -412,33 +337,8 @@ const adminJs = new AdminJS({
                 // Delete assignment material file from Cloudinary if exists and is a file type
                 if (material && material.url && material.type === 'file') {
                   try {
-                    const url = material.url;
-                    const urlParts = url.split('/');
-                    const uploadIndex = urlParts.indexOf('upload');
-                    
-                    if (uploadIndex !== -1) {
-                      const pathAfterUpload = urlParts.slice(uploadIndex + 1);
-                      const publicIdParts = pathAfterUpload[0].match(/^v\d+$/) 
-                        ? pathAfterUpload.slice(1) 
-                        : pathAfterUpload;
-                      
-                      const fullPath = publicIdParts.join('/');
-                      const isRawFile = url.includes('/raw/upload/');
-                      
-                      if (isRawFile) {
-                        await cloudinary.uploader.destroy(fullPath, { 
-                          resource_type: 'raw',
-                          invalidate: true 
-                        });
-                      } else {
-                        const publicIdNoExt = fullPath.replace(/\.[^.]+$/, '');
-                        await cloudinary.uploader.destroy(publicIdNoExt, { 
-                          resource_type: 'image',
-                          invalidate: true 
-                        });
-                      }
-                      console.log(`Deleted assignment material from Cloudinary: ${fullPath}`);
-                    }
+                    await deleteCloudinaryFile(material.url);
+                    console.log(`Deleted assignment material from Cloudinary`);
                   } catch (error) {
                     console.error('Error deleting assignment material file from Cloudinary:', error);
                   }
@@ -466,32 +366,8 @@ const adminJs = new AdminJS({
                 // Delete submission file from Cloudinary if exists
                 if (submission && submission.file_url) {
                   try {
-                    const url = submission.file_url;
-                    const urlParts = url.split('/');
-                    const uploadIndex = urlParts.indexOf('upload');
-                    
-                    if (uploadIndex !== -1) {
-                      const pathAfterUpload = urlParts.slice(uploadIndex + 1);
-                      const publicIdParts = pathAfterUpload[0].match(/^v\d+$/) 
-                        ? pathAfterUpload.slice(1) 
-                        : pathAfterUpload;
-                      
-                      const fullPath = publicIdParts.join('/');
-                      const isRawFile = url.includes('/raw/upload/');
-                      
-                      if (isRawFile) {
-                        await cloudinary.uploader.destroy(fullPath, { 
-                          resource_type: 'raw',
-                          invalidate: true 
-                        });
-                      } else {
-                        const publicIdNoExt = fullPath.replace(/\.[^.]+$/, '');
-                        await cloudinary.uploader.destroy(publicIdNoExt, { 
-                          resource_type: 'image',
-                          invalidate: true 
-                        });
-                      }
-                    }
+                    await deleteCloudinaryFile(submission.file_url);
+                    console.log(`Deleted submission file from Cloudinary`);
                   } catch (error) {
                     console.error('Error deleting submission file from Cloudinary:', error);
                   }

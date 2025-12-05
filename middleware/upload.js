@@ -10,21 +10,28 @@ import cloudinary from '../config/cloudinary.js';
 /**
  * Cloudinary Storage Configuration for Materials (PDFs, Documents, Presentations)
  * Used by teachers to upload course materials
+ * Uses 'authenticated' type for security - files require signed URLs to access
+ * Uses 'raw' resource_type for documents (PDFs, DOC, etc.)
  */
 const materialStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
     // Generate unique filename - DON'T include extension in public_id
-    const fileExtension = file.originalname.split('.').pop();
+    const fileExtension = file.originalname.split('.').pop().toLowerCase();
     const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
+    
+    // Determine resource type based on file type
+    // Images use 'image', documents use 'raw'
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+    const resourceType = imageExtensions.includes(fileExtension) ? 'image' : 'raw';
     
     return {
       folder: 'lms-uploads/materials',
-      resource_type: 'auto',
+      resource_type: resourceType,
       public_id: uniqueName,
-      format: fileExtension, // Let Cloudinary add the extension
+      format: fileExtension,
       use_filename: false,
-      access_mode: 'public'
+      type: 'authenticated'
     };
   }
 });
@@ -32,21 +39,26 @@ const materialStorage = new CloudinaryStorage({
 /**
  * Cloudinary Storage Configuration for Assignment Materials
  * Used by teachers to upload assignment reference materials
+ * Uses 'authenticated' type for security - files require signed URLs to access
  */
 const assignmentMaterialStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
     // Generate unique filename - DON'T include extension in public_id
-    const fileExtension = file.originalname.split('.').pop();
+    const fileExtension = file.originalname.split('.').pop().toLowerCase();
     const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
+    
+    // Determine resource type based on file type
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'];
+    const resourceType = imageExtensions.includes(fileExtension) ? 'image' : 'raw';
     
     return {
       folder: 'lms-uploads/assignments',
-      resource_type: 'auto',
+      resource_type: resourceType,
       public_id: uniqueName,
-      format: fileExtension, // Let Cloudinary add the extension
+      format: fileExtension,
       use_filename: false,
-      access_mode: 'public'
+      type: 'authenticated'
     };
   }
 });
@@ -54,21 +66,24 @@ const assignmentMaterialStorage = new CloudinaryStorage({
 /**
  * Cloudinary Storage Configuration for Assignment Submissions
  * Used by students to submit assignment files
+ * Uses 'authenticated' type for security - files require signed URLs to access
  */
 const submissionStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
     // Generate unique filename - DON'T include extension in public_id
-    const fileExtension = file.originalname.split('.').pop();
+    const fileExtension = file.originalname.split('.').pop().toLowerCase();
     const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
     
+    // Submissions are typically documents, so use 'raw'
+    // Even if it's an image, 'raw' works fine for downloading
     return {
       folder: 'lms-uploads/submissions',
-      resource_type: 'auto',
+      resource_type: 'raw',
       public_id: uniqueName,
-      format: fileExtension, // Let Cloudinary add the extension
+      format: fileExtension,
       use_filename: false,
-      access_mode: 'public'
+      type: 'authenticated'
     };
   }
 });

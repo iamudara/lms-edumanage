@@ -17,7 +17,7 @@ import {
   Material
 } from '../models/index.js';
 import { Op } from 'sequelize';
-import cloudinary from '../config/cloudinary.js';
+import cloudinary, { generateSignedUrl, signUrlsInArray, deleteCloudinaryFile } from '../config/cloudinary.js';
 
 /**
  * Helper function to check if a teacher has access to a course
@@ -453,6 +453,15 @@ export const getCourseDetail = async (req, res) => {
       }
     }
 
+    // Sign assignment material URLs for authenticated access (12-hour expiry)
+    if (course.Assignments) {
+      course.Assignments.forEach(assignment => {
+        if (assignment.materials && assignment.materials.length > 0) {
+          assignment.materials = signUrlsInArray(assignment.materials, 'url', 'assignment');
+        }
+      });
+    }
+
     res.render('teacher/course-detail', {
       user: req.user,
       course,
@@ -503,10 +512,13 @@ export const getMaterials = async (req, res) => {
       order: [['created_at', 'DESC']]
     });
 
+    // Sign URLs for authenticated access (24-hour expiry for materials)
+    const signedMaterials = signUrlsInArray(materials, 'file_url', 'material');
+
     res.render('teacher/materials', {
       user: req.user,
       course,
-      materials,
+      materials: signedMaterials,
       canEdit,
       pageTitle: `Materials - ${course.title}`,
       success: req.query.success,
@@ -621,44 +633,7 @@ export const deleteMaterial = async (req, res) => {
     // Delete from Cloudinary if it's a Cloudinary URL
     if (material.file_url && material.file_url.includes('cloudinary.com')) {
       try {
-        // Extract public_id from Cloudinary URL (handling version numbers)
-        const urlParts = material.file_url.split('/');
-        const uploadIndex = urlParts.indexOf('upload');
-        
-        // Get everything after 'upload', skip version if present
-        const pathAfterUpload = urlParts.slice(uploadIndex + 1);
-        const publicIdParts = pathAfterUpload[0].match(/^v\d+$/) 
-          ? pathAfterUpload.slice(1) // Skip version folder
-          : pathAfterUpload;
-        
-        // Get full path with extension
-        const fullPath = publicIdParts.join('/');
-        const isRawFile = material.file_url.includes('/raw/upload/');
-        
-        // Detect resource type from URL
-        let resourceType = 'raw';
-        if (material.file_url.includes('/image/upload/')) {
-          resourceType = 'image';
-        } else if (material.file_url.includes('/video/upload/')) {
-          resourceType = 'video';
-        }
-        
-        let result;
-        
-        if (isRawFile) {
-          // For raw files (DOCX, PPTX, TXT), use full path WITH extension
-          result = await cloudinary.uploader.destroy(fullPath, { 
-            resource_type: 'raw',
-            invalidate: true 
-          });
-        } else {
-          // For image/video files, use path WITHOUT extension
-          const publicIdNoExt = fullPath.replace(/\.[^.]+$/, '');
-          result = await cloudinary.uploader.destroy(publicIdNoExt, { 
-            resource_type: resourceType,
-            invalidate: true 
-          });
-        }
+        await deleteCloudinaryFile(material.file_url);
       } catch (cloudinaryError) {
         console.error('Cloudinary deletion error:', cloudinaryError);
         // Continue with database deletion even if Cloudinary fails
@@ -1008,12 +983,15 @@ export const getSubmissions = async (req, res) => {
       order: [['submitted_at', 'DESC']] // Most recent first
     });
 
+    // Sign URLs for authenticated access (1-hour expiry for submissions)
+    const signedSubmissions = signUrlsInArray(submissions, 'file_url', 'submission');
+
     // 3. Render submissions view
     res.render('teacher/submissions', {
       user: req.user,
       assignment,
       course,
-      submissions,
+      submissions: signedSubmissions,
       canGrade,
       success: req.query.success,
       error: req.query.error
@@ -1065,6 +1043,11 @@ export const showGradeForm = async (req, res) => {
     }
 
     const assignment = submission.assignment;
+
+    // Sign the submission file URL for authenticated access (1-hour expiry)
+    if (submission.file_url) {
+      submission.file_url = generateSignedUrl(submission.file_url, { type: 'submission' });
+    }
 
     // 2. Render grading form
     res.render('teacher/grade-submission', {
@@ -1574,42 +1557,7 @@ export const deleteAssignment = async (req, res) => {
     // 4. Delete files from Cloudinary
     for (const material of materials) {
       try {
-        // Extract public_id from Cloudinary URL (handling version numbers)
-        const urlParts = material.url.split('/');
-        const uploadIndex = urlParts.indexOf('upload');
-        
-        // Get everything after 'upload', skip version if present
-        const pathAfterUpload = urlParts.slice(uploadIndex + 1);
-        const publicIdParts = pathAfterUpload[0].match(/^v\d+$/) 
-          ? pathAfterUpload.slice(1) // Skip version folder
-          : pathAfterUpload;
-        
-        // Get full path with extension
-        const fullPath = publicIdParts.join('/');
-        const isRawFile = material.url.includes('/raw/upload/');
-        
-        // Detect resource type from URL
-        let resourceType = 'raw';
-        if (material.url.includes('/image/upload/')) {
-          resourceType = 'image';
-        } else if (material.url.includes('/video/upload/')) {
-          resourceType = 'video';
-        }
-        
-        if (isRawFile) {
-          // For raw files (DOCX, PPTX, TXT), use full path WITH extension
-          await cloudinary.uploader.destroy(fullPath, { 
-            resource_type: 'raw',
-            invalidate: true 
-          });
-        } else {
-          // For image/video files, use path WITHOUT extension
-          const publicIdNoExt = fullPath.replace(/\.[^.]+$/, '');
-          await cloudinary.uploader.destroy(publicIdNoExt, { 
-            resource_type: resourceType,
-            invalidate: true 
-          });
-        }
+        await deleteCloudinaryFile(material.url);
       } catch (cloudinaryError) {
         console.error('Cloudinary deletion error:', cloudinaryError);
         // Continue even if Cloudinary deletion fails
@@ -1624,11 +1572,7 @@ export const deleteAssignment = async (req, res) => {
     for (const submission of submissions) {
       if (submission.file_url) {
         try {
-          const urlParts = submission.file_url.split('/');
-          const filename = urlParts[urlParts.length - 1];
-          const publicId = `lms-uploads/submissions/${filename.split('.')[0]}`;
-          
-          await cloudinary.uploader.destroy(publicId);
+          await deleteCloudinaryFile(submission.file_url);
         } catch (cloudinaryError) {
           console.error('Cloudinary deletion error:', cloudinaryError);
         }
