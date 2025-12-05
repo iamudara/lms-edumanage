@@ -147,11 +147,6 @@ Folder.hasMany(Folder, {
   onDelete: 'CASCADE'
 });
 
-Folder.belongsTo(User, {
-  foreignKey: 'created_by',
-  as: 'creator'
-});
-
 Folder.hasMany(Material, {
   foreignKey: 'folder_id',
   as: 'materials',
@@ -186,11 +181,6 @@ FolderCourse.belongsTo(Course, {
 FolderCourse.belongsTo(User, {
   foreignKey: 'added_by',
   as: 'addedBy'
-});
-
-User.hasMany(Folder, {
-  foreignKey: 'created_by',
-  as: 'folders'
 });
 
 // Material associations

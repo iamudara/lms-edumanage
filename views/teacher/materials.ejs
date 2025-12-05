@@ -18,13 +18,15 @@
     }
     .folder-item:hover { background-color: oklch(var(--b2)); }
     .folder-item.selected { 
-      background-color: oklch(var(--su) / 0.15); 
-      border-left: 3px solid oklch(var(--su));
+      background-color: oklch(var(--p) / 0.15); 
+      border-left: 3px solid oklch(var(--p));
       margin-left: -3px;
       font-weight: 600;
-      color: oklch(var(--su));
+      color: oklch(var(--p));
+      box-shadow: inset 0 0 0 1px oklch(var(--p) / 0.3);
     }
-    .folder-item.selected .fa-folder { color: oklch(var(--su)); }
+    .folder-item.selected .fa-folder,
+    .folder-item.selected .fa-home { color: oklch(var(--p)); }
     .folder-item.not-shared { opacity: 0.6; }
     .folder-item.not-shared:hover { opacity: 1; }
     .folder-item .chevron { transition: transform 0.15s; }
@@ -96,13 +98,13 @@
 
             <!-- Folder Tree -->
             <div class="folder-tree text-sm">
-              <!-- Root Folder -->
+              <!-- Course Materials (Root) -->
               <div class="folder-item flex items-center gap-2 selected" 
                    data-folder-id="" 
-                   onclick="selectFolder(this, '', 'Root', <%= materials.length %>, 0)">
+                   onclick="selectFolder(this, '', 'Course Materials', <%= materials.length %>, 0)">
                 <i class="fas fa-chevron-right chevron text-xs text-base-content/30 invisible"></i>
-                <i class="fas fa-folder text-warning text-sm"></i>
-                <span class="flex-1">Root</span>
+                <i class="fas fa-home text-primary text-sm"></i>
+                <span class="flex-1">Course Materials</span>
                 <span class="text-xs text-base-content/50"><%= materials.length %></span>
               </div>
 
@@ -168,8 +170,8 @@
             <!-- Header -->
             <div class="flex items-center justify-between mb-4 pb-3 border-b">
               <div class="flex items-center gap-2 flex-wrap">
-                <i class="fas fa-folder-open text-warning"></i>
-                <h2 class="font-bold text-lg" id="folderTitle">Root</h2>
+                <i class="fas fa-folder-open text-warning" id="folderIcon"></i>
+                <h2 class="font-bold text-lg" id="folderTitle">Course Materials</h2>
                 <span class="badge badge-primary" id="countBadge"><%= materials.length %></span>
                 <span id="sharedIndicator" class="badge badge-success badge-sm hidden">
                   <i class="fas fa-share-alt mr-1"></i>Shared
@@ -189,11 +191,15 @@
             <div id="materialsPanel">
               <!-- Root content -->
               <div id="content-root" class="folder-content">
+                <div class="alert alert-info mb-4 py-2 text-sm">
+                  <i class="fas fa-info-circle"></i>
+                  <span>These are course-specific materials. To share materials between courses, create a folder and use the <strong>Share</strong> button.</span>
+                </div>
                 <% if (materials.length === 0) { %>
                   <div class="empty-state">
                     <i class="fas fa-cloud-upload-alt text-6xl mb-4"></i>
                     <p class="font-medium text-lg">No materials yet</p>
-                    <p class="text-sm mb-4">Upload your first material to this folder</p>
+                    <p class="text-sm mb-4">Upload your first material or create a folder</p>
                     <button onclick="openUploadModal()" class="btn btn-primary btn-sm">
                       <i class="fas fa-upload mr-1"></i>Upload Material
                     </button>
@@ -277,7 +283,7 @@
   <!-- Upload Modal -->
   <dialog id="uploadModal" class="modal">
     <div class="modal-box">
-      <h3 class="font-bold text-lg mb-4"><i class="fas fa-upload text-primary mr-2"></i>Upload to: <span id="uploadTo">Root</span></h3>
+      <h3 class="font-bold text-lg mb-4"><i class="fas fa-upload text-primary mr-2"></i>Upload to: <span id="uploadTo">Course Materials</span></h3>
       <form action="/teacher/courses/<%= course.id %>/materials/upload" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="folder_id" id="uploadFolderId" value="">
         <div class="form-control mb-3">
@@ -314,13 +320,9 @@
         <input type="hidden" name="parent_id" id="parentId" value="">
         <input type="hidden" name="course_ids[]" value="<%= course.id %>">
         <input type="hidden" name="redirect" value="/teacher/courses/<%= course.id %>/materials">
-        <div class="form-control mb-3">
+        <div class="form-control mb-4">
           <label class="label py-1"><span class="label-text">Name <span class="text-error">*</span></span></label>
           <input type="text" name="name" class="input input-bordered input-sm" required>
-        </div>
-        <div class="form-control mb-4">
-          <label class="label py-1"><span class="label-text">Description</span></label>
-          <textarea name="description" class="textarea textarea-bordered textarea-sm" rows="2"></textarea>
         </div>
         <div class="modal-action">
           <button type="button" class="btn btn-sm" onclick="createModal.close()">Cancel</button>
@@ -363,9 +365,16 @@
           <div class="space-y-2 max-h-60 overflow-y-auto border rounded-lg p-2" id="courseCheckboxes">
             <% if (typeof courses !== 'undefined' && courses.length > 0) { %>
               <% courses.forEach(c => { %>
-                <label class="flex items-center gap-3 p-2 hover:bg-base-200 rounded cursor-pointer">
-                  <input type="checkbox" name="course_ids" value="<%= c.id %>" class="checkbox checkbox-primary checkbox-sm course-checkbox">
-                  <span class="text-sm"><strong><%= c.code %></strong> - <%= c.title %></span>
+                <label class="flex items-center gap-3 p-2 hover:bg-base-200 rounded cursor-pointer <%= c.id === course.id ? 'bg-primary/10 border border-primary/30' : '' %>">
+                  <input type="checkbox" name="course_ids" value="<%= c.id %>" 
+                         class="checkbox checkbox-primary checkbox-sm course-checkbox"
+                         data-is-current="<%= c.id === course.id ? 'true' : 'false' %>">
+                  <span class="text-sm">
+                    <strong><%= c.code %></strong> - <%= c.title %>
+                    <% if (c.id === course.id) { %>
+                      <span class="badge badge-primary badge-xs ml-1">Current</span>
+                    <% } %>
+                  </span>
                 </label>
               <% }) %>
             <% } else { %>
@@ -378,7 +387,10 @@
         </div>
         <div class="alert alert-info py-2 text-sm mb-4">
           <i class="fas fa-info-circle"></i>
-          <span>Shared folders and their contents will be visible in the selected courses.</span>
+          <div>
+            <p>Shared folders and their contents will be visible in the selected courses.</p>
+            <p class="mt-1 text-warning font-semibold">⚠️ The current course must remain selected.</p>
+          </div>
         </div>
         <div class="modal-action">
           <button type="button" class="btn btn-sm" onclick="shareModal.close()">Cancel</button>
@@ -465,10 +477,20 @@
         }
       }
       
-      // Share button: show for any folder (not root)
+      // Share button: show for any folder (not Course Materials root)
       const shareBtn = document.getElementById('shareFolderBtn');
       if (shareBtn) {
         shareBtn.classList.toggle('hidden', !id);
+      }
+      
+      // Update icon (home for Course Materials, folder-open for folders)
+      const folderIcon = document.getElementById('folderIcon');
+      if (folderIcon) {
+        if (!id) {
+          folderIcon.className = 'fas fa-home text-primary';
+        } else {
+          folderIcon.className = 'fas fa-folder-open text-warning';
+        }
       }
       
       // Show content
@@ -599,12 +621,14 @@
       const folderId = document.getElementById('shareFolderId').value;
       const checkedBoxes = document.querySelectorAll('.course-checkbox:checked');
       const courseIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+      const currentCourseId = <%= course.id %>;
       
-      // Allow empty selection to unshare from all courses
-      if (courseIds.length === 0) {
-        if (!confirm('No courses selected. This will remove this folder from the current course view. Continue?')) {
-          return;
-        }
+      // Ensure current course is always selected
+      if (!courseIds.includes(currentCourseId)) {
+        alert('The current course must remain selected. You cannot remove a folder from the course you are viewing it in.');
+        // Re-check the current course checkbox
+        document.querySelector('.course-checkbox[data-is-current="true"]').checked = true;
+        return;
       }
 
       try {

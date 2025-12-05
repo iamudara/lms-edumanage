@@ -250,10 +250,10 @@ const adminJs = new AdminJS({
           name: 'Folder Management',
           icon: 'Folder'
         },
-        listProperties: ['id', 'name', 'description', 'parent_id', 'created_by', 'is_shared'],
-        editProperties: ['name', 'description', 'parent_id', 'created_by', 'is_shared'],
-        filterProperties: ['name', 'created_by', 'is_shared'],
-        showProperties: ['id', 'name', 'description', 'parent_id', 'created_by', 'is_shared', 'createdAt', 'updatedAt'],
+        listProperties: ['id', 'name', 'parent_id', 'is_shared'],
+        editProperties: ['name', 'parent_id', 'is_shared'],
+        filterProperties: ['name', 'is_shared'],
+        showProperties: ['id', 'name', 'parent_id', 'is_shared', 'createdAt', 'updatedAt'],
         properties: {
           name: {
             isTitle: true,
@@ -263,13 +263,9 @@ const adminJs = new AdminJS({
             description: 'Parent folder (leave empty for root level folder)',
             position: 2
           },
-          created_by: {
-            description: 'Teacher who owns this folder',
-            position: 3
-          },
           is_shared: {
             description: 'Whether this folder is shared with any courses',
-            position: 4
+            position: 3
           }
         },
         actions: {

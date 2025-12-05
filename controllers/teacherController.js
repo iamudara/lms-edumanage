@@ -560,7 +560,7 @@ export const uploadMaterial = async (req, res) => {
       return res.redirect(`/teacher/courses/${courseId}/materials?error=Title is required`);
     }
 
-    // If folder_id is provided, verify teacher has access (owner OR course teacher for shared folder)
+    // If folder_id is provided, verify folder is shared with this course
     if (folder_id && folder_id !== '') {
       const folder = await Folder.findByPk(folder_id);
       
@@ -568,16 +568,13 @@ export const uploadMaterial = async (req, res) => {
         return res.redirect(`/teacher/courses/${courseId}/materials?error=Folder not found`);
       }
       
-      // Check if teacher owns the folder OR folder is shared with this course
-      const isOwner = folder.created_by === teacherId;
-      if (!isOwner) {
-        const folderSharedWithCourse = await FolderCourse.findOne({
-          where: { folder_id: folder_id, course_id: courseId }
-        });
-        
-        if (!folderSharedWithCourse) {
-          return res.redirect(`/teacher/courses/${courseId}/materials?error=Folder is not shared with this course`);
-        }
+      // Check if folder is shared with this course
+      const folderSharedWithCourse = await FolderCourse.findOne({
+        where: { folder_id: folder_id, course_id: courseId }
+      });
+      
+      if (!folderSharedWithCourse) {
+        return res.redirect(`/teacher/courses/${courseId}/materials?error=Folder is not shared with this course`);
       }
     }
 
@@ -683,7 +680,7 @@ export const deleteMaterial = async (req, res) => {
 
     // Check permission based on material type
     // Direct material (course_id set): check course access
-    // Folder material (course_id null): check folder access
+    // Folder material (course_id null): check folder access via shared courses
     let hasPermission = false;
     let redirectCourseId = fromCourseId || material.course_id;
 
@@ -693,44 +690,35 @@ export const deleteMaterial = async (req, res) => {
       hasPermission = !!course;
     } else if (material.folder_id) {
       // Folder-based material - check if teacher has access via any shared course
-      const folder = await Folder.findByPk(material.folder_id);
-      if (folder) {
-        // Owner can always delete
-        if (folder.created_by === teacherId) {
+      const sharedCourseIds = await FolderCourse.findAll({
+        where: { folder_id: material.folder_id },
+        attributes: ['course_id']
+      }).then(rows => rows.map(r => r.course_id));
+      
+      if (sharedCourseIds.length > 0) {
+        // Check if teacher has edit access to any of these courses
+        const teacherCourse = await CourseTeacher.findOne({
+          where: {
+            teacher_id: teacherId,
+            course_id: { [Op.in]: sharedCourseIds },
+            can_edit: true
+          }
+        });
+        
+        if (teacherCourse) {
           hasPermission = true;
+          if (!redirectCourseId) redirectCourseId = teacherCourse.course_id;
         } else {
-          // Non-owner: check if folder is shared with any course teacher has edit access to
-          const sharedCourseIds = await FolderCourse.findAll({
-            where: { folder_id: material.folder_id },
-            attributes: ['course_id']
-          }).then(rows => rows.map(r => r.course_id));
-          
-          if (sharedCourseIds.length > 0) {
-            // Check if teacher has edit access to any of these courses
-            const teacherCourse = await CourseTeacher.findOne({
-              where: {
-                teacher_id: teacherId,
-                course_id: { [Op.in]: sharedCourseIds },
-                can_edit: true
-              }
-            });
-            
-            if (teacherCourse) {
-              hasPermission = true;
-              if (!redirectCourseId) redirectCourseId = teacherCourse.course_id;
-            } else {
-              // Check if teacher owns any of these courses
-              const ownedCourse = await Course.findOne({
-                where: {
-                  id: { [Op.in]: sharedCourseIds },
-                  teacher_id: teacherId
-                }
-              });
-              if (ownedCourse) {
-                hasPermission = true;
-                if (!redirectCourseId) redirectCourseId = ownedCourse.id;
-              }
+          // Check if teacher owns any of these courses
+          const ownedCourse = await Course.findOne({
+            where: {
+              id: { [Op.in]: sharedCourseIds },
+              teacher_id: teacherId
             }
+          });
+          if (ownedCourse) {
+            hasPermission = true;
+            if (!redirectCourseId) redirectCourseId = ownedCourse.id;
           }
         }
       }
@@ -1764,16 +1752,27 @@ async function getFoldersForCourse(courseId) {
 }
 
 /**
- * Get all folders owned by a teacher
+ * Get all folders accessible to a teacher (via courses they have access to)
  * GET /teacher/folders
  */
 export const getTeacherFolders = async (req, res) => {
   try {
     const teacherId = req.user.id;
 
-    // Get all folders created by this teacher
+    // Get all course IDs teacher has access to
+    const courseIds = await getTeacherCourseIds(teacherId);
+    
+    // Get all folder IDs shared with these courses
+    const folderCourses = await FolderCourse.findAll({
+      where: { course_id: { [Op.in]: courseIds } },
+      attributes: ['folder_id'],
+      raw: true
+    });
+    const folderIds = [...new Set(folderCourses.map(fc => fc.folder_id))];
+
+    // Get all folders accessible to this teacher
     const folders = await Folder.findAll({
-      where: { created_by: teacherId },
+      where: { id: { [Op.in]: folderIds } },
       include: [
         {
           model: Folder,
@@ -1800,7 +1799,6 @@ export const getTeacherFolders = async (req, res) => {
     });
 
     // Get teacher's courses for sharing dropdown
-    const courseIds = await getTeacherCourseIds(teacherId);
     const courses = await Course.findAll({
       where: { id: { [Op.in]: courseIds } },
       attributes: ['id', 'title', 'code'],
@@ -1922,9 +1920,7 @@ export const createFolder = async (req, res) => {
     // Create folder
     const folder = await Folder.create({
       name: name.trim(),
-      description: description ? description.trim() : null,
       parent_id: parent_id || null,
-      created_by: teacherId,
       is_shared: false
     });
 
@@ -1939,12 +1935,12 @@ export const createFolder = async (req, res) => {
         raw: true
       });
       courseIdsToLink = parentFolderCourses.map(fc => fc.course_id);
-    } else if (course_ids) {
-      // Root level folder - use provided course_ids (array or single value)
-      courseIdsToLink = Array.isArray(course_ids) ? course_ids : [course_ids];
-    } else if (req.body.course_id) {
-      // Fallback to singular course_id
-      courseIdsToLink = [req.body.course_id];
+    } else {
+      // Root level folder - use provided course_ids (handles both course_ids and course_ids[])
+      const providedCourseIds = course_ids || req.body['course_ids[]'] || req.body.course_id;
+      if (providedCourseIds) {
+        courseIdsToLink = Array.isArray(providedCourseIds) ? providedCourseIds : [providedCourseIds];
+      }
     }
 
     // If we have courses to link, create associations
@@ -2256,8 +2252,8 @@ export const shareFolderWithCourses = async (req, res) => {
       }
     }
 
-    // Get all subfolder IDs recursively (no ownership check)
-    const allFolderIds = await getAllSubfolderIdsNoOwnerCheck(folderId);
+    // Get all subfolder IDs recursively
+    const allFolderIds = await getAllSubfolderIds(folderId);
     allFolderIds.unshift(folderId); // Include the main folder
 
     // Remove existing shares for all folders
@@ -2312,29 +2308,9 @@ export const shareFolderWithCourses = async (req, res) => {
 };
 
 /**
- * Get all subfolder IDs recursively (with ownership check)
+ * Get all subfolder IDs recursively
  */
-async function getAllSubfolderIds(parentId, teacherId) {
-  const subfolders = await Folder.findAll({
-    where: { parent_id: parentId, created_by: teacherId },
-    attributes: ['id'],
-    raw: true
-  });
-
-  let allIds = subfolders.map(f => f.id);
-  
-  for (const subfolder of subfolders) {
-    const childIds = await getAllSubfolderIds(subfolder.id, teacherId);
-    allIds = allIds.concat(childIds);
-  }
-  
-  return allIds;
-}
-
-/**
- * Get all subfolder IDs recursively (no ownership check - for simplified sharing)
- */
-async function getAllSubfolderIdsNoOwnerCheck(parentId) {
+async function getAllSubfolderIds(parentId) {
   const subfolders = await Folder.findAll({
     where: { parent_id: parentId },
     attributes: ['id'],
@@ -2344,7 +2320,7 @@ async function getAllSubfolderIdsNoOwnerCheck(parentId) {
   let allIds = subfolders.map(f => f.id);
   
   for (const subfolder of subfolders) {
-    const childIds = await getAllSubfolderIdsNoOwnerCheck(subfolder.id);
+    const childIds = await getAllSubfolderIds(subfolder.id);
     allIds = allIds.concat(childIds);
   }
   
@@ -2361,15 +2337,21 @@ export const unshareFolder = async (req, res) => {
     const folderId = req.params.id;
     const courseId = req.params.courseId;
 
-    // Verify folder ownership
-    const folder = await Folder.findOne({
-      where: { id: folderId, created_by: teacherId }
-    });
-
+    // Verify folder exists and teacher has course access
+    const folder = await Folder.findByPk(folderId);
     if (!folder) {
       return res.status(404).json({
         success: false,
-        message: 'Folder not found or you do not own it'
+        message: 'Folder not found'
+      });
+    }
+
+    // Verify teacher has access to this course
+    const course = await checkTeacherCourseAccess(courseId, teacherId);
+    if (!course) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have access to this course'
       });
     }
 
@@ -2433,16 +2415,47 @@ export const moveMaterialToFolder = async (req, res) => {
       }
     }
 
-    // If folder_id provided, verify folder ownership
+    // If folder_id provided, verify folder exists and teacher has access via shared courses
     if (folder_id) {
-      const folder = await Folder.findOne({
-        where: { id: folder_id, created_by: teacherId }
-      });
-
+      const folder = await Folder.findByPk(folder_id);
       if (!folder) {
         return res.status(404).json({
           success: false,
-          message: 'Target folder not found or you do not own it'
+          message: 'Target folder not found'
+        });
+      }
+
+      // Check teacher has access via any shared course
+      const sharedCourseIds = await FolderCourse.findAll({
+        where: { folder_id: folder_id },
+        attributes: ['course_id']
+      }).then(rows => rows.map(r => r.course_id));
+      
+      if (sharedCourseIds.length === 0) {
+        return res.status(403).json({
+          success: false,
+          message: 'Folder is not shared with any courses'
+        });
+      }
+      
+      const teacherCourse = await CourseTeacher.findOne({
+        where: {
+          teacher_id: teacherId,
+          course_id: { [Op.in]: sharedCourseIds }
+        }
+      });
+      
+      const ownsCourse = await Course.findOne({
+        where: {
+          id: { [Op.in]: sharedCourseIds },
+          teacher_id: teacherId
+        }
+      });
+      
+      if (!teacherCourse && !ownsCourse) {
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have access to this folder'
         });
       }
     }
@@ -2519,13 +2532,12 @@ export const getMaterialsWithFolders = async (req, res) => {
     });
     const sharedFolderIds = sharedFolderRecords.map(r => r.folder_id);
 
-    // Get ALL folders shared with this course (regardless of who created them)
-    // This allows all course teachers to see shared folders
+    // Get ALL folders shared with this course
     let sharedFolders = [];
     if (sharedFolderIds.length > 0) {
       sharedFolders = await Folder.findAll({
         where: { id: { [Op.in]: sharedFolderIds } },
-        attributes: ['id', 'name', 'parent_id', 'description', 'is_shared', 'created_by'],
+        attributes: ['id', 'name', 'parent_id', 'is_shared'],
         order: [['name', 'ASC']],
         raw: true
       });
@@ -2547,51 +2559,13 @@ export const getMaterialsWithFolders = async (req, res) => {
       folderSharedCountMap[fc.folder_id]++;
     });
 
-    // Get teacher's OWN folders (for "Add Existing Folder" modal - only show their own unshared folders)
-    let teacherOwnFolders = await Folder.findAll({
-      where: { created_by: teacherId },
-      attributes: ['id', 'name', 'parent_id', 'description', 'is_shared', 'created_by'],
-      order: [['name', 'ASC']],
-      raw: true
-    });
-
-    // Get shared course IDs for each of teacher's folders (for the share modal)
-    const teacherFolderIds = teacherOwnFolders.map(f => f.id);
-    const folderCourses = await FolderCourse.findAll({
-      where: { folder_id: { [Op.in]: teacherFolderIds.length > 0 ? teacherFolderIds : [0] } },
-      attributes: ['folder_id', 'course_id'],
-      raw: true
-    });
-    
-    // Create a map of folder_id -> [course_ids] (for teacher's own folders - share modal)
-    const folderShareMap = {};
-    folderCourses.forEach(fc => {
-      if (!folderShareMap[fc.folder_id]) {
-        folderShareMap[fc.folder_id] = [];
-      }
-      folderShareMap[fc.folder_id].push(fc.course_id);
-    });
-    
-    // Add metadata to teacher's own folders (for Add Existing Folder modal)
-    teacherOwnFolders = teacherOwnFolders.map(f => ({
-      ...f,
-      sharedCourseIds: folderShareMap[f.id] || [],
-      isSharedHere: sharedFolderIds.includes(f.id),
-      isOwner: true
-    }));
-
     // Add metadata to shared folders (for display in tree)
-    // Include sharedCourseCount for each folder
     const sharedFoldersForTree = sharedFolders.map(f => ({
       ...f,
-      sharedCourseIds: [], // Not needed for tree display
-      sharedCourseCount: folderSharedCountMap[f.id] || 1, // Count of courses sharing this folder
-      isSharedHere: true,
-      isOwner: f.created_by === teacherId
+      sharedCourseCount: folderSharedCountMap[f.id] || 1
     }));
 
     // Get materials from folders shared with this course
-    // Materials in folders don't have course_id - they're shared via folders
     let folderMaterials = [];
     if (sharedFolderIds.length > 0) {
       folderMaterials = await Material.findAll({
@@ -2623,8 +2597,6 @@ export const getMaterialsWithFolders = async (req, res) => {
       courses: allCourses,
       materials: signedDirectMaterials,
       folderTree,
-      teacherFolders: teacherOwnFolders, // Teacher's own folders for "Add Existing" modal
-      sharedFolderIds, // Which folders are shared with this course
       canEdit,
       pageTitle: `Materials - ${course.title}`,
       success: req.query.success,
@@ -2683,30 +2655,33 @@ export const uploadMaterialToFolder = async (req, res) => {
       return res.redirect(`/teacher/folders?error=Folder not found`);
     }
 
-    // Check if teacher owns the folder OR has access via a shared course
-    const isOwner = folder.created_by === teacherId;
+    // Check if folder is shared with any course teacher has access to
+    const sharedCourseIds = await FolderCourse.findAll({
+      where: { folder_id: folderId },
+      attributes: ['course_id']
+    }).then(rows => rows.map(r => r.course_id));
     
-    if (!isOwner) {
-      // Check if folder is shared with any course teacher has access to
-      const sharedCourseIds = await FolderCourse.findAll({
-        where: { folder_id: folderId },
-        attributes: ['course_id']
-      }).then(rows => rows.map(r => r.course_id));
-      
-      if (sharedCourseIds.length === 0) {
-        return res.redirect(`/teacher/folders?error=You do not have access to this folder`);
+    if (sharedCourseIds.length === 0) {
+      return res.redirect(`/teacher/folders?error=Folder is not shared with any courses`);
+    }
+    
+    // Check if teacher owns or has been granted access to any of the shared courses
+    const teacherCourse = await CourseTeacher.findOne({
+      where: {
+        teacher_id: teacherId,
+        course_id: { [Op.in]: sharedCourseIds }
       }
-      
-      const teacherCourse = await CourseTeacher.findOne({
-        where: {
-          teacher_id: teacherId,
-          course_id: { [Op.in]: sharedCourseIds }
-        }
-      });
-      
-      if (!teacherCourse) {
-        return res.redirect(`/teacher/folders?error=You do not have access to this folder`);
+    });
+    
+    const ownsCourse = await Course.findOne({
+      where: {
+        id: { [Op.in]: sharedCourseIds },
+        teacher_id: teacherId
       }
+    });
+    
+    if (!teacherCourse && !ownsCourse) {
+      return res.redirect(`/teacher/folders?error=You do not have access to this folder`);
     }
 
     // Validation
