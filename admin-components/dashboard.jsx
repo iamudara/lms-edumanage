@@ -1,72 +1,46 @@
 import React from 'react';
-import { Box, H2, H5, Button, Text } from '@adminjs/design-system';
+import { Box, H2, H4, Text, Illustration, Button } from '@adminjs/design-system';
 
 const Dashboard = () => {
   return (
     <Box variant="grey">
-      <Box bg="white" flex flexDirection="column" p="xxl">
-        <H2 mb="xl">🎓 LMS EduManage - Admin Panel</H2>
-        
-        <Text mb="xl" fontSize="lg" color="grey60">
-          Welcome to the admin dashboard. Use the sidebar to manage database records or choose a quick action below.
-        </Text>
-
-        <Box mb="xl">
-          <Box
-            flex
-            flexDirection="row"
-            flexWrap="wrap"
-            style={{ gap: '20px' }}
-          >
-            <Button
-              size="lg"
-              variant="primary"
-              onClick={() => window.location.href = '/admin/dashboard'}
-              style={{ flex: '1 1 200px' }}
-            >
-              📊 Statistics Dashboard
-            </Button>
-            
-            <Button
-              size="lg"
-              variant="primary"
-              onClick={() => window.location.href = '/admin/tools'}
-              style={{ flex: '1 1 200px' }}
-            >
-              📤 Bulk Operations
-            </Button>
-            
-            <Button
-              size="lg"
-              variant="primary"
-              onClick={() => window.location.href = '/admin/resources/batches'}
-              style={{ flex: '1 1 200px' }}
-            >
-              👥 Batch Management
-            </Button>
-            
-            <Button
-              size="lg"
-              variant="danger"
-              onClick={() => window.location.href = '/auth/logout'}
-              style={{ flex: '1 1 200px' }}
-            >
-              🚪 Logout
-            </Button>
+      <Box variant="white" p="xxl" m="xxl" style={{ borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <Box flex flexDirection="row" alignItems="center" mb="xl">
+          <Illustration variant="DocumentCheck" width={100} height={100} />
+          <Box ml="xl">
+            <H2>Welcome to LMS EduManage Admin</H2>
+            <Text>Manage users, courses, batches, and system settings from this panel.</Text>
           </Box>
         </Box>
-
-        <Box bg="bg" p="xl" borderRadius="default">
-          <H5 mb="default">💡 Quick Tips</H5>
-          <Text fontSize="sm" mb="sm">
-            • Use the <strong>sidebar</strong> to manage Users, Batches, Courses, Materials, Assignments, Submissions, and Grades
-          </Text>
-          <Text fontSize="sm" mb="sm">
-            • Click <strong>Statistics Dashboard</strong> to view charts and analytics
-          </Text>
-          <Text fontSize="sm">
-            • Click <strong>Bulk Operations</strong> to upload CSV files for mass user creation, enrollments, or grades
-          </Text>
+        
+        <Box flex flexDirection="row" flexWrap="wrap" mt="xl">
+          <Box width={[1, 1/2, 1/4]} p="lg">
+            <Box variant="card" p="xl" style={{ textAlign: 'center', borderRadius: '8px' }}>
+              <H4>Users</H4>
+              <Text>Manage students, teachers, and administrators</Text>
+            </Box>
+          </Box>
+          
+          <Box width={[1, 1/2, 1/4]} p="lg">
+            <Box variant="card" p="xl" style={{ textAlign: 'center', borderRadius: '8px' }}>
+              <H4>Courses</H4>
+              <Text>Create and manage course offerings</Text>
+            </Box>
+          </Box>
+          
+          <Box width={[1, 1/2, 1/4]} p="lg">
+            <Box variant="card" p="xl" style={{ textAlign: 'center', borderRadius: '8px' }}>
+              <H4>Batches</H4>
+              <Text>Organize students into batches</Text>
+            </Box>
+          </Box>
+          
+          <Box width={[1, 1/2, 1/4]} p="lg">
+            <Box variant="card" p="xl" style={{ textAlign: 'center', borderRadius: '8px' }}>
+              <H4>Enrollments</H4>
+              <Text>Manage batch enrollments</Text>
+            </Box>
+          </Box>
         </Box>
       </Box>
     </Box>

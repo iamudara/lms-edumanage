@@ -14,9 +14,12 @@ import {
   Submission, 
   Batch, 
   Grade,
-  Material
+  Material,
+  Folder,
+  FolderCourse,
+  sequelize
 } from '../models/index.js';
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 import cloudinary, { generateSignedUrl, signUrlsInArray, deleteCloudinaryFile } from '../config/cloudinary.js';
 
 /**
@@ -537,12 +540,13 @@ export const getMaterials = async (req, res) => {
  * 
  * Handles both file upload and URL input
  * Supports: PDF, DOC, DOCX, PPT, PPTX (max 10MB)
+ * Can upload to a specific folder or course root
  */
 export const uploadMaterial = async (req, res) => {
   try {
     const courseId = req.params.id;
     const teacherId = req.user.id;
-    const { title, description, material_url } = req.body;
+    const { title, description, material_url, folder_id } = req.body;
 
     // Verify teacher has access and edit permission
     const course = await checkTeacherCourseAccess(courseId, teacherId, { requireEdit: true });
@@ -554,6 +558,27 @@ export const uploadMaterial = async (req, res) => {
     // Validation
     if (!title || title.trim() === '') {
       return res.redirect(`/teacher/courses/${courseId}/materials?error=Title is required`);
+    }
+
+    // If folder_id is provided, verify teacher has access (owner OR course teacher for shared folder)
+    if (folder_id && folder_id !== '') {
+      const folder = await Folder.findByPk(folder_id);
+      
+      if (!folder) {
+        return res.redirect(`/teacher/courses/${courseId}/materials?error=Folder not found`);
+      }
+      
+      // Check if teacher owns the folder OR folder is shared with this course
+      const isOwner = folder.created_by === teacherId;
+      if (!isOwner) {
+        const folderSharedWithCourse = await FolderCourse.findOne({
+          where: { folder_id: folder_id, course_id: courseId }
+        });
+        
+        if (!folderSharedWithCourse) {
+          return res.redirect(`/teacher/courses/${courseId}/materials?error=Folder is not shared with this course`);
+        }
+      }
     }
 
     let fileUrl = material_url || '';
@@ -581,15 +606,51 @@ export const uploadMaterial = async (req, res) => {
     }
 
     // Create material
+    // If folder_id is provided: material belongs to folder (no course_id) - shared via FolderCourse
+    // If no folder_id: material belongs directly to course (course_id set)
+    const hasFolderId = folder_id && folder_id !== '';
+    const parsedFolderId = hasFolderId ? parseInt(folder_id) : null;
+    
     await Material.create({
-      course_id: courseId,
+      course_id: hasFolderId ? null : courseId, // Only set course_id for direct uploads (no folder)
+      folder_id: parsedFolderId,
       title: title.trim(),
       description: description ? description.trim() : null,
       file_url: fileUrl,
       file_type: fileType
     });
 
-    res.redirect(`/teacher/courses/${courseId}/materials?success=Material uploaded successfully`);
+    // If uploading to a folder, automatically share folder AND its parent hierarchy with this course
+    if (parsedFolderId) {
+      // Get all parent folder IDs (including the current folder)
+      const folderIdsToShare = [parsedFolderId];
+      let currentFolder = await Folder.findByPk(parsedFolderId);
+      
+      while (currentFolder && currentFolder.parent_folder_id) {
+        folderIdsToShare.push(currentFolder.parent_folder_id);
+        currentFolder = await Folder.findByPk(currentFolder.parent_folder_id);
+      }
+      
+      // Share each folder in hierarchy if not already shared
+      for (const fId of folderIdsToShare) {
+        const existingShare = await FolderCourse.findOne({
+          where: { folder_id: fId, course_id: courseId }
+        });
+        
+        if (!existingShare) {
+          await FolderCourse.create({
+            folder_id: fId,
+            course_id: courseId,
+            added_by: req.user.id
+          });
+        }
+      }
+    }
+
+    const successMsg = hasFolderId 
+      ? 'Material uploaded to folder successfully' 
+      : 'Material uploaded successfully';
+    res.redirect(`/teacher/courses/${courseId}/materials?success=${successMsg}`);
 
   } catch (error) {
     console.error('Upload Material Error:', error);
@@ -607,6 +668,8 @@ export const deleteMaterial = async (req, res) => {
   try {
     const materialId = req.params.id;
     const teacherId = req.user.id;
+    // Course context can come from route param or query string
+    const fromCourseId = req.params.course_id || req.query.course_id;
 
     // Find material
     const material = await Material.findByPk(materialId);
@@ -618,17 +681,67 @@ export const deleteMaterial = async (req, res) => {
       });
     }
 
-    // Check teacher has edit access to the course
-    const course = await checkTeacherCourseAccess(material.course_id, teacherId, { requireEdit: true });
+    // Check permission based on material type
+    // Direct material (course_id set): check course access
+    // Folder material (course_id null): check folder access
+    let hasPermission = false;
+    let redirectCourseId = fromCourseId || material.course_id;
 
-    if (!course) {
+    if (material.course_id) {
+      // Direct course material - check course edit access
+      const course = await checkTeacherCourseAccess(material.course_id, teacherId, { requireEdit: true });
+      hasPermission = !!course;
+    } else if (material.folder_id) {
+      // Folder-based material - check if teacher has access via any shared course
+      const folder = await Folder.findByPk(material.folder_id);
+      if (folder) {
+        // Owner can always delete
+        if (folder.created_by === teacherId) {
+          hasPermission = true;
+        } else {
+          // Non-owner: check if folder is shared with any course teacher has edit access to
+          const sharedCourseIds = await FolderCourse.findAll({
+            where: { folder_id: material.folder_id },
+            attributes: ['course_id']
+          }).then(rows => rows.map(r => r.course_id));
+          
+          if (sharedCourseIds.length > 0) {
+            // Check if teacher has edit access to any of these courses
+            const teacherCourse = await CourseTeacher.findOne({
+              where: {
+                teacher_id: teacherId,
+                course_id: { [Op.in]: sharedCourseIds },
+                can_edit: true
+              }
+            });
+            
+            if (teacherCourse) {
+              hasPermission = true;
+              if (!redirectCourseId) redirectCourseId = teacherCourse.course_id;
+            } else {
+              // Check if teacher owns any of these courses
+              const ownedCourse = await Course.findOne({
+                where: {
+                  id: { [Op.in]: sharedCourseIds },
+                  teacher_id: teacherId
+                }
+              });
+              if (ownedCourse) {
+                hasPermission = true;
+                if (!redirectCourseId) redirectCourseId = ownedCourse.id;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (!hasPermission) {
       return res.status(403).json({
         success: false,
         message: 'You do not have permission to delete this material'
       });
     }
-
-    const courseId = material.course_id;
 
     // Delete from Cloudinary if it's a Cloudinary URL
     if (material.file_url && material.file_url.includes('cloudinary.com')) {
@@ -646,7 +759,9 @@ export const deleteMaterial = async (req, res) => {
     res.json({
       success: true,
       message: 'Material deleted successfully',
-      redirectUrl: `/teacher/courses/${courseId}/materials?success=Material deleted successfully`
+      redirectUrl: redirectCourseId 
+        ? `/teacher/courses/${redirectCourseId}/materials?success=Material deleted successfully`
+        : `/teacher/folders?success=Material deleted successfully`
     });
 
   } catch (error) {
@@ -1596,6 +1711,931 @@ export const deleteAssignment = async (req, res) => {
       success: false, 
       message: `Error deleting assignment: ${error.message}` 
     });
+  }
+};
+
+// ==========================================
+// FOLDER MANAGEMENT FUNCTIONS
+// ==========================================
+
+/**
+ * Get all folder IDs accessible by a course (including inherited subfolders)
+ * Uses recursive CTE for query-time inheritance
+ * 
+ * @param {number} courseId - The course ID
+ * @returns {Array} Array of folder IDs with full folder data
+ */
+async function getFoldersForCourse(courseId) {
+  // Get directly shared folder IDs
+  const sharedFolders = await FolderCourse.findAll({
+    where: { course_id: courseId },
+    attributes: ['folder_id']
+  });
+
+  if (sharedFolders.length === 0) {
+    return [];
+  }
+
+  const sharedFolderIds = sharedFolders.map(fc => fc.folder_id);
+
+  // Use recursive CTE to get all subfolders
+  const query = `
+    WITH RECURSIVE folder_tree AS (
+      -- Base case: directly shared folders
+      SELECT f.* FROM folders f
+      WHERE f.id IN (:sharedFolderIds)
+      
+      UNION ALL
+      
+      -- Recursive case: all children of shared folders
+      SELECT f.* FROM folders f
+      INNER JOIN folder_tree ft ON f.parent_id = ft.id
+    )
+    SELECT DISTINCT * FROM folder_tree
+    ORDER BY ISNULL(parent_id) DESC, parent_id ASC, name ASC
+  `;
+
+  const folders = await sequelize.query(query, {
+    replacements: { sharedFolderIds },
+    type: QueryTypes.SELECT
+  });
+
+  return folders;
+}
+
+/**
+ * Get all folders owned by a teacher
+ * GET /teacher/folders
+ */
+export const getTeacherFolders = async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+
+    // Get all folders created by this teacher
+    const folders = await Folder.findAll({
+      where: { created_by: teacherId },
+      include: [
+        {
+          model: Folder,
+          as: 'parent',
+          attributes: ['id', 'name']
+        },
+        {
+          model: Course,
+          as: 'sharedCourses',
+          attributes: ['id', 'title', 'code'],
+          through: { attributes: [] }
+        },
+        {
+          model: Material,
+          as: 'materials',
+          attributes: ['id']
+        }
+      ],
+      order: [
+        [sequelize.literal('ISNULL(`Folder`.`parent_id`) DESC')],
+        [sequelize.literal('`Folder`.`parent_id`'), 'ASC'],
+        ['name', 'ASC']
+      ]
+    });
+
+    // Get teacher's courses for sharing dropdown
+    const courseIds = await getTeacherCourseIds(teacherId);
+    const courses = await Course.findAll({
+      where: { id: { [Op.in]: courseIds } },
+      attributes: ['id', 'title', 'code'],
+      order: [['title', 'ASC']]
+    });
+
+    // Build folder tree structure
+    const folderTree = buildFolderTree(folders);
+
+    res.render('teacher/folders', {
+      user: req.user,
+      folders,
+      folderTree,
+      courses,
+      pageTitle: 'My Folders',
+      success: req.query.success,
+      error: req.query.error
+    });
+
+  } catch (error) {
+    console.error('Get Teacher Folders Error:', error);
+    res.status(500).send('Error loading folders: ' + error.message);
+  }
+};
+
+/**
+ * Build a hierarchical folder tree from flat folder list
+ */
+function buildFolderTree(folders) {
+  const folderMap = new Map();
+  const rootFolders = [];
+
+  // First pass: create map of all folders
+  folders.forEach(folder => {
+    folderMap.set(folder.id, {
+      ...folder.toJSON(),
+      children: []
+    });
+  });
+
+  // Second pass: build tree structure
+  folders.forEach(folder => {
+    const folderNode = folderMap.get(folder.id);
+    if (folder.parent_id && folderMap.has(folder.parent_id)) {
+      folderMap.get(folder.parent_id).children.push(folderNode);
+    } else {
+      rootFolders.push(folderNode);
+    }
+  });
+
+  return rootFolders;
+}
+
+/**
+ * Create a new folder
+ * POST /teacher/folders
+ */
+export const createFolder = async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+    const { name, description, parent_id, course_ids } = req.body;
+    const isAjax = req.xhr || req.headers['content-type']?.includes('application/json');
+    const redirectUrl = req.body.redirect || '/teacher/courses';
+
+    // Validation
+    if (!name || name.trim() === '') {
+      if (isAjax) {
+        return res.status(400).json({ success: false, message: 'Folder name is required' });
+      }
+      return res.redirect(redirectUrl + '?error=Folder name is required');
+    }
+
+    // If parent_id provided, verify it belongs to this teacher
+    if (parent_id) {
+      const parentFolder = await Folder.findOne({
+        where: { id: parent_id, created_by: teacherId }
+      });
+      
+      if (!parentFolder) {
+        if (isAjax) {
+          return res.status(404).json({ success: false, message: 'Parent folder not found or you do not own it' });
+        }
+        return res.redirect(redirectUrl + '?error=Parent folder not found or you do not own it');
+      }
+    }
+
+    // Check for duplicate folder name at the same level (same parent_id and same teacher)
+    const existingFolder = await Folder.findOne({
+      where: {
+        name: name.trim(),
+        parent_id: parent_id || null,
+        created_by: teacherId
+      }
+    });
+
+    if (existingFolder) {
+      const errorMsg = parent_id 
+        ? 'A folder with this name already exists in the parent folder'
+        : 'A folder with this name already exists at root level';
+      if (isAjax) {
+        return res.status(400).json({ success: false, message: errorMsg });
+      }
+      return res.redirect(redirectUrl + '?error=' + encodeURIComponent(errorMsg));
+    }
+
+    // Create folder
+    const folder = await Folder.create({
+      name: name.trim(),
+      description: description ? description.trim() : null,
+      parent_id: parent_id || null,
+      created_by: teacherId,
+      is_shared: false
+    });
+
+    // Handle course_ids - can be array from form (course_ids[]) or singular course_id
+    let courseIdsToLink = [];
+    if (course_ids) {
+      // If course_ids is provided (array or single value)
+      courseIdsToLink = Array.isArray(course_ids) ? course_ids : [course_ids];
+    } else if (req.body.course_id) {
+      // Fallback to singular course_id
+      courseIdsToLink = [req.body.course_id];
+    }
+
+    // If we have courses to link, create associations
+    if (courseIdsToLink.length > 0) {
+      // Filter out empty strings and convert to integers
+      courseIdsToLink = courseIdsToLink.filter(id => id && id !== '').map(id => parseInt(id));
+      
+      if (courseIdsToLink.length > 0) {
+        // Verify teacher owns these courses
+        const courses = await Course.findAll({
+          where: { 
+            id: courseIdsToLink,
+            teacher_id: teacherId
+          }
+        });
+
+        // Create folder-course associations
+        for (const course of courses) {
+          await FolderCourse.create({
+            folder_id: folder.id,
+            course_id: course.id,
+            added_by: teacherId
+          });
+        }
+      }
+    }
+
+    if (isAjax) {
+      return res.json({ 
+        success: true, 
+        message: 'Folder created successfully',
+        folder: {
+          id: folder.id,
+          name: folder.name,
+          parent_id: folder.parent_id
+        }
+      });
+    }
+    
+    res.redirect(redirectUrl + '?success=Folder created successfully');
+
+  } catch (error) {
+    console.error('Create Folder Error:', error);
+    const isAjax = req.xhr || req.headers['content-type']?.includes('application/json');
+    const redirectUrl = req.body.redirect || '/teacher/courses';
+    if (isAjax) {
+      return res.status(500).json({ success: false, message: 'Error creating folder: ' + error.message });
+    }
+    res.redirect(redirectUrl + '?error=Error creating folder: ' + error.message);
+  }
+};
+
+/**
+ * Rename a folder
+ * PUT /teacher/folders/:id
+ */
+export const renameFolder = async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+    const folderId = req.params.id;
+    const { name, description } = req.body;
+
+    // Find folder and verify ownership
+    const folder = await Folder.findOne({
+      where: { id: folderId, created_by: teacherId }
+    });
+
+    if (!folder) {
+      return res.status(404).json({
+        success: false,
+        message: 'Folder not found or you do not own it'
+      });
+    }
+
+    // Validation
+    if (!name || name.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Folder name is required'
+      });
+    }
+
+    // Check for duplicate folder name at the same level (excluding current folder)
+    const existingFolder = await Folder.findOne({
+      where: {
+        name: name.trim(),
+        parent_id: folder.parent_id,
+        created_by: teacherId,
+        id: { [Op.ne]: folderId } // Exclude current folder
+      }
+    });
+
+    if (existingFolder) {
+      return res.status(400).json({
+        success: false,
+        message: 'A folder with this name already exists at the same level'
+      });
+    }
+
+    // Update folder
+    await folder.update({
+      name: name.trim(),
+      description: description !== undefined ? (description.trim() || null) : folder.description
+    });
+
+    res.json({
+      success: true,
+      message: 'Folder renamed successfully',
+      folder: { id: folder.id, name: folder.name, description: folder.description }
+    });
+
+  } catch (error) {
+    console.error('Rename Folder Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error renaming folder: ' + error.message
+    });
+  }
+};
+
+/**
+ * Delete a folder and ALL its contents (subfolders + materials)
+ * DELETE /teacher/folders/:id
+ * 
+ * This will recursively delete:
+ * - All subfolders
+ * - All materials in this folder and subfolders
+ * - All Cloudinary files for those materials
+ * - All folder-course associations
+ */
+export const deleteFolder = async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+    const folderId = req.params.id;
+
+    // Find folder and verify ownership
+    const folder = await Folder.findOne({
+      where: { id: folderId, created_by: teacherId }
+    });
+
+    if (!folder) {
+      return res.status(404).json({
+        success: false,
+        message: 'Folder not found or you do not own it'
+      });
+    }
+
+    // Recursive function to get all subfolder IDs
+    async function getAllSubfolderIds(parentId) {
+      const subfolders = await Folder.findAll({
+        where: { parent_id: parentId },
+        attributes: ['id']
+      });
+      
+      let allIds = [];
+      for (const subfolder of subfolders) {
+        allIds.push(subfolder.id);
+        const childIds = await getAllSubfolderIds(subfolder.id);
+        allIds = allIds.concat(childIds);
+      }
+      return allIds;
+    }
+
+    // Get all folder IDs to delete (including this one and all descendants)
+    const subfolderIds = await getAllSubfolderIds(folderId);
+    const allFolderIds = [parseInt(folderId), ...subfolderIds];
+
+    console.log(`Deleting folder ${folderId} and ${subfolderIds.length} subfolders`);
+
+    // Get all materials in these folders
+    const materials = await Material.findAll({
+      where: { folder_id: allFolderIds }
+    });
+
+    console.log(`Found ${materials.length} materials to delete`);
+
+    // Delete Cloudinary files for all materials
+    for (const material of materials) {
+      if (material.file_url && material.file_url.includes('cloudinary.com')) {
+        try {
+          await deleteCloudinaryFile(material.file_url);
+          console.log(`Deleted Cloudinary file for material ${material.id}`);
+        } catch (err) {
+          console.error(`Error deleting Cloudinary file for material ${material.id}:`, err.message);
+        }
+      }
+    }
+
+    // Delete all materials in these folders
+    await Material.destroy({
+      where: { folder_id: allFolderIds }
+    });
+
+    // Delete all folder-course associations for these folders
+    await FolderCourse.destroy({
+      where: { folder_id: allFolderIds }
+    });
+
+    // Delete all folders (children first, then parent)
+    // Sort by depth (deepest first) to avoid foreign key issues
+    for (const subfolderId of subfolderIds.reverse()) {
+      await Folder.destroy({ where: { id: subfolderId } });
+    }
+    
+    // Finally delete the main folder
+    await folder.destroy();
+
+    res.json({
+      success: true,
+      message: `Folder deleted successfully along with ${subfolderIds.length} subfolders and ${materials.length} materials`
+    });
+
+  } catch (error) {
+    console.error('Delete Folder Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting folder: ' + error.message
+    });
+  }
+};
+
+/**
+ * Share folder with courses
+ * POST /teacher/folders/:id/share
+ * Also shares all subfolders recursively
+ */
+export const shareFolderWithCourses = async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+    const folderId = req.params.id;
+    const { course_ids } = req.body;
+
+    // Find folder and verify ownership
+    const folder = await Folder.findOne({
+      where: { id: folderId, created_by: teacherId }
+    });
+
+    if (!folder) {
+      return res.status(404).json({
+        success: false,
+        message: 'Folder not found or you do not own it'
+      });
+    }
+
+    // course_ids can be empty (to unshare from all courses)
+    const courseIdsArray = course_ids && Array.isArray(course_ids) ? course_ids : [];
+
+    // Verify teacher has access to all selected courses (if any)
+    if (courseIdsArray.length > 0) {
+      const teacherCourseIds = await getTeacherCourseIds(teacherId);
+      const invalidCourses = courseIdsArray.filter(id => !teacherCourseIds.includes(parseInt(id)));
+
+      if (invalidCourses.length > 0) {
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have access to some of the selected courses'
+        });
+      }
+    }
+
+    // Get all subfolder IDs recursively
+    const allFolderIds = await getAllSubfolderIds(folderId, teacherId);
+    allFolderIds.unshift(folderId); // Include the main folder
+
+    // Remove existing shares for all folders
+    await FolderCourse.destroy({ where: { folder_id: { [Op.in]: allFolderIds } } });
+
+    // Create new shares for all folders (if any courses selected)
+    if (courseIdsArray.length > 0) {
+      const shareRecords = [];
+      allFolderIds.forEach(folderIdItem => {
+        courseIdsArray.forEach(courseId => {
+          shareRecords.push({
+            folder_id: folderIdItem,
+            course_id: parseInt(courseId),
+            added_by: teacherId
+          });
+        });
+      });
+
+      await FolderCourse.bulkCreate(shareRecords);
+    }
+
+    // Update is_shared flag for all folders
+    await Folder.update(
+      { is_shared: courseIdsArray.length > 0 },
+      { where: { id: { [Op.in]: allFolderIds } } }
+    );
+
+    const subfolderCount = allFolderIds.length - 1;
+    let message;
+    if (courseIdsArray.length === 0) {
+      message = subfolderCount > 0
+        ? `Folder and ${subfolderCount} subfolder(s) unshared from all courses`
+        : 'Folder unshared from all courses';
+    } else {
+      message = subfolderCount > 0 
+        ? `Folder and ${subfolderCount} subfolder(s) shared with ${courseIdsArray.length} course(s)`
+        : `Folder shared with ${courseIdsArray.length} course(s)`;
+    }
+
+    res.json({
+      success: true,
+      message
+    });
+
+  } catch (error) {
+    console.error('Share Folder Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error sharing folder: ' + error.message
+    });
+  }
+};
+
+/**
+ * Get all subfolder IDs recursively
+ */
+async function getAllSubfolderIds(parentId, teacherId) {
+  const subfolders = await Folder.findAll({
+    where: { parent_id: parentId, created_by: teacherId },
+    attributes: ['id'],
+    raw: true
+  });
+
+  let allIds = subfolders.map(f => f.id);
+  
+  for (const subfolder of subfolders) {
+    const childIds = await getAllSubfolderIds(subfolder.id, teacherId);
+    allIds = allIds.concat(childIds);
+  }
+  
+  return allIds;
+}
+
+/**
+ * Remove folder from a specific course
+ * DELETE /teacher/folders/:id/share/:courseId
+ */
+export const unshareFolder = async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+    const folderId = req.params.id;
+    const courseId = req.params.courseId;
+
+    // Verify folder ownership
+    const folder = await Folder.findOne({
+      where: { id: folderId, created_by: teacherId }
+    });
+
+    if (!folder) {
+      return res.status(404).json({
+        success: false,
+        message: 'Folder not found or you do not own it'
+      });
+    }
+
+    // Remove the share
+    await FolderCourse.destroy({
+      where: { folder_id: folderId, course_id: courseId }
+    });
+
+    // Check if folder is still shared with any courses
+    const remainingShares = await FolderCourse.count({
+      where: { folder_id: folderId }
+    });
+
+    // Update is_shared flag
+    if (remainingShares === 0) {
+      await folder.update({ is_shared: false });
+    }
+
+    res.json({
+      success: true,
+      message: 'Folder removed from course'
+    });
+
+  } catch (error) {
+    console.error('Unshare Folder Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error removing folder from course: ' + error.message
+    });
+  }
+};
+
+/**
+ * Move material to a folder
+ * PUT /teacher/materials/:id/move
+ */
+export const moveMaterialToFolder = async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+    const materialId = req.params.id;
+    const { folder_id } = req.body;
+
+    // Find material
+    const material = await Material.findByPk(materialId);
+
+    if (!material) {
+      return res.status(404).json({
+        success: false,
+        message: 'Material not found'
+      });
+    }
+
+    // Check teacher has access to the material's course (if course-based)
+    if (material.course_id) {
+      const course = await checkTeacherCourseAccess(material.course_id, teacherId, { requireEdit: true });
+      if (!course) {
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have edit permission for this material'
+        });
+      }
+    }
+
+    // If folder_id provided, verify folder ownership
+    if (folder_id) {
+      const folder = await Folder.findOne({
+        where: { id: folder_id, created_by: teacherId }
+      });
+
+      if (!folder) {
+        return res.status(404).json({
+          success: false,
+          message: 'Target folder not found or you do not own it'
+        });
+      }
+    }
+
+    // Move material
+    await material.update({
+      folder_id: folder_id || null,
+      // If moving to a folder, material becomes folder-based (not course-based)
+      course_id: folder_id ? null : material.course_id
+    });
+
+    res.json({
+      success: true,
+      message: folder_id ? 'Material moved to folder' : 'Material moved to root level'
+    });
+
+  } catch (error) {
+    console.error('Move Material Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error moving material: ' + error.message
+    });
+  }
+};
+
+/**
+ * Get materials for a course (with folder structure)
+ * 
+ * ARCHITECTURE: Folder-Specific Materials
+ * - Materials belong to folders (folder_id required for folder materials)
+ * - Folders are shared with courses via FolderCourse table
+ * - When viewing a course, we show:
+ *   1. Direct materials (course_id set, no folder) - legacy/direct uploads
+ *   2. Materials from folders shared with this course (via FolderCourse)
+ * 
+ * GET /teacher/courses/:id/materials
+ */
+export const getMaterialsWithFolders = async (req, res) => {
+  try {
+    const courseId = parseInt(req.params.id);
+    const teacherId = req.user.id;
+
+    // Verify teacher has access to the course
+    const course = await checkTeacherCourseAccess(courseId, teacherId);
+
+    if (!course) {
+      return res.status(404).send('Course not found or you do not have permission to access it');
+    }
+
+    // Check edit permission
+    const isOwner = course.teacher_id === teacherId;
+    let canEdit = isOwner;
+    if (!isOwner) {
+      const courseTeacher = await CourseTeacher.findOne({
+        where: { course_id: courseId, teacher_id: teacherId }
+      });
+      canEdit = courseTeacher ? courseTeacher.can_edit : false;
+    }
+
+    // Get direct course materials (not in any folder - legacy uploads)
+    const directMaterials = await Material.findAll({
+      where: { 
+        course_id: courseId,
+        folder_id: null
+      },
+      order: [['created_at', 'DESC']]
+    });
+
+    // Get folders shared WITH this course (from FolderCourse table)
+    const sharedFolderRecords = await FolderCourse.findAll({
+      where: { course_id: courseId },
+      attributes: ['folder_id'],
+      raw: true
+    });
+    const sharedFolderIds = sharedFolderRecords.map(r => r.folder_id);
+
+    // Get ALL folders shared with this course (regardless of who created them)
+    // This allows all course teachers to see shared folders
+    let sharedFolders = [];
+    if (sharedFolderIds.length > 0) {
+      sharedFolders = await Folder.findAll({
+        where: { id: { [Op.in]: sharedFolderIds } },
+        attributes: ['id', 'name', 'parent_id', 'description', 'is_shared', 'created_by'],
+        order: [['name', 'ASC']],
+        raw: true
+      });
+    }
+
+    // Get teacher's OWN folders (for "Add Existing Folder" modal - only show their own unshared folders)
+    let teacherOwnFolders = await Folder.findAll({
+      where: { created_by: teacherId },
+      attributes: ['id', 'name', 'parent_id', 'description', 'is_shared', 'created_by'],
+      order: [['name', 'ASC']],
+      raw: true
+    });
+
+    // Get shared course IDs for each of teacher's folders (for the share modal)
+    const teacherFolderIds = teacherOwnFolders.map(f => f.id);
+    const folderCourses = await FolderCourse.findAll({
+      where: { folder_id: { [Op.in]: teacherFolderIds.length > 0 ? teacherFolderIds : [0] } },
+      attributes: ['folder_id', 'course_id'],
+      raw: true
+    });
+    
+    // Create a map of folder_id -> [course_ids] (for teacher's own folders - share modal)
+    const folderShareMap = {};
+    folderCourses.forEach(fc => {
+      if (!folderShareMap[fc.folder_id]) {
+        folderShareMap[fc.folder_id] = [];
+      }
+      folderShareMap[fc.folder_id].push(fc.course_id);
+    });
+    
+    // Add metadata to teacher's own folders (for Add Existing Folder modal)
+    teacherOwnFolders = teacherOwnFolders.map(f => ({
+      ...f,
+      sharedCourseIds: folderShareMap[f.id] || [],
+      isSharedHere: sharedFolderIds.includes(f.id),
+      isOwner: true
+    }));
+
+    // Add metadata to shared folders (for display in tree)
+    // Mark which ones the current teacher owns (for edit/share permissions)
+    const sharedFoldersForTree = sharedFolders.map(f => ({
+      ...f,
+      sharedCourseIds: [], // Not needed for tree display
+      isSharedHere: true,
+      isOwner: f.created_by === teacherId
+    }));
+
+    // Get materials from folders shared with this course
+    // Materials in folders don't have course_id - they're shared via folders
+    let folderMaterials = [];
+    if (sharedFolderIds.length > 0) {
+      folderMaterials = await Material.findAll({
+        where: { 
+          folder_id: { [Op.in]: sharedFolderIds }
+        },
+        order: [['created_at', 'DESC']]
+      });
+    }
+
+    // Sign URLs for authenticated access
+    const signedDirectMaterials = signUrlsInArray(directMaterials, 'file_url', 'material');
+    const signedFolderMaterials = signUrlsInArray(folderMaterials, 'file_url', 'material');
+
+    // Build folder tree with ONLY folders shared with this course
+    const folderTree = buildFolderTreeWithMaterials(sharedFoldersForTree, signedFolderMaterials);
+
+    // Get all teacher's courses for sharing folders
+    const teacherCourseIds = await getTeacherCourseIds(teacherId);
+    const allCourses = await Course.findAll({
+      where: { id: { [Op.in]: teacherCourseIds } },
+      attributes: ['id', 'code', 'title'],
+      order: [['code', 'ASC']]
+    });
+
+    res.render('teacher/materials', {
+      user: req.user,
+      course,
+      courses: allCourses,
+      materials: signedDirectMaterials,
+      folderTree,
+      teacherFolders: teacherOwnFolders, // Teacher's own folders for "Add Existing" modal
+      sharedFolderIds, // Which folders are shared with this course
+      canEdit,
+      pageTitle: `Materials - ${course.title}`,
+      success: req.query.success,
+      error: req.query.error
+    });
+
+  } catch (error) {
+    console.error('Get Materials With Folders Error:', error);
+    res.status(500).send('Error loading materials: ' + error.message);
+  }
+};
+
+/**
+ * Build folder tree with materials included
+ */
+function buildFolderTreeWithMaterials(folders, materials) {
+  const folderMap = new Map();
+  const rootFolders = [];
+
+  // Create folder nodes with materials array
+  folders.forEach(folder => {
+    folderMap.set(folder.id, {
+      ...folder,
+      materials: materials.filter(m => m.folder_id == folder.id), // Use loose comparison for type safety
+      children: []
+    });
+  });
+
+  // Build tree structure
+  folders.forEach(folder => {
+    const folderNode = folderMap.get(folder.id);
+    if (folder.parent_id && folderMap.has(folder.parent_id)) {
+      folderMap.get(folder.parent_id).children.push(folderNode);
+    } else {
+      rootFolders.push(folderNode);
+    }
+  });
+
+  return rootFolders;
+}
+
+/**
+ * Upload material to a folder
+ * POST /teacher/folders/:id/materials
+ */
+export const uploadMaterialToFolder = async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+    const folderId = req.params.id;
+    const { title, description, material_url, course_id } = req.body;
+
+    // Check if folder exists
+    const folder = await Folder.findByPk(folderId);
+    if (!folder) {
+      return res.redirect(`/teacher/folders?error=Folder not found`);
+    }
+
+    // Check if teacher owns the folder OR has access via a shared course
+    const isOwner = folder.created_by === teacherId;
+    
+    if (!isOwner) {
+      // Check if folder is shared with any course teacher has access to
+      const sharedCourseIds = await FolderCourse.findAll({
+        where: { folder_id: folderId },
+        attributes: ['course_id']
+      }).then(rows => rows.map(r => r.course_id));
+      
+      if (sharedCourseIds.length === 0) {
+        return res.redirect(`/teacher/folders?error=You do not have access to this folder`);
+      }
+      
+      const teacherCourse = await CourseTeacher.findOne({
+        where: {
+          teacher_id: teacherId,
+          course_id: { [Op.in]: sharedCourseIds }
+        }
+      });
+      
+      if (!teacherCourse) {
+        return res.redirect(`/teacher/folders?error=You do not have access to this folder`);
+      }
+    }
+
+    // Validation
+    if (!title || title.trim() === '') {
+      return res.redirect(`/teacher/folders?error=Title is required`);
+    }
+
+    let fileUrl = material_url || '';
+    let fileType = 'url';
+
+    // Check if file was uploaded
+    if (req.file) {
+      fileUrl = req.file.path;
+      const originalName = req.file.originalname;
+      const extMatch = originalName.match(/\.([a-z0-9]+)$/i);
+      fileType = extMatch ? extMatch[1].toLowerCase() : 'file';
+    } else if (!material_url || material_url.trim() === '') {
+      return res.redirect(`/teacher/folders?error=Please upload a file or provide a URL`);
+    }
+
+    // Create material in folder (no course_id)
+    await Material.create({
+      folder_id: folderId,
+      course_id: null,
+      title: title.trim(),
+      description: description ? description.trim() : null,
+      file_url: fileUrl,
+      file_type: fileType
+    });
+
+    // Redirect back to the materials page for the course if provided
+    if (course_id) {
+      res.redirect(`/teacher/courses/${course_id}/materials?success=Material uploaded to folder successfully`);
+    } else {
+      res.redirect(`/teacher/folders?success=Material uploaded to folder successfully`);
+    }
+
+  } catch (error) {
+    console.error('Upload Material to Folder Error:', error);
+    res.redirect(`/teacher/folders?error=Error uploading material: ${error.message}`);
   }
 };
 

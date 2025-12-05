@@ -11,11 +11,85 @@ import {
   AssignmentMaterial,
   Submission, 
   Material,
-  User 
+  User,
+  Folder,
+  FolderCourse,
+  sequelize
 } from '../models/index.js';
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 import cloudinary, { generateSignedUrl, signUrlsInArray, deleteCloudinaryFile } from '../config/cloudinary.js';
 import { checkDeadline, isDeadlinePassed } from '../services/deadlineService.js';
+
+/**
+ * Get all folders accessible by a course (including inherited subfolders)
+ * Uses recursive CTE for query-time inheritance
+ */
+async function getFoldersForCourse(courseId) {
+  // Get directly shared folder IDs
+  const sharedFolders = await FolderCourse.findAll({
+    where: { course_id: courseId },
+    attributes: ['folder_id']
+  });
+
+  if (sharedFolders.length === 0) {
+    return [];
+  }
+
+  const sharedFolderIds = sharedFolders.map(fc => fc.folder_id);
+
+  // Use recursive CTE to get all subfolders
+  const query = `
+    WITH RECURSIVE folder_tree AS (
+      -- Base case: directly shared folders
+      SELECT f.* FROM folders f
+      WHERE f.id IN (:sharedFolderIds)
+      
+      UNION ALL
+      
+      -- Recursive case: all children of shared folders
+      SELECT f.* FROM folders f
+      INNER JOIN folder_tree ft ON f.parent_id = ft.id
+    )
+    SELECT DISTINCT * FROM folder_tree
+    ORDER BY parent_id, name ASC
+  `;
+
+  const folders = await sequelize.query(query, {
+    replacements: { sharedFolderIds },
+    type: QueryTypes.SELECT
+  });
+
+  return folders;
+}
+
+/**
+ * Build folder tree with materials for student view
+ */
+function buildStudentFolderTree(folders, materials) {
+  const folderMap = new Map();
+  const rootFolders = [];
+
+  // Create folder nodes with materials array
+  folders.forEach(folder => {
+    folderMap.set(folder.id, {
+      ...folder,
+      materials: materials.filter(m => m.folder_id == folder.id), // Use loose comparison for type safety
+      children: []
+    });
+  });
+
+  // Build tree structure
+  folders.forEach(folder => {
+    const folderNode = folderMap.get(folder.id);
+    if (folder.parent_id && folderMap.has(folder.parent_id)) {
+      folderMap.get(folder.parent_id).children.push(folderNode);
+    } else {
+      rootFolders.push(folderNode);
+    }
+  });
+
+  return rootFolders;
+}
 
 /**
  * Show Student Dashboard
@@ -228,7 +302,7 @@ export const getAllCourses = async (req, res) => {
 /**
  * Get Course View (Student)
  * GET /student/courses/:id
- * Display: course info, materials, assignments list, course grade
+ * Display: course info, materials (with folder structure), assignments list, course grade
  */
 export const getCourseView = async (req, res) => {
   try {
@@ -256,7 +330,8 @@ export const getCourseView = async (req, res) => {
         },
         {
           model: Material,
-          required: false
+          required: false,
+          where: { folder_id: null } // Only direct course materials (not in folders)
         },
         {
           model: Assignment,
@@ -282,10 +357,30 @@ export const getCourseView = async (req, res) => {
       return res.status(404).send('Course not found or you are not enrolled in this course.');
     }
 
-    // Sign material URLs for authenticated access (24-hour expiry)
+    // Sign direct material URLs for authenticated access (6-hour expiry)
     if (course.Materials && course.Materials.length > 0) {
       course.Materials = signUrlsInArray(course.Materials, 'file_url', 'material');
     }
+
+    // Get folders shared with this course (with inherited subfolders)
+    const sharedFolders = await getFoldersForCourse(courseId);
+
+    // Get materials for shared folders
+    const folderIds = sharedFolders.map(f => f.id);
+    let folderMaterials = [];
+    
+    if (folderIds.length > 0) {
+      folderMaterials = await Material.findAll({
+        where: { folder_id: { [Op.in]: folderIds } },
+        order: [['created_at', 'DESC']]
+      });
+    }
+
+    // Sign folder materials URLs
+    const signedFolderMaterials = signUrlsInArray(folderMaterials, 'file_url', 'material');
+
+    // Build folder tree with materials
+    const folderTree = buildStudentFolderTree(sharedFolders, signedFolderMaterials);
 
     // Calculate assignment statistics
     const totalAssignments = course.Assignments ? course.Assignments.length : 0;
@@ -306,12 +401,16 @@ export const getCourseView = async (req, res) => {
       averageScore = (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2);
     }
 
+    // Total materials including folder materials
+    const totalMaterials = (course.Materials ? course.Materials.length : 0) + folderMaterials.length;
+
     res.render('student/course', {
       title: course.title,
       user: req.user,
       course,
+      folderTree,
       stats: {
-        totalMaterials: course.Materials ? course.Materials.length : 0,
+        totalMaterials,
         totalAssignments,
         submittedAssignments,
         gradedAssignments,

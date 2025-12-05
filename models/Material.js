@@ -9,11 +9,20 @@ export default (sequelize) => {
     },
     course_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true, // Changed to nullable - material can belong to folder instead
       references: {
         model: 'courses',
         key: 'id'
       }
+    },
+    folder_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'folders',
+        key: 'id'
+      },
+      comment: 'Folder this material belongs to. NULL = root level or direct course material'
     },
     title: {
       type: DataTypes.STRING(200),

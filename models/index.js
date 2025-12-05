@@ -6,6 +6,8 @@ import BatchModel from './Batch.js';
 import CourseModel from './Course.js';
 import CourseTeacherModel from './CourseTeacher.js';
 import BatchEnrollmentModel from './BatchEnrollment.js';
+import FolderModel from './Folder.js';
+import FolderCourseModel from './FolderCourse.js';
 import MaterialModel from './Material.js';
 import AssignmentModel from './Assignment.js';
 import AssignmentMaterialModel from './AssignmentMaterial.js';
@@ -18,6 +20,8 @@ const Batch = BatchModel(sequelize);
 const Course = CourseModel(sequelize);
 const CourseTeacher = CourseTeacherModel(sequelize);
 const BatchEnrollment = BatchEnrollmentModel(sequelize);
+const Folder = FolderModel(sequelize);
+const FolderCourse = FolderCourseModel(sequelize);
 const Material = MaterialModel(sequelize);
 const Assignment = AssignmentModel(sequelize);
 const AssignmentMaterial = AssignmentMaterialModel(sequelize);
@@ -131,10 +135,73 @@ BatchEnrollment.belongsTo(Course, {
   as: 'course' 
 });
 
+// Folder associations (self-referencing for nested folders)
+Folder.belongsTo(Folder, {
+  foreignKey: 'parent_id',
+  as: 'parent'
+});
+
+Folder.hasMany(Folder, {
+  foreignKey: 'parent_id',
+  as: 'subfolders',
+  onDelete: 'CASCADE'
+});
+
+Folder.belongsTo(User, {
+  foreignKey: 'created_by',
+  as: 'creator'
+});
+
+Folder.hasMany(Material, {
+  foreignKey: 'folder_id',
+  as: 'materials',
+  onDelete: 'SET NULL' // If folder deleted, materials go to root level
+});
+
+// Folder-Course sharing (many-to-many)
+Folder.belongsToMany(Course, {
+  through: FolderCourse,
+  foreignKey: 'folder_id',
+  otherKey: 'course_id',
+  as: 'sharedCourses'
+});
+
+Course.belongsToMany(Folder, {
+  through: FolderCourse,
+  foreignKey: 'course_id',
+  otherKey: 'folder_id',
+  as: 'sharedFolders'
+});
+
+FolderCourse.belongsTo(Folder, {
+  foreignKey: 'folder_id',
+  as: 'folder'
+});
+
+FolderCourse.belongsTo(Course, {
+  foreignKey: 'course_id',
+  as: 'course'
+});
+
+FolderCourse.belongsTo(User, {
+  foreignKey: 'added_by',
+  as: 'addedBy'
+});
+
+User.hasMany(Folder, {
+  foreignKey: 'created_by',
+  as: 'folders'
+});
+
 // Material associations
 Material.belongsTo(Course, {
   foreignKey: 'course_id',
   as: 'course'
+});
+
+Material.belongsTo(Folder, {
+  foreignKey: 'folder_id',
+  as: 'folder'
 });
 
 // Assignment associations
@@ -214,6 +281,8 @@ export {
   Course,
   CourseTeacher,
   BatchEnrollment,
+  Folder,
+  FolderCourse,
   Material,
   Assignment,
   AssignmentMaterial,

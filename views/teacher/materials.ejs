@@ -7,13 +7,50 @@
   <link href="/css/output.css" rel="stylesheet">
   <link href="/css/custom.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .folder-tree { min-height: 400px; }
+    .folder-item { 
+      cursor: pointer; 
+      padding: 6px 10px;
+      border-radius: 4px;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .folder-item:hover { background-color: oklch(var(--b2)); }
+    .folder-item.selected { 
+      background-color: oklch(var(--su) / 0.15); 
+      border-left: 3px solid oklch(var(--su));
+      margin-left: -3px;
+      font-weight: 600;
+      color: oklch(var(--su));
+    }
+    .folder-item.selected .fa-folder { color: oklch(var(--su)); }
+    .folder-item.not-shared { opacity: 0.6; }
+    .folder-item.not-shared:hover { opacity: 1; }
+    .folder-item .chevron { transition: transform 0.15s; }
+    .folder-item.expanded .chevron { transform: rotate(90deg); }
+    .folder-children { display: none; }
+    .folder-item.expanded + .folder-children { display: block; }
+    .material-item { transition: all 0.15s; }
+    .material-item:hover { background-color: oklch(var(--b2)); }
+    .empty-state { 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center; 
+      min-height: 300px;
+      color: oklch(var(--bc) / 0.4);
+    }
+    .folder-actions { opacity: 0; transition: opacity 0.15s; }
+    .folder-item:hover .folder-actions { opacity: 1; }
+  </style>
 </head>
 <body>
   <%- include('../shared/navbar') %>
 
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-4 py-6">
     <!-- Breadcrumb -->
-    <div class="text-sm breadcrumbs mb-6">
+    <div class="text-sm breadcrumbs mb-4">
       <ul>
         <li><a href="/teacher/dashboard"><i class="fas fa-home mr-1"></i>Dashboard</a></li>
         <li><a href="/teacher/courses"><i class="fas fa-book mr-1"></i>Courses</a></li>
@@ -23,350 +60,629 @@
     </div>
 
     <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-base-content mb-2">
-        <i class="fas fa-file-alt mr-2"></i>Course Materials
-      </h1>
-      <p class="text-base-content/70"><%= course.code %> - <%= course.title %></p>
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-base-content">
+          <i class="fas fa-folder-open mr-2 text-warning"></i>Course Materials
+        </h1>
+        <p class="text-base-content/70 text-sm"><%= course.code %> - <%= course.title %></p>
+      </div>
     </div>
 
-    <!-- Success/Error Messages -->
+    <!-- Messages -->
     <% if (success) { %>
-      <div class="alert alert-success mb-6">
-        <i class="fas fa-check-circle"></i>
-        <span><%= success %></span>
-      </div>
+      <div class="alert alert-success mb-4 py-2"><i class="fas fa-check-circle"></i><span><%= success %></span></div>
     <% } %>
-
     <% if (error) { %>
-      <div class="alert alert-error mb-6">
-        <i class="fas fa-exclamation-circle"></i>
-        <span><%= error %></span>
-      </div>
+      <div class="alert alert-error mb-4 py-2"><i class="fas fa-exclamation-circle"></i><span><%= error %></span></div>
     <% } %>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Upload Form (1/3 width) -->
-      <div class="lg:col-span-1">
-        <div class="card bg-base-100 shadow-xl sticky top-4">
-          <div class="card-body">
-            <h2 class="card-title text-xl mb-4">
-              <i class="fas fa-upload mr-2"></i>Upload Material
-            </h2>
-
-            <form action="/teacher/courses/<%= course.id %>/materials/upload" method="POST" enctype="multipart/form-data" id="uploadForm">
-              <!-- Title -->
-              <div class="form-control mb-4">
-                <label class="label">
-                  <span class="label-text font-semibold">
-                    Title <span class="text-error">*</span>
-                  </span>
-                </label>
-                <input 
-                  type="text" 
-                  name="title" 
-                  placeholder="e.g., Week 1 Lecture Notes"
-                  class="input input-bordered w-full"
-                  required
-                >
-              </div>
-
-              <!-- Description -->
-              <div class="form-control mb-4">
-                <label class="label">
-                  <span class="label-text font-semibold">Description</span>
-                </label>
-                <textarea 
-                  name="description" 
-                  class="textarea textarea-bordered h-20"
-                  placeholder="Optional description..."
-                ></textarea>
-              </div>
-
-              <!-- Upload Method Selection -->
-              <div class="form-control mb-4">
-                <label class="label">
-                  <span class="label-text font-semibold">Upload Method</span>
-                </label>
-                <div class="tabs tabs-boxed">
-                  <a class="tab tab-active" id="fileTab" onclick="switchTab('file')">
-                    <i class="fas fa-file-upload mr-1"></i>File Upload
-                  </a>
-                  <a class="tab" id="urlTab" onclick="switchTab('url')">
-                    <i class="fas fa-link mr-1"></i>URL Link
-                  </a>
-                </div>
-              </div>
-
-              <!-- File Upload Section -->
-              <div id="fileSection" class="form-control mb-4">
-                <label class="label">
-                  <span class="label-text font-semibold">
-                    Select File <span class="text-error">*</span>
-                  </span>
-                </label>
-                <input 
-                  type="file" 
-                  name="material" 
-                  id="materialFile"
-                  class="file-input file-input-bordered w-full"
-                  accept=".pdf,.doc,.docx,.ppt,.pptx"
-                >
-                <label class="label">
-                  <span class="label-text-alt text-base-content/60">
-                    PDF, DOC, DOCX, PPT, PPTX (Max 10MB)
-                  </span>
-                </label>
-              </div>
-
-              <!-- URL Input Section (Hidden by default) -->
-              <div id="urlSection" class="form-control mb-4 hidden">
-                <label class="label">
-                  <span class="label-text font-semibold">
-                    Material URL <span class="text-error">*</span>
-                  </span>
-                </label>
-                <input 
-                  type="url" 
-                  name="material_url" 
-                  id="materialUrl"
-                  placeholder="https://example.com/document.pdf"
-                  class="input input-bordered w-full"
-                >
-                <label class="label">
-                  <span class="label-text-alt text-base-content/60">
-                    Enter a direct link to the material
-                  </span>
-                </label>
-              </div>
-
-              <!-- Submit Button -->
-              <div class="card-actions justify-end pt-4 border-t">
-                <button type="submit" class="btn btn-primary btn-block">
-                  <i class="fas fa-upload mr-2"></i>Upload Material
+    <!-- Two Column Layout -->
+    <div class="flex gap-4" style="min-height: 500px;">
+      
+      <!-- Left: Folder Tree (Explorer) -->
+      <div class="w-96 flex-shrink-0">
+        <div class="card bg-base-100 shadow h-full">
+          <div class="card-body p-3">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-2 pb-2 border-b">
+              <span class="font-bold text-xs uppercase tracking-wide text-base-content/60">Explorer</span>
+              <div class="flex gap-1">
+                <button onclick="openAddExistingFolderModal()" class="btn btn-ghost btn-xs" title="Add Existing Folder">
+                  <i class="fas fa-folder-open text-info"></i>
+                </button>
+                <button onclick="openCreateFolderModal(currentFolderId)" class="btn btn-ghost btn-xs" title="New Folder">
+                  <i class="fas fa-folder-plus text-warning"></i>
                 </button>
               </div>
-            </form>
+            </div>
+
+            <!-- Folder Tree -->
+            <div class="folder-tree text-sm">
+              <!-- Root Folder -->
+              <div class="folder-item flex items-center gap-2 selected" 
+                   data-folder-id="" 
+                   onclick="selectFolder(this, '', 'Root', <%= materials.length %>)">
+                <i class="fas fa-chevron-right chevron text-xs text-base-content/30 invisible"></i>
+                <i class="fas fa-folder text-warning text-sm"></i>
+                <span class="flex-1">Root</span>
+                <span class="text-xs text-base-content/50"><%= materials.length %></span>
+              </div>
+
+              <!-- Folders -->
+              <% 
+              var sharedIdsArray = typeof sharedFolderIds !== 'undefined' ? sharedFolderIds : [];
+              if (folderTree && folderTree.length > 0) { 
+                function renderTree(folder, indent) {
+                  var count = folder.materials ? folder.materials.length : 0;
+                  var hasKids = folder.children && folder.children.length > 0;
+                  var sharedIds = folder.sharedCourseIds || [];
+                  var isSharedHere = sharedIdsArray.includes(folder.id);
+                  var isOwner = folder.isOwner || false; // Check if current teacher owns this folder
+              %>
+                <div class="folder-item flex items-center gap-2 <%= isSharedHere ? 'shared-here' : 'not-shared' %>" 
+                     style="padding-left: <%= indent %>px;"
+                     data-folder-id="<%= folder.id %>"
+                     data-shared-courses="<%= JSON.stringify(sharedIds) %>"
+                     data-is-shared="<%= isSharedHere %>"
+                     data-is-owner="<%= isOwner %>"
+                     onclick="selectFolder(this, '<%= folder.id %>', '<%= folder.name.replace(/'/g, "\\'") %>', <%= count %>, <%= isOwner %>)">
+                  <% if (hasKids) { %>
+                    <i class="fas fa-chevron-right chevron text-xs text-base-content/30" onclick="event.stopPropagation(); toggleExpand(this.parentElement)"></i>
+                  <% } else { %>
+                    <i class="fas fa-chevron-right chevron text-xs text-base-content/30 invisible"></i>
+                  <% } %>
+                  <i class="fas fa-folder <%= isSharedHere ? 'text-success' : 'text-base-content/30' %> text-sm"></i>
+                  <span class="flex-1 truncate <%= isSharedHere ? '' : 'text-base-content/50' %>"><%= folder.name %></span>
+                  <% if (!isOwner) { %>
+                    <i class="fas fa-users text-info text-xs" title="Shared by another teacher"></i>
+                  <% } %>
+                  <% if (isSharedHere) { %>
+                    <span class="text-xs text-base-content/50"><%= count %></span>
+                  <% } %>
+                  <div class="folder-actions flex gap-0.5">
+                    <% if (canEdit) { %>
+                      <button onclick="event.stopPropagation(); openCreateFolderModal('<%= folder.id %>')" class="btn btn-ghost btn-xs px-1" title="Add Subfolder">
+                        <i class="fas fa-plus text-success text-xs"></i>
+                      </button>
+                    <% } %>
+                    <% if (isOwner) { %>
+                      <button onclick="event.stopPropagation(); openRenameModal('<%= folder.id %>', '<%= folder.name.replace(/'/g, "\\'") %>', '')" class="btn btn-ghost btn-xs px-1" title="Rename">
+                        <i class="fas fa-pen text-info text-xs"></i>
+                      </button>
+                      <button onclick="event.stopPropagation(); deleteFolder('<%= folder.id %>', '<%= folder.name.replace(/'/g, "\\'") %>')" class="btn btn-ghost btn-xs px-1" title="Delete">
+                        <i class="fas fa-trash text-error text-xs"></i>
+                      </button>
+                    <% } %>
+                  </div>
+                </div>
+                <% if (hasKids) { %>
+                  <div class="folder-children" style="margin-left: <%= indent %>px;">
+                    <% folder.children.forEach(function(child) { renderTree(child, 16); }); %>
+                  </div>
+                <% } %>
+              <% 
+                }
+                folderTree.forEach(function(f) { renderTree(f, 16); });
+              } %>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Materials List (2/3 width) -->
-      <div class="lg:col-span-2">
-        <div class="card bg-base-100 shadow-xl">
-          <div class="card-body">
-            <h2 class="card-title text-2xl mb-4">
-              <i class="fas fa-list mr-2"></i>Uploaded Materials
-              <span class="badge badge-primary"><%= materials.length %></span>
-            </h2>
-
-            <% if (materials.length === 0) { %>
-              <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i>
-                <span>No materials uploaded yet. Use the form to add your first material.</span>
+      <!-- Right: Materials Panel -->
+      <div class="flex-1">
+        <div class="card bg-base-100 shadow h-full">
+          <div class="card-body p-4">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-4 pb-3 border-b">
+              <div class="flex items-center gap-2">
+                <i class="fas fa-folder-open text-warning"></i>
+                <h2 class="font-bold text-lg" id="folderTitle">Root</h2>
+                <span class="badge badge-primary" id="countBadge"><%= materials.length %></span>
               </div>
-            <% } else { %>
-              <div class="space-y-3">
-                <% materials.forEach(material => { 
-                  // Get file extension from database (file_type column)
-                  const fileExt = material.file_type || 'link';
+              <div class="flex gap-2">
+                <button id="shareFolderBtn" onclick="openShareModal()" class="btn btn-outline btn-secondary btn-sm hidden">
+                  <i class="fas fa-share-alt mr-1"></i>Share
+                </button>
+                <button id="uploadBtn" onclick="openUploadModal()" class="btn btn-primary btn-sm">
+                  <i class="fas fa-upload mr-1"></i>Upload
+                </button>
+              </div>
+            </div>
 
-                  // Icon based on file type
-                  let icon = 'fas fa-link';
-                  let iconColor = 'text-info';
-                  
-                  if (fileExt === 'pdf') {
-                    icon = 'fas fa-file-pdf';
-                    iconColor = 'text-error';
-                  } else if (fileExt === 'doc' || fileExt === 'docx') {
-                    icon = 'fas fa-file-word';
-                    iconColor = 'text-primary';
-                  } else if (fileExt === 'ppt' || fileExt === 'pptx') {
-                    icon = 'fas fa-file-powerpoint';
-                    iconColor = 'text-warning';
-                  } else if (fileExt === 'txt') {
-                    icon = 'fas fa-file-alt';
-                    iconColor = 'text-accent';
-                  } else if (fileExt === 'jpg' || fileExt === 'jpeg' || fileExt === 'png' || fileExt === 'gif' || fileExt === 'webp') {
-                    icon = 'fas fa-file-image';
-                    iconColor = 'text-success';
-                  }
-                %>
-                  <div class="card bg-base-200 hover:shadow-md transition-shadow">
-                    <div class="card-body p-4">
-                      <div class="flex items-start gap-4">
-                        <!-- File Icon -->
-                        <div class="avatar placeholder">
-                          <div class="bg-base-300 text-base-content rounded-lg w-16 h-16 flex items-center justify-center">
-                            <i class="<%= icon %> <%= iconColor %> text-3xl"></i>
-                          </div>
-                        </div>
-
-                        <!-- Material Info -->
-                        <div class="flex-1 min-w-0">
-                          <h3 class="font-bold text-lg mb-1"><%= material.title %></h3>
-                          
-                          <% if (material.description) { %>
-                            <p class="text-sm text-base-content/70 mb-2"><%= material.description %></p>
-                          <% } %>
-
-                          <div class="flex flex-wrap gap-2 items-center text-xs">
-                            <div class="badge badge-outline">
-                              <i class="<%= icon %> mr-1"></i>
-                              <%= fileExt.toUpperCase() %>
-                            </div>
-                            <div class="text-base-content/50">
-                              <i class="far fa-clock mr-1"></i>
-                              <% 
-                                const uploadDate = material.created_at || material.createdAt;
-                                const dateStr = uploadDate ? new Date(uploadDate).toLocaleDateString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  year: 'numeric'
-                                }) : 'Unknown';
-                              %>
-                              Uploaded <%= dateStr %>
-                            </div>
-                          </div>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="flex flex-col gap-2">
-                          <a 
-                            href="<%= material.file_url %>" 
-                            target="_blank"
-                            class="btn btn-sm btn-primary"
-                          >
-                            <i class="fas fa-external-link-alt mr-1"></i>Open
-                          </a>
-                          <button 
-                            onclick="deleteMaterial(<%= material.id %>, '<%= material.title %>')"
-                            class="btn btn-sm btn-error btn-outline"
-                          >
-                            <i class="fas fa-trash mr-1"></i>Delete
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+            <!-- Materials Container -->
+            <div id="materialsPanel">
+              <!-- Root content -->
+              <div id="content-root" class="folder-content">
+                <% if (materials.length === 0) { %>
+                  <div class="empty-state">
+                    <i class="fas fa-cloud-upload-alt text-6xl mb-4"></i>
+                    <p class="font-medium text-lg">No materials yet</p>
+                    <p class="text-sm mb-4">Upload your first material to this folder</p>
+                    <button onclick="openUploadModal()" class="btn btn-primary btn-sm">
+                      <i class="fas fa-upload mr-1"></i>Upload Material
+                    </button>
                   </div>
-                <% }) %>
+                <% } else { %>
+                  <div class="space-y-2">
+                    <% materials.forEach(function(m) { 
+                      var ext = m.file_type || 'link';
+                      var ico = 'fas fa-link text-info';
+                      if (ext === 'pdf') ico = 'fas fa-file-pdf text-error';
+                      else if (ext === 'doc' || ext === 'docx') ico = 'fas fa-file-word text-primary';
+                      else if (ext === 'ppt' || ext === 'pptx') ico = 'fas fa-file-powerpoint text-warning';
+                    %>
+                      <div class="material-item flex items-center gap-3 p-3 rounded-lg border">
+                        <div class="w-10 h-10 rounded bg-base-200 flex items-center justify-center">
+                          <i class="<%= ico %> text-lg"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                          <p class="font-medium"><%= m.title %></p>
+                          <p class="text-xs text-base-content/50"><%= ext.toUpperCase() %></p>
+                        </div>
+                        <a href="<%= m.file_url %>" target="_blank" class="btn btn-ghost btn-sm btn-square"><i class="fas fa-external-link-alt"></i></a>
+                        <button onclick="deleteMaterial(<%= m.id %>, '<%= m.title.replace(/'/g, "\\'") %>')" class="btn btn-ghost btn-sm btn-square text-error"><i class="fas fa-trash"></i></button>
+                      </div>
+                    <% }); %>
+                  </div>
+                <% } %>
               </div>
-            <% } %>
-          </div>
-        </div>
 
-        <!-- Info Card -->
-        <div class="card bg-base-200 shadow-xl mt-6">
-          <div class="card-body">
-            <h3 class="font-semibold mb-2">
-              <i class="fas fa-info-circle mr-2 text-info"></i>Upload Guidelines
-            </h3>
-            <ul class="text-sm space-y-1 text-base-content/80">
-              <li><i class="fas fa-check mr-2 text-success"></i>Supported formats: PDF, DOC, DOCX, PPT, PPTX, TXT, Images (JPG, PNG, GIF)</li>
-              <li><i class="fas fa-check mr-2 text-success"></i>Maximum file size: 10MB</li>
-              <li><i class="fas fa-check mr-2 text-success"></i>You can upload files or provide external URLs</li>
-              <li><i class="fas fa-check mr-2 text-success"></i>All enrolled students can access these materials</li>
-            </ul>
+              <!-- Folder contents -->
+              <% 
+              function renderContent(folder) {
+                var mats = folder.materials || [];
+              %>
+                <div id="content-<%= folder.id %>" class="folder-content hidden">
+                  <% if (mats.length === 0) { %>
+                    <div class="empty-state">
+                      <i class="fas fa-cloud-upload-alt text-6xl mb-4"></i>
+                      <p class="font-medium text-lg">No materials yet</p>
+                      <p class="text-sm mb-4">Upload your first material to this folder</p>
+                      <button onclick="openUploadModal()" class="btn btn-primary btn-sm">
+                        <i class="fas fa-upload mr-1"></i>Upload Material
+                      </button>
+                    </div>
+                  <% } else { %>
+                    <div class="space-y-2">
+                      <% mats.forEach(function(m) { 
+                        var ext = m.file_type || 'link';
+                        var ico = 'fas fa-link text-info';
+                        if (ext === 'pdf') ico = 'fas fa-file-pdf text-error';
+                        else if (ext === 'doc' || ext === 'docx') ico = 'fas fa-file-word text-primary';
+                        else if (ext === 'ppt' || ext === 'pptx') ico = 'fas fa-file-powerpoint text-warning';
+                      %>
+                        <div class="material-item flex items-center gap-3 p-3 rounded-lg border">
+                          <div class="w-10 h-10 rounded bg-base-200 flex items-center justify-center">
+                            <i class="<%= ico %> text-lg"></i>
+                          </div>
+                          <div class="flex-1 min-w-0">
+                            <p class="font-medium"><%= m.title %></p>
+                            <p class="text-xs text-base-content/50"><%= ext.toUpperCase() %></p>
+                          </div>
+                          <a href="<%= m.file_url %>" target="_blank" class="btn btn-ghost btn-sm btn-square"><i class="fas fa-external-link-alt"></i></a>
+                          <button onclick="deleteMaterial(<%= m.id %>, '<%= m.title.replace(/'/g, "\\'") %>')" class="btn btn-ghost btn-sm btn-square text-error"><i class="fas fa-trash"></i></button>
+                        </div>
+                      <% }); %>
+                    </div>
+                  <% } %>
+                </div>
+              <% 
+                if (folder.children) folder.children.forEach(renderContent);
+              }
+              if (folderTree) folderTree.forEach(renderContent);
+              %>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Upload Modal -->
+  <dialog id="uploadModal" class="modal">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg mb-4"><i class="fas fa-upload text-primary mr-2"></i>Upload to: <span id="uploadTo">Root</span></h3>
+      <form action="/teacher/courses/<%= course.id %>/materials/upload" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="folder_id" id="uploadFolderId" value="">
+        <div class="form-control mb-3">
+          <label class="label py-1"><span class="label-text">Title <span class="text-error">*</span></span></label>
+          <input type="text" name="title" class="input input-bordered input-sm" required>
+        </div>
+        <div class="form-control mb-3">
+          <label class="label py-1"><span class="label-text">Description</span></label>
+          <textarea name="description" class="textarea textarea-bordered textarea-sm" rows="2"></textarea>
+        </div>
+        <div class="form-control mb-3">
+          <label class="label py-1"><span class="label-text">File</span></label>
+          <input type="file" name="material" class="file-input file-input-bordered file-input-sm w-full">
+          <label class="label py-0"><span class="label-text-alt">OR provide URL below</span></label>
+        </div>
+        <div class="form-control mb-4">
+          <label class="label py-1"><span class="label-text">Material URL</span></label>
+          <input type="url" name="material_url" class="input input-bordered input-sm" placeholder="https://...">
+        </div>
+        <div class="modal-action">
+          <button type="button" class="btn btn-sm" onclick="uploadModal.close()">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm">Upload</button>
+        </div>
+      </form>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+
+  <!-- Create Folder Modal -->
+  <dialog id="createModal" class="modal">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg mb-4"><i class="fas fa-folder-plus text-warning mr-2"></i><span id="createTitle">New Folder</span></h3>
+      <form action="/teacher/folders" method="POST">
+        <input type="hidden" name="parent_id" id="parentId" value="">
+        <input type="hidden" name="course_ids[]" value="<%= course.id %>">
+        <input type="hidden" name="redirect" value="/teacher/courses/<%= course.id %>/materials">
+        <div class="form-control mb-3">
+          <label class="label py-1"><span class="label-text">Name <span class="text-error">*</span></span></label>
+          <input type="text" name="name" class="input input-bordered input-sm" required>
+        </div>
+        <div class="form-control mb-4">
+          <label class="label py-1"><span class="label-text">Description</span></label>
+          <textarea name="description" class="textarea textarea-bordered textarea-sm" rows="2"></textarea>
+        </div>
+        <div class="modal-action">
+          <button type="button" class="btn btn-sm" onclick="createModal.close()">Cancel</button>
+          <button type="submit" class="btn btn-warning btn-sm">Create</button>
+        </div>
+      </form>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+
+  <!-- Rename Modal -->
+  <dialog id="renameModal" class="modal">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg mb-4"><i class="fas fa-edit text-info mr-2"></i>Rename Folder</h3>
+      <input type="hidden" id="renameId">
+      <div class="form-control mb-3">
+        <label class="label py-1"><span class="label-text">Name</span></label>
+        <input type="text" id="renameName" class="input input-bordered input-sm" required>
+      </div>
+      <div class="modal-action">
+        <button type="button" class="btn btn-sm" onclick="renameModal.close()">Cancel</button>
+        <button type="button" class="btn btn-info btn-sm" onclick="submitRename()">Save</button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+
+  <!-- Share Modal -->
+  <dialog id="shareModal" class="modal">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg mb-4">
+        <i class="fas fa-share-alt text-success mr-2"></i>Share Folder: <span id="shareFolderName"></span>
+      </h3>
+      <form id="shareForm">
+        <input type="hidden" id="shareFolderId">
+        <div class="form-control mb-4">
+          <label class="label">
+            <span class="label-text font-semibold">Select Courses to Share With</span>
+          </label>
+          <div class="space-y-2 max-h-60 overflow-y-auto border rounded-lg p-2" id="courseCheckboxes">
+            <% if (typeof courses !== 'undefined' && courses.length > 0) { %>
+              <% courses.forEach(c => { %>
+                <label class="flex items-center gap-3 p-2 hover:bg-base-200 rounded cursor-pointer">
+                  <input type="checkbox" name="course_ids" value="<%= c.id %>" class="checkbox checkbox-primary checkbox-sm course-checkbox">
+                  <span class="text-sm"><strong><%= c.code %></strong> - <%= c.title %></span>
+                </label>
+              <% }) %>
+            <% } else { %>
+              <div class="alert alert-warning py-2">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>No courses available to share with.</span>
+              </div>
+            <% } %>
+          </div>
+        </div>
+        <div class="alert alert-info py-2 text-sm mb-4">
+          <i class="fas fa-info-circle"></i>
+          <span>Shared folders and their contents will be visible in the selected courses.</span>
+        </div>
+        <div class="modal-action">
+          <button type="button" class="btn btn-sm" onclick="shareModal.close()">Cancel</button>
+          <button type="button" class="btn btn-success btn-sm" onclick="submitShare()">
+            <i class="fas fa-share-alt mr-1"></i>Share
+          </button>
+        </div>
+      </form>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+
+  <!-- Add Existing Folder Modal -->
+  <dialog id="addExistingModal" class="modal">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg mb-4">
+        <i class="fas fa-folder-open text-info mr-2"></i>Add Existing Folder
+      </h3>
+      <p class="text-sm text-base-content/70 mb-4">
+        Select a folder from your other courses to add to this course:
+      </p>
+      <div class="space-y-2 max-h-60 overflow-y-auto border rounded-lg p-2" id="existingFoldersContainer">
+        <% 
+        // Filter to folders NOT already shared with this course
+        const unsharedFolders = teacherFolders.filter(f => !f.isSharedHere && !f.parent_id);
+        if (unsharedFolders.length > 0) { 
+          unsharedFolders.forEach(f => { 
+        %>
+          <label class="flex items-center gap-3 p-2 hover:bg-base-200 rounded cursor-pointer">
+            <input type="checkbox" name="folder_to_add" value="<%= f.id %>" class="checkbox checkbox-info checkbox-sm existing-folder-checkbox">
+            <i class="fas fa-folder text-warning"></i>
+            <span class="text-sm"><%= f.name %></span>
+            <% if (f.sharedCourseIds && f.sharedCourseIds.length > 0) { %>
+              <span class="badge badge-ghost badge-xs">shared in <%= f.sharedCourseIds.length %> course(s)</span>
+            <% } %>
+          </label>
+        <% }); } else { %>
+          <p class="text-center text-base-content/50 py-4">
+            <i class="fas fa-check-circle text-success mr-1"></i>
+            All your folders are already shared with this course, or you have no other folders.
+          </p>
+        <% } %>
+      </div>
+      <div class="alert alert-info mt-3 py-2">
+        <i class="fas fa-info-circle"></i>
+        <span class="text-xs">Adding a folder will make its materials visible in this course.</span>
+      </div>
+      <div class="modal-action">
+        <button type="button" class="btn btn-sm" onclick="addExistingModal.close()">Cancel</button>
+        <button type="button" class="btn btn-info btn-sm" onclick="submitAddExisting()">
+          <i class="fas fa-plus mr-1"></i>Add Selected
+        </button>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+  </dialog>
+
   <%- include('../shared/footer') %>
 
   <script>
-    // Tab switching
-    function switchTab(type) {
-      const fileTab = document.getElementById('fileTab');
-      const urlTab = document.getElementById('urlTab');
-      const fileSection = document.getElementById('fileSection');
-      const urlSection = document.getElementById('urlSection');
-      const fileInput = document.getElementById('materialFile');
-      const urlInput = document.getElementById('materialUrl');
+    let currentFolderId = '';
+    let currentFolderName = 'Root';
+    let currentFolderIsOwner = true; // Track if current user owns selected folder
+    const STORAGE_KEY = 'materials_expanded_<%= course.id %>';
 
-      if (type === 'file') {
-        fileTab.classList.add('tab-active');
-        urlTab.classList.remove('tab-active');
-        fileSection.classList.remove('hidden');
-        urlSection.classList.add('hidden');
-        fileInput.required = true;
-        urlInput.required = false;
-        urlInput.value = '';
-      } else {
-        urlTab.classList.add('tab-active');
-        fileTab.classList.remove('tab-active');
-        urlSection.classList.remove('hidden');
-        fileSection.classList.add('hidden');
-        urlInput.required = true;
-        fileInput.required = false;
-        fileInput.value = '';
+    // Restore expanded state on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      const savedState = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      
+      // Restore expanded folders
+      if (savedState.expanded) {
+        savedState.expanded.forEach(id => {
+          const folderEl = document.querySelector(`.folder-item[data-folder-id="${id}"]`);
+          if (folderEl) folderEl.classList.add('expanded');
+        });
       }
+      
+      // Restore selected folder
+      if (savedState.selected) {
+        const folderEl = document.querySelector(`.folder-item[data-folder-id="${savedState.selected}"]`);
+        if (folderEl) {
+          folderEl.click();
+        }
+      }
+    });
+
+    // Save expanded state
+    function saveExpandState() {
+      const expanded = [];
+      document.querySelectorAll('.folder-item.expanded').forEach(el => {
+        const id = el.dataset.folderId;
+        if (id) expanded.push(id);
+      });
+      const state = { expanded, selected: currentFolderId };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
 
-    // Delete material function
-    async function deleteMaterial(materialId, title) {
-      if (!confirm(`Are you sure you want to delete "${title}"?`)) {
+    function selectFolder(el, id, name, count, isOwner) {
+      currentFolderId = id;
+      currentFolderName = name;
+      currentFolderIsOwner = isOwner !== false; // default true for root
+      
+      // Update selection
+      document.querySelectorAll('.folder-item').forEach(f => f.classList.remove('selected'));
+      el.classList.add('selected');
+      
+      // Auto-expand when selected (if has children)
+      if (!el.classList.contains('expanded')) {
+        el.classList.add('expanded');
+      }
+      
+      // Save state
+      saveExpandState();
+      
+      // Update header
+      document.getElementById('folderTitle').textContent = name;
+      document.getElementById('countBadge').textContent = count;
+      document.getElementById('uploadTo').textContent = name;
+      document.getElementById('uploadFolderId').value = id;
+      
+      // Update toolbar buttons based on ownership
+      const shareBtn = document.getElementById('shareFolderBtn');
+      if (shareBtn) {
+        if (id && currentFolderIsOwner) {
+          shareBtn.classList.remove('hidden');
+        } else {
+          shareBtn.classList.add('hidden');
+        }
+      }
+      
+      // Show content
+      document.querySelectorAll('.folder-content').forEach(c => c.classList.add('hidden'));
+      var content = document.getElementById('content-' + (id || 'root'));
+      if (content) content.classList.remove('hidden');
+    }
+
+    function toggleExpand(el) {
+      el.classList.toggle('expanded');
+      saveExpandState();
+    }
+
+    function openUploadModal() {
+      document.getElementById('uploadTo').textContent = currentFolderName;
+      document.getElementById('uploadFolderId').value = currentFolderId;
+      uploadModal.showModal();
+    }
+
+    function openCreateFolderModal(parentId) {
+      document.getElementById('parentId').value = parentId || '';
+      document.getElementById('createTitle').textContent = parentId ? 'New Subfolder' : 'New Folder';
+      createModal.showModal();
+    }
+
+    function openRenameModal(id, name) {
+      document.getElementById('renameId').value = id;
+      document.getElementById('renameName').value = name;
+      renameModal.showModal();
+    }
+
+    async function submitRename() {
+      const id = document.getElementById('renameId').value;
+      const name = document.getElementById('renameName').value;
+      try {
+        const res = await fetch('/teacher/folders/' + id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        if ((await res.json()).success) location.reload();
+        else alert('Error');
+      } catch(e) { alert('Error'); }
+    }
+
+    async function deleteFolder(id, name) {
+      if (!confirm('Delete "' + name + '" and all contents?')) return;
+      try {
+        const res = await fetch('/teacher/folders/' + id, { method: 'DELETE' });
+        if ((await res.json()).success) location.reload();
+        else alert('Error');
+      } catch(e) { alert('Error'); }
+    }
+
+    async function deleteMaterial(id, name) {
+      if (!confirm('Delete "' + name + '"?')) return;
+      try {
+        const res = await fetch('/teacher/courses/<%= course.id %>/materials/' + id, { method: 'DELETE' });
+        if ((await res.json()).success) location.reload();
+        else alert('Error');
+      } catch(e) { alert('Error'); }
+    }
+
+    function openShareModal() {
+      if (!currentFolderId) {
+        alert('Please select a folder to share (Root cannot be shared)');
         return;
+      }
+      if (!currentFolderIsOwner) {
+        alert('Only the folder owner can share this folder');
+        return;
+      }
+      document.getElementById('shareFolderName').textContent = currentFolderName;
+      document.getElementById('shareFolderId').value = currentFolderId;
+      
+      // Get shared course IDs from the selected folder element
+      const folderEl = document.querySelector(`.folder-item[data-folder-id="${currentFolderId}"]`);
+      let sharedCourseIds = [];
+      if (folderEl && folderEl.dataset.sharedCourses) {
+        try {
+          sharedCourseIds = JSON.parse(folderEl.dataset.sharedCourses);
+        } catch(e) {}
+      }
+      
+      // Reset all checkboxes first, then check already shared courses
+      document.querySelectorAll('.course-checkbox').forEach(cb => {
+        cb.checked = sharedCourseIds.includes(parseInt(cb.value));
+      });
+      
+      shareModal.showModal();
+    }
+
+    async function submitShare() {
+      const folderId = document.getElementById('shareFolderId').value;
+      const checkedBoxes = document.querySelectorAll('.course-checkbox:checked');
+      const courseIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+      
+      // Allow empty selection to unshare from all courses
+      if (courseIds.length === 0) {
+        if (!confirm('No courses selected. This will remove this folder from the current course view. Continue?')) {
+          return;
+        }
       }
 
       try {
-        const response = await fetch(`/teacher/materials/${materialId}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json'
-          }
+        const response = await fetch('/teacher/folders/' + folderId + '/share', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ course_ids: courseIds })
         });
 
         const data = await response.json();
 
         if (data.success) {
-          window.location.href = data.redirectUrl;
+          shareModal.close();
+          location.reload();
         } else {
-          alert(data.message || 'Error deleting material');
+          alert(data.message || 'Error sharing folder');
         }
       } catch (error) {
-        console.error('Delete error:', error);
-        alert('Error deleting material. Please try again.');
+        console.error('Share error:', error);
+        alert('Error sharing folder');
       }
     }
 
-    // Form validation
-    document.getElementById('uploadForm').addEventListener('submit', function(e) {
-      const title = document.querySelector('input[name="title"]').value.trim();
-      const fileInput = document.getElementById('materialFile');
-      const urlInput = document.getElementById('materialUrl');
+    function openAddExistingFolderModal() {
+      addExistingModal.showModal();
+    }
 
-      if (!title) {
-        e.preventDefault();
-        alert('Please enter a title');
-        return false;
-      }
-
-      const isFileTab = !document.getElementById('fileSection').classList.contains('hidden');
+    async function submitAddExisting() {
+      const checkedBoxes = document.querySelectorAll('.existing-folder-checkbox:checked');
+      const folderIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
       
-      if (isFileTab && !fileInput.files[0]) {
-        e.preventDefault();
-        alert('Please select a file to upload');
-        return false;
+      if (folderIds.length === 0) {
+        alert('Please select at least one folder to add');
+        return;
       }
 
-      if (!isFileTab && !urlInput.value.trim()) {
-        e.preventDefault();
-        alert('Please enter a URL');
-        return false;
-      }
+      // Share each selected folder with this course
+      const courseId = <%= course.id %>;
+      let successCount = 0;
+      let errorCount = 0;
 
-      // Check file size
-      if (isFileTab && fileInput.files[0]) {
-        const fileSize = fileInput.files[0].size / 1024 / 1024; // Convert to MB
-        if (fileSize > 10) {
-          e.preventDefault();
-          alert('File size exceeds 10MB limit');
-          return false;
+      for (const folderId of folderIds) {
+        try {
+          const response = await fetch('/teacher/folders/' + folderId + '/share', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ course_ids: [courseId] })
+          });
+
+          const data = await response.json();
+          if (data.success) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch (error) {
+          errorCount++;
         }
       }
-    });
+
+      addExistingModal.close();
+      
+      if (successCount > 0) {
+        location.reload();
+      } else if (errorCount > 0) {
+        alert('Error adding folders');
+      }
+    }
   </script>
 </body>
 </html>

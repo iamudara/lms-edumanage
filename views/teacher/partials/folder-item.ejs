@@ -1,0 +1,75 @@
+<%
+  var materialCount = folder.materials ? folder.materials.length : 0;
+  var childCount = folder.children ? folder.children.length : 0;
+%>
+<div class="folder-item" style="margin-left: <%= level * 20 %>px">
+  <div class="collapse collapse-arrow bg-base-200 rounded-lg">
+    <input type="checkbox" name="folder-accordion" <% if (level === 0) { %>checked<% } %>>
+    <div class="collapse-title text-md font-medium flex items-center gap-2">
+      <i class="fas fa-folder text-warning"></i>
+      <%= folder.name %>
+      <span class="badge badge-ghost badge-sm"><%= materialCount %> files</span>
+      <% if (childCount > 0) { %>
+        <span class="badge badge-ghost badge-sm"><%= childCount %> subfolders</span>
+      <% } %>
+    </div>
+    <div class="collapse-content">
+      <% if (folder.description) { %>
+        <p class="text-sm text-base-content/60 mb-3"><%= folder.description %></p>
+      <% } %>
+      
+      <!-- Folder Materials -->
+      <% if (folder.materials && folder.materials.length > 0) { %>
+        <div class="space-y-2 mb-3">
+          <% folder.materials.forEach(function(material) { 
+            var fileExt = material.file_type || 'link';
+            var icon = 'fas fa-link';
+            var iconColor = 'text-info';
+            
+            if (fileExt === 'pdf') {
+              icon = 'fas fa-file-pdf';
+              iconColor = 'text-error';
+            } else if (fileExt === 'doc' || fileExt === 'docx') {
+              icon = 'fas fa-file-word';
+              iconColor = 'text-primary';
+            } else if (fileExt === 'ppt' || fileExt === 'pptx') {
+              icon = 'fas fa-file-powerpoint';
+              iconColor = 'text-warning';
+            }
+          %>
+            <div class="flex items-center justify-between bg-base-100 p-3 rounded-lg">
+              <div class="flex items-center gap-3">
+                <i class="<%= icon %> <%= iconColor %>"></i>
+                <div>
+                  <p class="font-medium text-sm"><%= material.title %></p>
+                  <% if (material.description) { %>
+                    <p class="text-xs text-base-content/60"><%= material.description %></p>
+                  <% } %>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <a href="<%= material.file_url %>" target="_blank" class="btn btn-xs btn-primary">
+                  <i class="fas fa-external-link-alt"></i>
+                </a>
+                <button onclick="deleteMaterial(<%= material.id %>, '<%= material.title.replace(/'/g, "\\'") %>')" class="btn btn-xs btn-error btn-outline">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <p class="text-sm text-base-content/50 italic mb-3">No materials in this folder</p>
+      <% } %>
+      
+      <!-- Subfolders -->
+      <% if (folder.children && folder.children.length > 0) { %>
+        <div class="space-y-2">
+          <% folder.children.forEach(function(child) { %>
+            <%- include('folder-item', { folder: child, level: level + 1 }) %>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>

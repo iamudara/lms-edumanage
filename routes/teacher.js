@@ -25,7 +25,16 @@ import {
   getGrades,
   saveGrade,
   bulkUploadGrades,
-  downloadGradeTemplate
+  downloadGradeTemplate,
+  // Folder management
+  createFolder,
+  renameFolder,
+  deleteFolder,
+  shareFolderWithCourses,
+  unshareFolder,
+  moveMaterialToFolder,
+  getMaterialsWithFolders,
+  uploadMaterialToFolder
 } from '../controllers/teacherController.js';
 import { uploadMaterial as uploadMiddleware, uploadAssignmentMaterials, uploadCsv } from '../middleware/upload.js';
 
@@ -79,11 +88,11 @@ router.get('/courses/:id', getCourseDetail);
 // ============================================
 
 /**
- * Get materials for a course
+ * Get materials for a course (with folder structure)
  * GET /teacher/courses/:id/materials
- * Lists all materials for a specific course
+ * Lists all materials for a specific course, organized by folders
  */
-router.get('/courses/:id/materials', getMaterials);
+router.get('/courses/:id/materials', getMaterialsWithFolders);
 
 /**
  * Upload material to course
@@ -95,9 +104,11 @@ router.post('/courses/:id/materials/upload', uploadMiddleware, uploadMaterial);
 /**
  * Delete a material
  * DELETE /teacher/materials/:id
- * Removes a material from a course
+ * DELETE /teacher/courses/:course_id/materials/:id
+ * Removes a material (can be direct or folder-based)
  */
 router.delete('/materials/:id', deleteMaterial);
+router.delete('/courses/:course_id/materials/:id', deleteMaterial);
 
 // ============================================
 // ASSIGNMENT MANAGEMENT
@@ -194,5 +205,58 @@ router.post('/courses/:id/grades/bulk', uploadCsv, bulkUploadGrades);
  * Downloads a sample CSV file for bulk grade upload
  */
 router.get('/courses/:id/grades/template', downloadGradeTemplate);
+
+// ============================================
+// FOLDER MANAGEMENT
+// ============================================
+
+/**
+ * Create a new folder
+ * POST /teacher/folders
+ * Creates a new folder (optionally as subfolder)
+ */
+router.post('/folders', createFolder);
+
+/**
+ * Rename a folder
+ * PUT /teacher/folders/:id
+ * Updates folder name and description
+ */
+router.put('/folders/:id', renameFolder);
+
+/**
+ * Delete a folder
+ * DELETE /teacher/folders/:id
+ * Deletes folder (with option to delete or move contents)
+ */
+router.delete('/folders/:id', deleteFolder);
+
+/**
+ * Share folder with courses
+ * POST /teacher/folders/:id/share
+ * Shares folder (and subfolders) with selected courses
+ */
+router.post('/folders/:id/share', shareFolderWithCourses);
+
+/**
+ * Remove folder from a course
+ * DELETE /teacher/folders/:id/share/:courseId
+ * Removes folder sharing from a specific course
+ */
+router.delete('/folders/:id/share/:courseId', unshareFolder);
+
+/**
+ * Upload material to a folder
+ * POST /teacher/folders/:id/materials
+ * Uploads material directly to a folder
+ */
+router.post('/folders/:id/materials', uploadMiddleware, uploadMaterialToFolder);
+
+/**
+ * Move material to a folder
+ * PUT /teacher/materials/:id/move
+ * Moves material to a folder or root level
+ */
+router.put('/materials/:id/move', moveMaterialToFolder);
 
 export default router;

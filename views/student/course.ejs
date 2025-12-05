@@ -72,47 +72,139 @@
       <div class="card-body">
         <h2 class="text-2xl font-bold mb-6">📄 Course Materials</h2>
         
-        <% if (course.Materials && course.Materials.length > 0) { %>
-          <div class="overflow-x-auto">
-            <table class="table table-zebra">
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Description</th>
-                  <th>Uploaded</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <% course.Materials.forEach(material => { %>
-                  <tr>
-                    <td class="font-medium">
-                      <div class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        <% if ((course.Materials && course.Materials.length > 0) || (folderTree && folderTree.length > 0)) { %>
+          
+          <!-- Direct Course Materials -->
+          <% if (course.Materials && course.Materials.length > 0) { %>
+            <div class="mb-6">
+              <h3 class="text-lg font-semibold mb-3 text-base-content/80">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Course Files
+              </h3>
+              <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Description</th>
+                      <th>Uploaded</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% course.Materials.forEach(material => { %>
+                      <tr>
+                        <td class="font-medium">
+                          <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <%= material.title %>
+                          </div>
+                        </td>
+                        <td class="text-base-content/70 max-w-md truncate">
+                          <%= material.description || 'No description' %>
+                        </td>
+                        <td class="text-sm text-base-content/60">
+                          <%= new Date(material.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                        </td>
+                        <td>
+                          <a href="<%= material.file_url %>" target="_blank" class="btn btn-primary btn-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Download
+                          </a>
+                        </td>
+                      </tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- Shared Folders -->
+          <% if (folderTree && folderTree.length > 0) { %>
+            <div class="mt-6">
+              <h3 class="text-lg font-semibold mb-3 text-base-content/80">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
+                Shared Folders
+              </h3>
+              
+              <div class="space-y-3" id="folderTree">
+                <% function renderStudentFolder(folder, level = 0) { %>
+                  <div class="folder-item" style="margin-left: <%= level * 20 %>px">
+                    <div class="collapse collapse-arrow bg-base-200 rounded-lg">
+                      <input type="checkbox" name="folder-accordion" <% if (level === 0) { %>checked<% } %>>
+                      <div class="collapse-title text-md font-medium flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                         </svg>
-                        <%= material.title %>
+                        <%= folder.name %>
+                        <span class="badge badge-ghost badge-sm"><%= folder.materials ? folder.materials.length : 0 %> files</span>
                       </div>
-                    </td>
-                    <td class="text-base-content/70 max-w-md truncate">
-                      <%= material.description || 'No description' %>
-                    </td>
-                    <td class="text-sm text-base-content/60">
-                      <%= new Date(material.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
-                    </td>
-                    <td>
-                      <a href="<%= material.file_url %>" target="_blank" class="btn btn-primary btn-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        Download
-                      </a>
-                    </td>
-                  </tr>
+                      <div class="collapse-content">
+                        <% if (folder.description) { %>
+                          <p class="text-sm text-base-content/60 mb-3"><%= folder.description %></p>
+                        <% } %>
+                        
+                        <!-- Folder Materials -->
+                        <% if (folder.materials && folder.materials.length > 0) { %>
+                          <div class="overflow-x-auto">
+                            <table class="table table-sm">
+                              <tbody>
+                                <% folder.materials.forEach(material => { %>
+                                  <tr>
+                                    <td class="font-medium">
+                                      <div class="flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        <%= material.title %>
+                                      </div>
+                                    </td>
+                                    <td class="text-base-content/60 text-sm max-w-xs truncate">
+                                      <%= material.description || '' %>
+                                    </td>
+                                    <td class="text-right">
+                                      <a href="<%= material.file_url %>" target="_blank" class="btn btn-primary btn-xs">
+                                        Download
+                                      </a>
+                                    </td>
+                                  </tr>
+                                <% }) %>
+                              </tbody>
+                            </table>
+                          </div>
+                        <% } else { %>
+                          <p class="text-sm text-base-content/50 italic">No materials in this folder</p>
+                        <% } %>
+                        
+                        <!-- Subfolders -->
+                        <% if (folder.children && folder.children.length > 0) { %>
+                          <div class="mt-3 space-y-2">
+                            <% folder.children.forEach(child => { %>
+                              <%- renderStudentFolder(child, level + 1) %>
+                            <% }) %>
+                          </div>
+                        <% } %>
+                      </div>
+                    </div>
+                  </div>
+                <% } %>
+
+                <% folderTree.forEach(folder => { %>
+                  <%- renderStudentFolder(folder, 0) %>
                 <% }) %>
-              </tbody>
-            </table>
-          </div>
+              </div>
+            </div>
+          <% } %>
+
         <% } else { %>
           <div class="text-center py-12">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-base-content/30 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
