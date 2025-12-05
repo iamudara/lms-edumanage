@@ -44,24 +44,43 @@
         <% courses.forEach(course => { 
           // Calculate enrolled students
           let enrolledStudents = 0;
-          course.BatchEnrollments.forEach(enrollment => {
-            enrolledStudents += enrollment.batch.students.length;
-          });
+          if (course.BatchEnrollments) {
+            course.BatchEnrollments.forEach(enrollment => {
+              enrolledStudents += enrollment.batch.students.length;
+            });
+          }
           
-          const assignmentCount = course.Assignments.length;
-          const batchCount = course.BatchEnrollments.length;
+          const assignmentCount = course.Assignments ? course.Assignments.length : 0;
+          const batchCount = course.BatchEnrollments ? course.BatchEnrollments.length : 0;
+          const isOwner = course.isOwner !== undefined ? course.isOwner : true;
         %>
           <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow cursor-pointer" onclick="window.location.href='/teacher/courses/<%= course.id %>'">
             <div class="card-body">
-              <!-- Course Code Badge -->
-              <div class="badge badge-primary badge-lg mb-2">
-                <%= course.code %>
+              <!-- Course Code Badge and Ownership -->
+              <div class="flex justify-between items-start mb-2">
+                <div class="badge badge-primary badge-lg">
+                  <%= course.code %>
+                </div>
+                <% if (!isOwner) { %>
+                  <div class="badge badge-info badge-sm gap-1">
+                    <i class="fas fa-user-plus text-xs"></i>
+                    Assigned
+                  </div>
+                <% } %>
               </div>
 
               <!-- Course Title -->
               <h2 class="card-title text-xl mb-2">
                 <%= course.title %>
               </h2>
+
+              <!-- Primary Teacher (if assigned course) -->
+              <% if (!isOwner && course.teacher) { %>
+                <p class="text-xs text-base-content/60 mb-2">
+                  <i class="fas fa-user-tie mr-1"></i>
+                  Primary: <%= course.teacher.full_name %>
+                </p>
+              <% } %>
 
               <!-- Course Description -->
               <p class="text-base-content/70 text-sm mb-4 line-clamp-3">
@@ -123,7 +142,13 @@
           </div>
           <div class="stat-title">Total Courses</div>
           <div class="stat-value text-primary"><%= courses.length %></div>
-          <div class="stat-desc">Created by you</div>
+          <div class="stat-desc">
+            <% 
+              const ownedCount = courses.filter(c => c.isOwner !== false).length;
+              const assignedCount = courses.length - ownedCount;
+            %>
+            <%= ownedCount %> owned, <%= assignedCount %> assigned
+          </div>
         </div>
         
         <div class="stat">
@@ -135,9 +160,11 @@
             <% 
               let totalStudents = 0;
               courses.forEach(course => {
-                course.BatchEnrollments.forEach(enrollment => {
-                  totalStudents += enrollment.batch.students.length;
-                });
+                if (course.BatchEnrollments) {
+                  course.BatchEnrollments.forEach(enrollment => {
+                    totalStudents += enrollment.batch.students.length;
+                  });
+                }
               });
             %>
             <%= totalStudents %>
@@ -154,7 +181,9 @@
             <% 
               let totalAssignments = 0;
               courses.forEach(course => {
-                totalAssignments += course.Assignments.length;
+                if (course.Assignments) {
+                  totalAssignments += course.Assignments.length;
+                }
               });
             %>
             <%= totalAssignments %>

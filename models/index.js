@@ -4,6 +4,7 @@ import sequelize from '../config/database.js';
 import UserModel from './User.js';
 import BatchModel from './Batch.js';
 import CourseModel from './Course.js';
+import CourseTeacherModel from './CourseTeacher.js';
 import BatchEnrollmentModel from './BatchEnrollment.js';
 import MaterialModel from './Material.js';
 import AssignmentModel from './Assignment.js';
@@ -15,6 +16,7 @@ import GradeModel from './Grade.js';
 const User = UserModel(sequelize);
 const Batch = BatchModel(sequelize);
 const Course = CourseModel(sequelize);
+const CourseTeacher = CourseTeacherModel(sequelize);
 const BatchEnrollment = BatchEnrollmentModel(sequelize);
 const Material = MaterialModel(sequelize);
 const Assignment = AssignmentModel(sequelize);
@@ -62,6 +64,19 @@ Course.belongsTo(User, {
   as: 'teacher' 
 });
 
+Course.hasMany(CourseTeacher, {
+  foreignKey: 'course_id',
+  as: 'courseTeachers',
+  onDelete: 'CASCADE'
+});
+
+Course.belongsToMany(User, {
+  through: CourseTeacher,
+  foreignKey: 'course_id',
+  otherKey: 'teacher_id',
+  as: 'teachers'
+});
+
 Course.hasMany(BatchEnrollment, { 
   foreignKey: 'course_id', 
   onDelete: 'CASCADE'  // Changed from RESTRICT - allows deleting course with enrollments
@@ -80,6 +95,29 @@ Course.hasMany(Material, {
 Course.hasMany(Grade, {
   foreignKey: 'course_id',
   onDelete: 'CASCADE'  // Changed from RESTRICT - allows deleting course with grades
+});
+
+// CourseTeacher associations
+CourseTeacher.belongsTo(Course, {
+  foreignKey: 'course_id',
+  as: 'course'
+});
+
+CourseTeacher.belongsTo(User, {
+  foreignKey: 'teacher_id',
+  as: 'teacher'
+});
+
+User.hasMany(CourseTeacher, {
+  foreignKey: 'teacher_id',
+  as: 'teacherCourses'
+});
+
+User.belongsToMany(Course, {
+  through: CourseTeacher,
+  foreignKey: 'teacher_id',
+  otherKey: 'course_id',
+  as: 'assignedCourses'
 });
 
 // BatchEnrollment associations
@@ -174,6 +212,7 @@ export {
   User,
   Batch,
   Course,
+  CourseTeacher,
   BatchEnrollment,
   Material,
   Assignment,

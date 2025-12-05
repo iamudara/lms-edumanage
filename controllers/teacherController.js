@@ -7,6 +7,7 @@
 import { 
   User, 
   Course, 
+  CourseTeacher,
   BatchEnrollment, 
   Assignment,
   AssignmentMaterial,
@@ -19,11 +20,83 @@ import { Op } from 'sequelize';
 import cloudinary from '../config/cloudinary.js';
 
 /**
+ * Helper function to check if a teacher has access to a course
+ * Returns the course if teacher has access, null otherwise
+ * 
+ * @param {number} courseId - The course ID to check
+ * @param {number} teacherId - The teacher's user ID
+ * @param {Object} options - Additional options
+ * @param {boolean} options.requireEdit - Require edit permission
+ * @param {boolean} options.requireGrade - Require grade permission
+ * @returns {Object|null} Course object if teacher has access, null otherwise
+ */
+async function checkTeacherCourseAccess(courseId, teacherId, options = {}) {
+  const { requireEdit = false, requireGrade = false } = options;
+  
+  // First check if teacher is the primary teacher (owner)
+  const course = await Course.findOne({
+    where: { id: courseId }
+  });
+  
+  if (!course) return null;
+  
+  // Primary teacher has full access
+  if (course.teacher_id === teacherId) {
+    return course;
+  }
+  
+  // Check CourseTeacher table for additional access
+  const accessQuery = {
+    course_id: courseId,
+    teacher_id: teacherId
+  };
+  
+  if (requireEdit) accessQuery.can_edit = true;
+  if (requireGrade) accessQuery.can_grade = true;
+  
+  const courseTeacher = await CourseTeacher.findOne({
+    where: accessQuery
+  });
+  
+  if (courseTeacher) {
+    return course;
+  }
+  
+  return null;
+}
+
+/**
+ * Helper function to get all courses a teacher has access to
+ * @param {number} teacherId - The teacher's user ID
+ * @returns {Array} Array of course IDs
+ */
+async function getTeacherCourseIds(teacherId) {
+  // Get courses where teacher is the primary teacher
+  const ownedCourses = await Course.findAll({
+    where: { teacher_id: teacherId },
+    attributes: ['id']
+  });
+  
+  // Get courses where teacher is assigned via CourseTeacher
+  const assignedCourses = await CourseTeacher.findAll({
+    where: { teacher_id: teacherId },
+    attributes: ['course_id']
+  });
+  
+  const courseIds = new Set([
+    ...ownedCourses.map(c => c.id),
+    ...assignedCourses.map(ct => ct.course_id)
+  ]);
+  
+  return Array.from(courseIds);
+}
+
+/**
  * Show Teacher Dashboard
  * GET /teacher/dashboard
  * 
  * Displays:
- * - Teacher's courses count
+ * - Teacher's courses count (including assigned courses)
  * - Total enrolled students across all courses
  * - Pending submissions count (ungraded)
  * - Recent activity (latest submissions)
@@ -32,9 +105,12 @@ export const showDashboard = async (req, res) => {
   try {
     const teacherId = req.user.id;
 
-    // 1. Get teacher's courses
+    // 1. Get all course IDs teacher has access to
+    const courseIds = await getTeacherCourseIds(teacherId);
+
+    // 2. Get teacher's courses with full details
     const courses = await Course.findAll({
-      where: { teacher_id: teacherId },
+      where: { id: { [Op.in]: courseIds } },
       include: [{
         model: BatchEnrollment,
         include: [{
@@ -47,11 +123,23 @@ export const showDashboard = async (req, res) => {
         }]
       }, {
         model: Assignment
+      }, {
+        model: User,
+        as: 'teacher',
+        attributes: ['id', 'full_name']
+      }, {
+        model: CourseTeacher,
+        as: 'courseTeachers',
+        include: [{
+          model: User,
+          as: 'teacher',
+          attributes: ['id', 'full_name']
+        }]
       }],
       order: [['created_at', 'DESC']]
     });
 
-    // 2. Calculate statistics
+    // 3. Calculate statistics
     const totalCourses = courses.length;
 
     // Get unique students across all teacher's courses
@@ -84,7 +172,7 @@ export const showDashboard = async (req, res) => {
       });
     }
 
-    // 3. Get recent activity (latest 5 submissions)
+    // 4. Get recent activity (latest 5 submissions)
     let recentSubmissions = [];
     if (assignmentIds.length > 0) {
       recentSubmissions = await Submission.findAll({
@@ -110,10 +198,10 @@ export const showDashboard = async (req, res) => {
       });
     }
 
-    // 4. Calculate total assignments
+    // 5. Calculate total assignments
     const totalAssignments = assignmentIds.length;
 
-    // 5. Render dashboard
+    // 6. Render dashboard
     res.render('teacher/dashboard', {
       user: req.user,
       stats: {
@@ -137,14 +225,17 @@ export const showDashboard = async (req, res) => {
  * Get All Courses
  * GET /teacher/courses
  * 
- * Displays list of all courses created by the teacher
+ * Displays list of all courses the teacher has access to (owned + assigned)
  */
 export const getCourses = async (req, res) => {
   try {
     const teacherId = req.user.id;
 
+    // Get all course IDs teacher has access to
+    const courseIds = await getTeacherCourseIds(teacherId);
+
     const courses = await Course.findAll({
-      where: { teacher_id: teacherId },
+      where: { id: { [Op.in]: courseIds } },
       include: [{
         model: BatchEnrollment,
         include: [{
@@ -157,13 +248,31 @@ export const getCourses = async (req, res) => {
         }]
       }, {
         model: Assignment
+      }, {
+        model: User,
+        as: 'teacher',
+        attributes: ['id', 'full_name']
+      }, {
+        model: CourseTeacher,
+        as: 'courseTeachers',
+        include: [{
+          model: User,
+          as: 'teacher',
+          attributes: ['id', 'full_name']
+        }]
       }],
       order: [['created_at', 'DESC']]
     });
 
+    // Add a flag to indicate if current teacher is the owner
+    const coursesWithOwnership = courses.map(course => ({
+      ...course.toJSON(),
+      isOwner: course.teacher_id === teacherId
+    }));
+
     res.render('teacher/courses', {
       user: req.user,
-      courses,
+      courses: coursesWithOwnership,
       pageTitle: 'My Courses'
     });
 
@@ -261,18 +370,20 @@ export const createCourse = async (req, res) => {
  * GET /teacher/courses/:id
  * 
  * Shows course details, enrolled batches, materials, assignments
- * Verifies teacher owns the course
+ * Verifies teacher has access to the course (owner or assigned)
  */
 export const getCourseDetail = async (req, res) => {
   try {
     const courseId = req.params.id;
     const teacherId = req.user.id;
 
-    const course = await Course.findOne({
-      where: { 
-        id: courseId,
-        teacher_id: teacherId // Ensure teacher owns this course
-      },
+    // Check if teacher has access to this course
+    const hasAccess = await checkTeacherCourseAccess(courseId, teacherId);
+    if (!hasAccess) {
+      return res.status(404).send('Course not found or you do not have permission to view it');
+    }
+
+    const course = await Course.findByPk(courseId, {
       include: [{
         model: BatchEnrollment,
         include: [{
@@ -291,11 +402,23 @@ export const getCourseDetail = async (req, res) => {
           model: AssignmentMaterial,
           as: 'materials'
         }]
+      }, {
+        model: User,
+        as: 'teacher',
+        attributes: ['id', 'full_name', 'email']
+      }, {
+        model: CourseTeacher,
+        as: 'courseTeachers',
+        include: [{
+          model: User,
+          as: 'teacher',
+          attributes: ['id', 'full_name', 'email']
+        }]
       }]
     });
 
     if (!course) {
-      return res.status(404).send('Course not found or you do not have permission to view it');
+      return res.status(404).send('Course not found');
     }
 
     // Calculate enrolled students
@@ -313,11 +436,30 @@ export const getCourseDetail = async (req, res) => {
       });
     });
 
+    // Check if current teacher is the owner
+    const isOwner = course.teacher_id === teacherId;
+
+    // Get teacher's permissions if not owner
+    let permissions = { can_edit: true, can_grade: true };
+    if (!isOwner) {
+      const courseTeacher = await CourseTeacher.findOne({
+        where: { course_id: courseId, teacher_id: teacherId }
+      });
+      if (courseTeacher) {
+        permissions = {
+          can_edit: courseTeacher.can_edit,
+          can_grade: courseTeacher.can_grade
+        };
+      }
+    }
+
     res.render('teacher/course-detail', {
       user: req.user,
       course,
       totalStudents,
       enrolledBatches,
+      isOwner,
+      permissions,
       pageTitle: course.title
     });
 
@@ -338,16 +480,21 @@ export const getMaterials = async (req, res) => {
     const courseId = req.params.id;
     const teacherId = req.user.id;
 
-    // Verify teacher owns the course
-    const course = await Course.findOne({
-      where: { 
-        id: courseId,
-        teacher_id: teacherId
-      }
-    });
+    // Verify teacher has access to the course (with edit permission for uploads)
+    const course = await checkTeacherCourseAccess(courseId, teacherId);
 
     if (!course) {
       return res.status(404).send('Course not found or you do not have permission to access it');
+    }
+
+    // Check edit permission
+    const isOwner = course.teacher_id === teacherId;
+    let canEdit = isOwner;
+    if (!isOwner) {
+      const courseTeacher = await CourseTeacher.findOne({
+        where: { course_id: courseId, teacher_id: teacherId }
+      });
+      canEdit = courseTeacher ? courseTeacher.can_edit : false;
     }
 
     // Get all materials for this course
@@ -360,6 +507,7 @@ export const getMaterials = async (req, res) => {
       user: req.user,
       course,
       materials,
+      canEdit,
       pageTitle: `Materials - ${course.title}`,
       success: req.query.success,
       error: req.query.error
@@ -384,16 +532,11 @@ export const uploadMaterial = async (req, res) => {
     const teacherId = req.user.id;
     const { title, description, material_url } = req.body;
 
-    // Verify teacher owns the course
-    const course = await Course.findOne({
-      where: { 
-        id: courseId,
-        teacher_id: teacherId
-      }
-    });
+    // Verify teacher has access and edit permission
+    const course = await checkTeacherCourseAccess(courseId, teacherId, { requireEdit: true });
 
     if (!course) {
-      return res.redirect(`/teacher/courses/${courseId}/materials?error=Course not found`);
+      return res.redirect(`/teacher/courses/${courseId}/materials?error=Course not found or you do not have edit permission`);
     }
 
     // Validation
@@ -453,20 +596,23 @@ export const deleteMaterial = async (req, res) => {
     const materialId = req.params.id;
     const teacherId = req.user.id;
 
-    // Find material with course to verify ownership
-    const material = await Material.findOne({
-      where: { id: materialId },
-      include: [{
-        model: Course,
-        as: 'course',
-        where: { teacher_id: teacherId }
-      }]
-    });
+    // Find material
+    const material = await Material.findByPk(materialId);
 
     if (!material) {
       return res.status(404).json({
         success: false,
-        message: 'Material not found or you do not have permission to delete it'
+        message: 'Material not found'
+      });
+    }
+
+    // Check teacher has edit access to the course
+    const course = await checkTeacherCourseAccess(material.course_id, teacherId, { requireEdit: true });
+
+    if (!course) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to delete this material'
       });
     }
 
@@ -548,16 +694,11 @@ export const showCreateAssignment = async (req, res) => {
     const courseId = req.params.id;
     const teacherId = req.user.id;
 
-    // Verify teacher owns the course
-    const course = await Course.findOne({
-      where: { 
-        id: courseId,
-        teacher_id: teacherId
-      }
-    });
+    // Verify teacher has access with edit permission
+    const course = await checkTeacherCourseAccess(courseId, teacherId, { requireEdit: true });
 
     if (!course) {
-      return res.status(404).send('Course not found or you do not have permission to access it');
+      return res.status(404).send('Course not found or you do not have permission to create assignments');
     }
 
     res.render('teacher/assignment-create', {
@@ -587,16 +728,11 @@ export const createAssignment = async (req, res) => {
     const { title, description, deadline, material_titles, url_titles, material_urls } = req.body;
     const uploadedFiles = req.files || [];
 
-    // Verify teacher owns the course
-    const course = await Course.findOne({
-      where: { 
-        id: courseId,
-        teacher_id: teacherId
-      }
-    });
+    // Verify teacher has access with edit permission
+    const course = await checkTeacherCourseAccess(courseId, teacherId, { requireEdit: true });
 
     if (!course) {
-      return res.redirect(`/teacher/courses?error=Course not found`);
+      return res.redirect(`/teacher/courses?error=Course not found or you do not have permission to create assignments`);
     }
 
     // Validation
@@ -686,17 +822,20 @@ export const showEditAssignment = async (req, res) => {
     const assignment = await Assignment.findByPk(assignmentId, {
       include: [{
         model: Course,
-        as: 'course',
-        where: { teacher_id: teacherId } // Verify teacher owns the course
+        as: 'course'
       }]
     });
 
-    // Check if assignment exists and teacher has access
+    // Check if assignment exists
     if (!assignment) {
-      return res.status(404).send('Assignment not found or you do not have permission to access it');
+      return res.status(404).send('Assignment not found');
     }
 
-    const course = assignment.course;
+    // Check if teacher has access with edit permission
+    const course = await checkTeacherCourseAccess(assignment.course_id, teacherId, { requireEdit: true });
+    if (!course) {
+      return res.status(403).send('You do not have permission to edit this assignment');
+    }
 
     // Get submission statistics
     const submissionCount = await Submission.count({
@@ -734,7 +873,7 @@ export const showEditAssignment = async (req, res) => {
  * POST /teacher/assignments/:id/edit
  * 
  * Updates assignment details (title, description, deadline)
- * Validates: future date, teacher ownership
+ * Validates: future date, teacher has edit permission
  */
 export const editAssignment = async (req, res) => {
   try {
@@ -746,14 +885,19 @@ export const editAssignment = async (req, res) => {
     const assignment = await Assignment.findByPk(assignmentId, {
       include: [{
         model: Course,
-        as: 'course',
-        where: { teacher_id: teacherId } // Verify teacher owns the course
+        as: 'course'
       }]
     });
 
-    // Check if assignment exists and teacher has access
+    // Check if assignment exists
     if (!assignment) {
-      return res.status(404).send('Assignment not found or you do not have permission to access it');
+      return res.status(404).send('Assignment not found');
+    }
+
+    // Check if teacher has edit permission
+    const course = await checkTeacherCourseAccess(assignment.course_id, teacherId, { requireEdit: true });
+    if (!course) {
+      return res.status(403).send('You do not have permission to edit this assignment');
     }
 
     // Validation
@@ -823,17 +967,30 @@ export const getSubmissions = async (req, res) => {
     const assignment = await Assignment.findByPk(assignmentId, {
       include: [{
         model: Course,
-        as: 'course',
-        where: { teacher_id: teacherId } // Verify teacher owns the course
+        as: 'course'
       }]
     });
 
-    // Check if assignment exists and teacher has access
+    // Check if assignment exists
     if (!assignment) {
-      return res.status(404).send('Assignment not found or access denied');
+      return res.status(404).send('Assignment not found');
     }
 
-    const course = assignment.course;
+    // Check if teacher has access (view submissions doesn't require grade permission, just access)
+    const course = await checkTeacherCourseAccess(assignment.course_id, teacherId);
+    if (!course) {
+      return res.status(403).send('You do not have permission to view submissions for this assignment');
+    }
+
+    // Check if teacher can grade
+    const isOwner = course.teacher_id === teacherId;
+    let canGrade = isOwner;
+    if (!isOwner) {
+      const courseTeacher = await CourseTeacher.findOne({
+        where: { course_id: assignment.course_id, teacher_id: teacherId }
+      });
+      canGrade = courseTeacher ? courseTeacher.can_grade : false;
+    }
 
     // 2. Get all submissions for this assignment with student details
     const submissions = await Submission.findAll({
@@ -857,6 +1014,7 @@ export const getSubmissions = async (req, res) => {
       assignment,
       course,
       submissions,
+      canGrade,
       success: req.query.success,
       error: req.query.error
     });
@@ -890,19 +1048,23 @@ export const showGradeForm = async (req, res) => {
         as: 'assignment',
         include: [{
           model: Course,
-          as: 'course',
-          where: { teacher_id: teacherId } // Verify teacher owns the course
+          as: 'course'
         }]
       }]
     });
 
-    // Check if submission exists and teacher has access
+    // Check if submission exists
     if (!submission) {
-      return res.status(404).send('Submission not found or access denied');
+      return res.status(404).send('Submission not found');
+    }
+
+    // Check if teacher has grade permission
+    const course = await checkTeacherCourseAccess(submission.assignment.course_id, teacherId, { requireGrade: true });
+    if (!course) {
+      return res.status(403).send('You do not have permission to grade this submission');
     }
 
     const assignment = submission.assignment;
-    const course = assignment.course;
 
     // 2. Render grading form
     res.render('teacher/grade-submission', {
@@ -932,21 +1094,26 @@ export const gradeSubmission = async (req, res) => {
     const submissionId = req.params.id;
     const { marks, feedback } = req.body;
 
-    // 1. Get submission with assignment to verify teacher ownership
+    // 1. Get submission with assignment
     const submission = await Submission.findByPk(submissionId, {
       include: [{
         model: Assignment,
         as: 'assignment',
         include: [{
           model: Course,
-          as: 'course',
-          where: { teacher_id: teacherId }
+          as: 'course'
         }]
       }]
     });
 
     if (!submission) {
-      return res.status(404).send('Submission not found or access denied');
+      return res.status(404).send('Submission not found');
+    }
+
+    // Check if teacher has grade permission
+    const course = await checkTeacherCourseAccess(submission.assignment.course_id, teacherId, { requireGrade: true });
+    if (!course) {
+      return res.status(403).send('You do not have permission to grade this submission');
     }
 
     // 2. Validate marks
@@ -985,22 +1152,31 @@ export const getGrades = async (req, res) => {
     const teacherId = req.user.id;
     const courseId = req.params.id;
 
-    // 1. Fetch course and verify teacher ownership
-    const course = await Course.findOne({
-      where: {
-        id: courseId,
-        teacher_id: teacherId
-      },
+    // 1. Check if teacher has access to the course
+    const course = await checkTeacherCourseAccess(courseId, teacherId);
+
+    if (!course) {
+      return res.status(404).send('Course not found or you do not have permission to access it');
+    }
+
+    // Check if teacher can grade
+    const isOwner = course.teacher_id === teacherId;
+    let canGrade = isOwner;
+    if (!isOwner) {
+      const courseTeacher = await CourseTeacher.findOne({
+        where: { course_id: courseId, teacher_id: teacherId }
+      });
+      canGrade = courseTeacher ? courseTeacher.can_grade : false;
+    }
+
+    // Get full course details
+    const fullCourse = await Course.findByPk(courseId, {
       include: [{
         model: User,
         as: 'teacher',
         attributes: ['id', 'full_name', 'email']
       }]
     });
-
-    if (!course) {
-      return res.status(404).send('Course not found or you do not have permission to access it');
-    }
 
     // 2. Import gradeService
     const { calculateSuggestedGrade } = await import('../services/gradeService.js');
@@ -1062,8 +1238,9 @@ export const getGrades = async (req, res) => {
     // 5. Render grades page
     res.render('teacher/grades', {
       user: req.user,
-      course,
+      course: fullCourse,
       studentGrades,
+      canGrade,
       success: req.query.success,
       error: req.query.error
     });
@@ -1083,16 +1260,11 @@ export const saveGrade = async (req, res) => {
     const courseId = req.params.id;
     const { studentId, grade, remarks } = req.body;
 
-    // 1. Verify course ownership
-    const course = await Course.findOne({
-      where: {
-        id: courseId,
-        teacher_id: teacherId
-      }
-    });
+    // 1. Verify teacher has grade permission
+    const course = await checkTeacherCourseAccess(courseId, teacherId, { requireGrade: true });
 
     if (!course) {
-      return res.redirect(`/teacher/courses/${courseId}/grades?error=Course not found or access denied`);
+      return res.redirect(`/teacher/courses/${courseId}/grades?error=Course not found or you do not have grade permission`);
     }
 
     // 2. Validate grade input
@@ -1159,22 +1331,18 @@ export const saveGrade = async (req, res) => {
  * Only students in this course can be graded
  */
 export const bulkUploadGrades = async (req, res) => {
+  const { sequelize } = await import('../models/index.js');
   const transaction = await sequelize.transaction();
   
   try {
     const teacherId = req.user.id;
     const courseId = req.params.id;
 
-    // 1. Verify course ownership
-    const course = await Course.findOne({
-      where: {
-        id: courseId,
-        teacher_id: teacherId
-      }
-    });
+    // 1. Verify teacher has grade permission
+    const course = await checkTeacherCourseAccess(courseId, teacherId, { requireGrade: true });
 
     if (!course) {
-      return res.redirect(`/teacher/courses/${courseId}/grades?error=Course not found or access denied`);
+      return res.redirect(`/teacher/courses/${courseId}/grades?error=Course not found or you do not have grade permission`);
     }
 
     // 2. Check if file was uploaded
@@ -1386,11 +1554,12 @@ export const deleteAssignment = async (req, res) => {
       });
     }
 
-    // 2. Verify course ownership
-    if (assignment.course.teacher_id !== teacherId) {
+    // 2. Verify teacher has edit permission
+    const course = await checkTeacherCourseAccess(assignment.course_id, teacherId, { requireEdit: true });
+    if (!course) {
       return res.status(403).json({ 
         success: false, 
-        message: 'Unauthorized: You can only delete your own assignments' 
+        message: 'You do not have permission to delete this assignment' 
       });
     }
 
