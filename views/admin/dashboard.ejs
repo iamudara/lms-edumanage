@@ -26,48 +26,47 @@
     <!-- Statistics Cards Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       
-      <!-- Total Users Card -->
+      <!-- Total Users Card (Students + Teachers) -->
       <div class="card bg-primary text-primary-content shadow-lg">
         <div class="card-body">
           <h2 class="card-title text-lg">👥 Total Users</h2>
-          <p class="text-4xl font-bold"><%= stats.totalUsers %></p>
+          <p class="text-4xl font-bold"><%= stats.userCountDisplay %></p>
           <div class="text-sm opacity-80 mt-2">
-            <div>Admins: <%= stats.adminCount %></div>
             <div>Teachers: <%= stats.teacherCount %></div>
             <div>Students: <%= stats.studentCount %></div>
           </div>
         </div>
       </div>
 
-      <!-- Total Batches Card -->
+      <!-- Platform Usage - Active Users This Week -->
       <div class="card bg-secondary text-secondary-content shadow-lg">
         <div class="card-body">
-          <h2 class="card-title text-lg">📚 Total Batches</h2>
-          <p class="text-4xl font-bold"><%= stats.totalBatches %></p>
+          <h2 class="card-title text-lg">📈 Platform Usage</h2>
+          <p class="text-4xl font-bold"><%= stats.activeUsersThisWeek %></p>
           <div class="text-sm opacity-80 mt-2">
-            Active student groups
+            Active users this week
           </div>
         </div>
       </div>
 
-      <!-- Total Courses Card -->
+      <!-- System Activity - Submissions This Week -->
       <div class="card bg-accent text-accent-content shadow-lg">
         <div class="card-body">
-          <h2 class="card-title text-lg">🎓 Total Courses</h2>
-          <p class="text-4xl font-bold"><%= stats.totalCourses %></p>
+          <h2 class="card-title text-lg">⚡ System Activity</h2>
+          <p class="text-4xl font-bold"><%= stats.submissionsThisWeek %></p>
           <div class="text-sm opacity-80 mt-2">
-            Available courses
+            Submissions this week
           </div>
         </div>
       </div>
 
-      <!-- Total Enrollments Card -->
+      <!-- New Enrollments - This Year -->
       <div class="card bg-info text-info-content shadow-lg">
         <div class="card-body">
-          <h2 class="card-title text-lg">✅ Batch Enrollments</h2>
-          <p class="text-4xl font-bold"><%= stats.totalEnrollments %></p>
+          <h2 class="card-title text-lg">✨ New Enrollments</h2>
+          <p class="text-4xl font-bold"><%= stats.enrollmentsThisYear %></p>
           <div class="text-sm opacity-80 mt-2">
-            Batches enrolled in courses
+            Enrolled this year
           </div>
         </div>
       </div>
@@ -115,22 +114,106 @@
     <!-- Charts Row -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
       
-      <!-- User Distribution Pie Chart -->
+      <!-- Activity Trends Chart (Line/Area Chart) -->
       <div class="card bg-base-100 shadow-lg">
         <div class="card-body">
-          <h2 class="card-title text-xl mb-4">User Distribution</h2>
-          <div class="flex justify-center">
-            <canvas id="userDistributionChart" style="max-height: 300px;"></canvas>
+          <h2 class="card-title text-xl mb-4">📊 Activity Trends (Last 30 Days)</h2>
+          <div>
+            <canvas id="activityTrendsChart" style="max-height: 300px;"></canvas>
           </div>
         </div>
       </div>
 
-      <!-- Enrollments Per Course Bar Chart -->
+      <!-- Teacher Workload Distribution (Horizontal Bar Chart) -->
       <div class="card bg-base-100 shadow-lg">
         <div class="card-body">
-          <h2 class="card-title text-xl mb-4">Top 10 Courses by Batch Enrollments</h2>
+          <h2 class="card-title text-xl mb-4">👨‍🏫 Teacher Workload Distribution</h2>
           <div>
-            <canvas id="enrollmentsChart" style="max-height: 300px;"></canvas>
+            <canvas id="teacherWorkloadChart" style="max-height: 300px;"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Alerts & Notifications and Resource Usage Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      
+      <!-- Alerts & Notifications -->
+      <div class="card bg-base-100 shadow-lg">
+        <div class="card-body">
+          <h2 class="card-title text-xl mb-4">🚨 Alerts & Notifications</h2>
+          
+          <!-- Inactive Teachers Alert -->
+          <% if (alerts.inactiveTeachers && alerts.inactiveTeachers.length > 0) { %>
+            <div class="alert alert-warning mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <div class="w-full">
+                <h3 class="font-bold">Inactive Teachers (14+ days)</h3>
+                <div class="text-sm mt-2">
+                  <% alerts.inactiveTeachers.forEach(teacher => { %>
+                    <div class="flex justify-between py-1 border-b border-base-300 last:border-b-0">
+                      <span><%= teacher.full_name %></span>
+                      <span class="text-xs opacity-70">
+                        Last active: <%= Math.floor((Date.now() - new Date(teacher.updated_at)) / (1000 * 60 * 60 * 24)) %> days ago
+                      </span>
+                    </div>
+                  <% }); %>
+                </div>
+              </div>
+            </div>
+          <% } else { %>
+            <div class="alert alert-success">
+              <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>All teachers are active! ✨</span>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Resource Usage -->
+      <div class="card bg-base-100 shadow-lg">
+        <div class="card-body">
+          <h2 class="card-title text-xl mb-4">💾 Resource Usage</h2>
+          
+          <!-- Total Files Uploaded -->
+          <div class="mb-4">
+            <div class="flex justify-between mb-2">
+              <span class="text-sm font-semibold">📁 Total Files Uploaded</span>
+              <span class="text-sm font-bold text-primary"><%= stats.totalFilesUploaded %> files</span>
+            </div>
+            <progress class="progress progress-primary w-full" value="<%= stats.totalFilesUploaded %>" max="1000"></progress>
+            <div class="text-xs text-base-content/60 mt-1">
+              <%= stats.totalFilesUploaded %> / 1000 files
+            </div>
+          </div>
+
+          <!-- Storage Usage -->
+          <div class="mb-4">
+            <div class="flex justify-between mb-2">
+              <span class="text-sm font-semibold">💿 Estimated Storage</span>
+              <span class="text-sm font-bold text-secondary"><%= stats.estimatedStorageGB %> GB</span>
+            </div>
+            <progress class="progress progress-secondary w-full" value="<%= parseFloat(stats.estimatedStorageGB) %>" max="100"></progress>
+            <div class="text-xs text-base-content/60 mt-1">
+              <%= stats.estimatedStorageGB %> / 100 GB
+            </div>
+          </div>
+
+          <!-- Additional Stats -->
+          <div class="stats stats-vertical shadow w-full">
+            <div class="stat py-2 px-4">
+              <div class="stat-title text-xs">Course Materials</div>
+              <div class="stat-value text-2xl text-accent"><%= stats.totalAssignments %></div>
+            </div>
+            <div class="stat py-2 px-4">
+              <div class="stat-title text-xs">Student Submissions</div>
+              <div class="stat-value text-2xl text-info"><%= stats.totalSubmissions %></div>
+            </div>
           </div>
         </div>
       </div>
@@ -170,7 +253,13 @@
                           <%= user.role %>
                         </span>
                       </td>
-                      <td><%= new Date(user.created_at).toLocaleDateString() %></td>
+                      <td>
+                        <% if (user.created_at) { %>
+                          <%= new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                        <% } else { %>
+                          <span class="text-xs opacity-50">Before tracking</span>
+                        <% } %>
+                      </td>
                     </tr>
                   <% }); %>
                 <% } %>
@@ -203,7 +292,13 @@
                     <tr>
                       <td><%= sub.student ? sub.student.full_name : 'N/A' %></td>
                       <td><%= sub.assignment ? sub.assignment.title : 'N/A' %></td>
-                      <td><%= new Date(sub.submitted_at).toLocaleDateString() %></td>
+                      <td>
+                        <% if (sub.submitted_at) { %>
+                          <%= new Date(sub.submitted_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+                        <% } else { %>
+                          N/A
+                        <% } %>
+                      </td>
                     </tr>
                   <% }); %>
                 <% } %>
@@ -248,58 +343,129 @@
   <!-- Chart.js Configuration -->
   <script>
     // @ts-nocheck - EJS template syntax causes false TypeScript errors
-    // User Distribution Pie Chart
-    const userCtx = document.getElementById('userDistributionChart');
-    new Chart(userCtx, {
-      type: 'pie',
+    
+    // ============================================
+    // Activity Trends Line/Area Chart
+    // ============================================
+    const activityCtx = document.getElementById('activityTrendsChart');
+    new Chart(activityCtx, {
+      type: 'line',
       data: {
-        labels: <%- JSON.stringify(charts.userDistribution.labels) %>,
-        datasets: [{
-          data: <%- JSON.stringify(charts.userDistribution.data) %>,
-          backgroundColor: <%- JSON.stringify(charts.userDistribution.colors) %>,
-          borderWidth: 2,
-          borderColor: '#ffffff'
-        }]
+        labels: <%- JSON.stringify(charts.activityTrends.labels) %>,
+        datasets: [
+          {
+            label: 'Submissions',
+            data: <%- JSON.stringify(charts.activityTrends.submissions) %>,
+            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+            borderColor: 'rgba(59, 130, 246, 1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+          },
+          {
+            label: 'Grades Entered',
+            data: <%- JSON.stringify(charts.activityTrends.grades) %>,
+            backgroundColor: 'rgba(16, 185, 129, 0.2)',
+            borderColor: 'rgba(16, 185, 129, 1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+          },
+          {
+            label: 'User Logins',
+            data: <%- JSON.stringify(charts.activityTrends.logins) %>,
+            backgroundColor: 'rgba(245, 158, 11, 0.2)',
+            borderColor: 'rgba(245, 158, 11, 1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+          }
+        ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: true,
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
         plugins: {
           legend: {
             position: 'bottom'
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
           }
-        }
-      }
-    });
-
-    // Enrollments Per Course Bar Chart
-    const enrollmentCtx = document.getElementById('enrollmentsChart');
-    new Chart(enrollmentCtx, {
-      type: 'bar',
-      data: {
-        labels: <%- JSON.stringify(charts.courseLabels) %>,
-        datasets: [{
-          label: 'Batch Enrollments',
-          data: <%- JSON.stringify(charts.enrollmentData) %>,
-          backgroundColor: 'rgba(59, 130, 246, 0.8)',
-          borderColor: 'rgba(59, 130, 246, 1)',
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
+        },
         scales: {
           y: {
             beginAtZero: true,
             ticks: {
               stepSize: 1
             }
+          },
+          x: {
+            ticks: {
+              maxRotation: 45,
+              minRotation: 45
+            }
           }
-        },
+        }
+      }
+    });
+
+    // ============================================
+    // Teacher Workload Horizontal Bar Chart
+    // ============================================
+    const workloadCtx = document.getElementById('teacherWorkloadChart');
+    new Chart(workloadCtx, {
+      type: 'bar',
+      data: {
+        labels: <%- JSON.stringify(charts.teacherWorkload.labels) %>,
+        datasets: [
+          {
+            label: 'Assignments Created',
+            data: <%- JSON.stringify(charts.teacherWorkload.assignmentsCreated) %>,
+            backgroundColor: 'rgba(59, 130, 246, 0.8)',
+            borderColor: 'rgba(59, 130, 246, 1)',
+            borderWidth: 1
+          },
+          {
+            label: 'Courses Teaching',
+            data: <%- JSON.stringify(charts.teacherWorkload.coursesTeaching) %>,
+            backgroundColor: 'rgba(16, 185, 129, 0.8)',
+            borderColor: 'rgba(16, 185, 129, 1)',
+            borderWidth: 1
+          },
+          {
+            label: 'Pending Grades',
+            data: <%- JSON.stringify(charts.teacherWorkload.pendingGrades) %>,
+            backgroundColor: 'rgba(239, 68, 68, 0.8)',
+            borderColor: 'rgba(239, 68, 68, 1)',
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: true,
         plugins: {
           legend: {
-            display: false
+            position: 'bottom'
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1
+            }
           }
         }
       }

@@ -57,6 +57,11 @@ User.hasMany(Grade, {
   as: 'grades'
 });
 
+User.hasMany(Assignment, {
+  foreignKey: 'created_by',
+  as: 'assignments'
+});
+
 // Course associations
 Course.hasMany(CourseTeacher, {
   foreignKey: 'course_id',
