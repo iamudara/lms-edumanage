@@ -261,27 +261,23 @@ export const showDashboard = async (req, res) => {
     const submittedCount = await Submission.count({
       where: { student_id: studentId }
     });
-    const gradedSubmissionsCount = await Submission.count({
+    
+    // Count submissions from this week
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - 7);
+    const submittedThisWeek = await Submission.count({
       where: { 
         student_id: studentId,
-        marks: { [Op.ne]: null }
+        submitted_at: { [Op.gte]: weekStart }
       }
     });
+    
     const pendingCount = totalAssignments - submittedCount;
-
-    // Calculate average score from graded submissions
-    let averageScore = null;
-    if (gradedSubmissionsCount > 0) {
-      const gradedSubmissions = await Submission.findAll({
-        where: { 
-          student_id: studentId,
-          marks: { [Op.ne]: null }
-        },
-        attributes: ['marks']
-      });
-      const totalScore = gradedSubmissions.reduce((sum, s) => sum + parseFloat(s.marks), 0);
-      averageScore = (totalScore / gradedSubmissionsCount).toFixed(1);
-    }
+    
+    // Calculate completion rate (% of assignments submitted)
+    const completionRate = totalAssignments > 0 
+      ? ((submittedCount / totalAssignments) * 100).toFixed(1)
+      : 0;
 
     res.render('student/dashboard', {
       title: 'Student Dashboard',
@@ -292,11 +288,9 @@ export const showDashboard = async (req, res) => {
       recentGradedSubmissions,
       stats: {
         totalCourses,
-        totalAssignments,
-        submittedCount,
-        pendingCount,
-        gradedSubmissionsCount,
-        averageScore
+        toSubmit: pendingCount,
+        submittedThisWeek,
+        completionRate
       }
     });
 
