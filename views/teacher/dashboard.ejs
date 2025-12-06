@@ -79,11 +79,18 @@
             <div class="flex justify-between items-center mb-4">
               <h2 class="card-title text-2xl">
                 <i class="fas fa-book-open mr-2"></i>My Courses
+                <span class="badge badge-secondary">Recently Updated</span>
               </h2>
               <a href="/teacher/courses/create" class="btn btn-primary btn-sm">
                 <i class="fas fa-plus mr-2"></i>Create Course
               </a>
             </div>
+            <% if (totalAllCourses > courses.length) { %>
+              <p class="text-sm text-base-content/70 mb-4">
+                Showing <%= courses.length %> of <%= totalAllCourses %> courses
+                <a href="/teacher/courses" class="link link-primary ml-1">View all →</a>
+              </p>
+            <% } %>
 
             <% if (courses.length === 0) { %>
               <div class="alert alert-info">

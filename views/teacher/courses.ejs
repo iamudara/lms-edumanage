@@ -25,6 +25,20 @@
       </a>
     </div>
 
+    <!-- Batch Filter Tabs -->
+    <% if (batches && batches.length > 0) { %>
+      <div class="flex flex-wrap gap-2 mb-6">
+        <button class="btn btn-primary batch-filter-btn" data-batch="all">
+          <i class="fas fa-th-large mr-1"></i>All Batches
+        </button>
+        <% batches.forEach(batch => { %>
+          <button class="btn btn-ghost batch-filter-btn" data-batch="<%= batch.id %>">
+            <i class="fas fa-users mr-1"></i><%= batch.name %>
+          </button>
+        <% }); %>
+      </div>
+    <% } %>
+
     <!-- Courses Grid -->
     <% if (courses.length === 0) { %>
       <div class="card bg-base-100 shadow-xl">
@@ -40,13 +54,15 @@
         </div>
       </div>
     <% } else { %>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="courses-grid">
         <% courses.forEach(course => { 
           // Calculate enrolled students
           let enrolledStudents = 0;
+          const courseBatchIds = [];
           if (course.BatchEnrollments) {
             course.BatchEnrollments.forEach(enrollment => {
               enrolledStudents += enrollment.batch.students.length;
+              courseBatchIds.push(enrollment.batch.id);
             });
           }
           
@@ -57,7 +73,9 @@
           const primaryTeacher = course.courseTeachers?.find(ct => ct.is_primary);
           const isOwner = primaryTeacher?.teacher_id === user.id;
         %>
-          <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow cursor-pointer" onclick="window.location.href='/teacher/courses/<%= course.id %>'">
+          <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow cursor-pointer course-card" 
+               onclick="window.location.href='/teacher/courses/<%= course.id %>'"
+               data-batch-ids="<%= courseBatchIds.join(',') %>">>
             <div class="card-body">
               <!-- Course Code Badge and Ownership -->
               <div class="flex justify-between items-start mb-2">
@@ -198,5 +216,40 @@
   </div>
 
   <%- include('../shared/footer') %>
+
+  <script>
+    // Batch filter functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const filterButtons = document.querySelectorAll('.batch-filter-btn');
+      const courseCards = document.querySelectorAll('.course-card');
+
+      filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const selectedBatch = this.dataset.batch;
+
+          // Update button styles
+          filterButtons.forEach(btn => {
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-ghost');
+          });
+          this.classList.remove('btn-ghost');
+          this.classList.add('btn-primary');
+
+          // Filter courses
+          courseCards.forEach(card => {
+            const cardBatches = card.dataset.batchIds.split(',');
+            
+            if (selectedBatch === 'all') {
+              card.style.display = '';
+            } else if (cardBatches.includes(selectedBatch)) {
+              card.style.display = '';
+            } else {
+              card.style.display = 'none';
+            }
+          });
+        });
+      });
+    });
+  </script>
 </body>
 </html>

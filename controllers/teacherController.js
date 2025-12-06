@@ -114,7 +114,7 @@ export const showDashboard = async (req, res) => {
     const courseIds = await getTeacherCourseIds(teacherId);
 
     // 2. Get teacher's courses with full details
-    const courses = await Course.findAll({
+    const allCourses = await Course.findAll({
       where: { id: { [Op.in]: courseIds } },
       include: [{
         model: BatchEnrollment,
@@ -140,12 +140,48 @@ export const showDashboard = async (req, res) => {
       order: [['created_at', 'DESC']]
     });
 
-    // 3. Calculate statistics
-    const totalCourses = courses.length;
+    // Get latest material update for each course (including materials in folders)
+    const folderMaterialUpdates = await sequelize.query(`
+      SELECT 
+        fc.course_id,
+        MAX(m.updated_at) as latest_folder_material_update
+      FROM folder_courses fc
+      JOIN materials m ON m.folder_id = fc.folder_id
+      WHERE fc.course_id IN (:courseIds)
+      GROUP BY fc.course_id
+    `, {
+      replacements: { courseIds: courseIds.length > 0 ? courseIds : [0] },
+      type: QueryTypes.SELECT
+    });
+
+    // Create a map of course_id to latest update time
+    const latestUpdateMap = new Map();
+    
+    // Add folder material updates
+    folderMaterialUpdates.forEach(row => {
+      const folderDate = new Date(row.latest_folder_material_update);
+      const existing = latestUpdateMap.get(row.course_id);
+      if (!existing || folderDate > existing) {
+        latestUpdateMap.set(row.course_id, folderDate);
+      }
+    });
+
+    // Sort courses by most recently updated material and get top 3 for dashboard
+    const courses = [...allCourses]
+      .map(course => {
+        const latestMaterialUpdate = latestUpdateMap.get(course.id) || new Date(0);
+        return { course, latestMaterialUpdate };
+      })
+      .sort((a, b) => b.latestMaterialUpdate - a.latestMaterialUpdate)
+      .slice(0, 3)
+      .map(item => item.course);
+
+    // 3. Calculate statistics (use allCourses for accurate counts)
+    const totalCourses = allCourses.length;
 
     // Get unique students across all teacher's courses
     const studentIds = new Set();
-    courses.forEach(course => {
+    allCourses.forEach(course => {
       course.BatchEnrollments.forEach(enrollment => {
         enrollment.batch.students.forEach(student => {
           studentIds.add(student.id);
@@ -156,7 +192,7 @@ export const showDashboard = async (req, res) => {
 
     // Get all assignments for teacher's courses
     const assignmentIds = [];
-    courses.forEach(course => {
+    allCourses.forEach(course => {
       course.Assignments.forEach(assignment => {
         assignmentIds.push(assignment.id);
       });
@@ -212,6 +248,7 @@ export const showDashboard = async (req, res) => {
         pendingSubmissions
       },
       courses,
+      totalAllCourses: allCourses.length,
       recentSubmissions,
       pageTitle: 'Teacher Dashboard'
     });
@@ -274,9 +311,26 @@ export const getCourses = async (req, res) => {
       };
     });
 
+    // Get unique batches from courses for filtering
+    const batchMap = new Map();
+    coursesWithOwnership.forEach(course => {
+      if (course.BatchEnrollments) {
+        course.BatchEnrollments.forEach(enrollment => {
+          if (enrollment.batch && !batchMap.has(enrollment.batch.id)) {
+            batchMap.set(enrollment.batch.id, enrollment.batch.name);
+          }
+        });
+      }
+    });
+    
+    // Convert to array and sort
+    const batches = Array.from(batchMap, ([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
     res.render('teacher/courses', {
       user: req.user,
       courses: coursesWithOwnership,
+      batches,
       pageTitle: 'My Courses'
     });
 
