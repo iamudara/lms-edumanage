@@ -17,86 +17,131 @@
         📚 My Courses
       </h1>
       <p class="text-base-content/70">
-        All courses you are enrolled in through your batch
+        All courses you are enrolled in through your batch, organized by semester
       </p>
     </div>
 
     <% if (courses && courses.length > 0) { %>
-      <!-- Courses Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <% courses.forEach(course => { %>
-          <div class="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow">
-            <div class="card-body">
-              <!-- Course Header -->
-              <div class="flex items-start justify-between mb-4">
-                <div class="flex-1">
-                  <h2 class="card-title text-xl mb-2">
-                    <%= course.title %>
-                  </h2>
-                  <div class="flex gap-2 mb-3">
-                    <span class="badge badge-primary"><%= course.code %></span>
-                  </div>
-                </div>
-              </div>
+      <%
+        // Group courses by semester
+        const coursesBySemester = {};
+        const semesterOrder = ['Semester 1', 'Semester 2', 'Semester 3', 'Semester 4', 'Semester 5', 'Semester 6', 'Semester 7', 'Semester 8', 'Other'];
+        
+        courses.forEach(course => {
+          const semester = course.semester || 'Other';
+          if (!coursesBySemester[semester]) {
+            coursesBySemester[semester] = [];
+          }
+          coursesBySemester[semester].push(course);
+        });
 
-              <!-- Course Description -->
-              <p class="text-base-content/70 text-sm mb-4 line-clamp-3">
-                <%= course.description || 'No description available.' %>
-              </p>
+        // Sort semesters in order
+        const sortedSemesters = Object.keys(coursesBySemester).sort((a, b) => {
+          const indexA = semesterOrder.indexOf(a);
+          const indexB = semesterOrder.indexOf(b);
+          return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+        });
+      %>
 
-              <!-- Course Info -->
-              <div class="space-y-2 mb-4">
-                <div class="flex items-center gap-2 text-sm">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  <span class="text-base-content/60">Instructor:</span>
-                  <% const primaryTeacher = course.courseTeachers?.find(ct => ct.is_primary)?.teacher; %>
-                  <span class="font-medium"><%= primaryTeacher ? primaryTeacher.full_name : 'Unknown' %></span>
-                </div>
-
-                <% if (course.BatchEnrollments && course.BatchEnrollments[0] && course.BatchEnrollments[0].batch) { %>
-                  <div class="flex items-center gap-2 text-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <span class="text-base-content/60">Batch:</span>
-                    <span class="font-medium"><%= course.BatchEnrollments[0].batch.name %></span>
-                  </div>
-                <% } %>
-              </div>
-
-              <!-- Course Statistics -->
-              <div class="stats stats-vertical shadow mb-4">
-                <div class="stat py-2 px-4">
-                  <div class="stat-title text-xs">Materials</div>
-                  <div class="stat-value text-2xl text-primary">
-                    <%= course.Materials ? course.Materials.length : 0 %>
-                  </div>
-                </div>
-                
-                <div class="stat py-2 px-4">
-                  <div class="stat-title text-xs">Assignments</div>
-                  <div class="stat-value text-2xl text-secondary">
-                    <%= course.Assignments ? course.Assignments.length : 0 %>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Action Button -->
-              <div class="card-actions justify-end">
-                <a href="/student/courses/<%= course.id %>" class="btn btn-primary btn-block">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                  View Course
-                </a>
-              </div>
-            </div>
-          </div>
+      <!-- Semester Filter Tabs -->
+      <div class="flex flex-wrap gap-2 mb-6">
+        <button class="btn btn-primary btn-sm semester-tab" data-semester="all" onclick="filterBySemester('all', this)">
+          All
+        </button>
+        <% sortedSemesters.forEach(semester => { %>
+          <button class="btn btn-ghost btn-sm semester-tab" data-semester="<%= semester %>" onclick="filterBySemester('<%= semester %>', this)">
+            <%= semester %>
+          </button>
         <% }) %>
       </div>
+
+      <!-- Courses grouped by semester -->
+      <% sortedSemesters.forEach(semester => { %>
+        <div class="semester-section mb-8" data-semester="<%= semester %>">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="badge badge-lg badge-primary gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <%= semester %>
+            </div>
+            <span class="text-base-content/60 text-sm"><%= coursesBySemester[semester].length %> course<%= coursesBySemester[semester].length !== 1 ? 's' : '' %></span>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <% coursesBySemester[semester].forEach(course => { %>
+              <div class="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow">
+                <div class="card-body">
+                  <!-- Course Header -->
+                  <div class="flex items-start justify-between mb-4">
+                    <div class="flex-1">
+                      <h2 class="card-title text-xl mb-2">
+                        <%= course.title %>
+                      </h2>
+                      <div class="flex gap-2 mb-3">
+                        <span class="badge badge-primary"><%= course.code %></span>
+                        <% if (course.semester) { %>
+                          <span class="badge badge-outline badge-sm"><%= course.semester %></span>
+                        <% } %>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Course Description -->
+                  <p class="text-base-content/70 text-sm mb-4 line-clamp-3">
+                    <%= course.description || 'No description available.' %>
+                  </p>
+
+                  <!-- Course Info -->
+                  <div class="space-y-2 mb-4">
+                    <div class="flex items-center gap-2 text-sm">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      <span class="text-base-content/60">Instructor:</span>
+                      <% const primaryTeacher = course.courseTeachers?.find(ct => ct.is_primary)?.teacher; %>
+                      <span class="font-medium"><%= primaryTeacher ? primaryTeacher.full_name : 'Unknown' %></span>
+                    </div>
+
+                    <% if (course.BatchEnrollments && course.BatchEnrollments[0] && course.BatchEnrollments[0].batch) { %>
+                      <div class="flex items-center gap-2 text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <span class="text-base-content/60">Batch:</span>
+                        <span class="font-medium"><%= course.BatchEnrollments[0].batch.name %></span>
+                      </div>
+                    <% } %>
+                  </div>
+
+                  <!-- Course Statistics -->
+                  <div class="flex gap-4 mb-4">
+                    <div class="flex items-center gap-1 text-sm">
+                      <span class="text-primary font-bold"><%= course.Materials ? course.Materials.length : 0 %></span>
+                      <span class="text-base-content/60">Materials</span>
+                    </div>
+                    <div class="flex items-center gap-1 text-sm">
+                      <span class="text-secondary font-bold"><%= course.Assignments ? course.Assignments.length : 0 %></span>
+                      <span class="text-base-content/60">Assignments</span>
+                    </div>
+                  </div>
+
+                  <!-- Action Button -->
+                  <div class="card-actions justify-end">
+                    <a href="/student/courses/<%= course.id %>" class="btn btn-primary btn-block">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      View Course
+                    </a>
+                  </div>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        </div>
+      <% }) %>
 
       <!-- Summary Card -->
       <div class="card bg-base-100 shadow-lg mt-8">
@@ -175,5 +220,26 @@
   </div>
 
   <%- include('../shared/footer') %>
+
+  <script>
+    function filterBySemester(semester, clickedBtn) {
+      // Update active button styling
+      document.querySelectorAll('.semester-tab').forEach(btn => {
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-ghost');
+      });
+      clickedBtn.classList.remove('btn-ghost');
+      clickedBtn.classList.add('btn-primary');
+
+      // Filter sections
+      document.querySelectorAll('.semester-section').forEach(section => {
+        if (semester === 'all' || section.dataset.semester === semester) {
+          section.style.display = 'block';
+        } else {
+          section.style.display = 'none';
+        }
+      });
+    }
+  </script>
 </body>
 </html>

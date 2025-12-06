@@ -107,8 +107,8 @@ export const showDashboard = async (req, res) => {
       return res.status(400).send('You are not assigned to any batch. Please contact the administrator.');
     }
 
-    // Get enrolled courses (via batch enrollments)
-    const enrolledCourses = await Course.findAll({
+    // Get ALL enrolled courses (via batch enrollments)
+    const allEnrolledCourses = await Course.findAll({
       include: [
         {
           model: BatchEnrollment,
@@ -134,14 +134,74 @@ export const showDashboard = async (req, res) => {
         {
           model: Material,
           required: false,
-          attributes: ['id']
+          attributes: ['id', 'updated_at']
         }
       ],
       order: [['created_at', 'DESC']]
     });
 
-    // Get all assignments for enrolled courses
-    const courseIds = enrolledCourses.map(course => course.id);
+    // Get latest material update for each course (including materials in folders)
+    const courseLatestMaterials = await sequelize.query(`
+      SELECT 
+        c.id as course_id,
+        MAX(m.updated_at) as latest_material_update
+      FROM courses c
+      LEFT JOIN materials m ON m.course_id = c.id
+      LEFT JOIN folder_courses fc ON fc.course_id = c.id
+      LEFT JOIN materials fm ON fm.folder_id = fc.folder_id
+      WHERE c.id IN (:courseIds)
+      GROUP BY c.id
+      HAVING MAX(m.updated_at) IS NOT NULL OR MAX(fm.updated_at) IS NOT NULL
+    `, {
+      replacements: { courseIds: allEnrolledCourses.map(c => c.id) },
+      type: QueryTypes.SELECT
+    });
+
+    // Also get materials from folders
+    const folderMaterialUpdates = await sequelize.query(`
+      SELECT 
+        fc.course_id,
+        MAX(m.updated_at) as latest_folder_material_update
+      FROM folder_courses fc
+      JOIN materials m ON m.folder_id = fc.folder_id
+      WHERE fc.course_id IN (:courseIds)
+      GROUP BY fc.course_id
+    `, {
+      replacements: { courseIds: allEnrolledCourses.map(c => c.id) },
+      type: QueryTypes.SELECT
+    });
+
+    // Create a map of course_id to latest update time
+    const latestUpdateMap = new Map();
+    
+    // Add direct material updates
+    courseLatestMaterials.forEach(row => {
+      if (row.latest_material_update) {
+        latestUpdateMap.set(row.course_id, new Date(row.latest_material_update));
+      }
+    });
+    
+    // Merge folder material updates (keep the most recent)
+    folderMaterialUpdates.forEach(row => {
+      const folderDate = new Date(row.latest_folder_material_update);
+      const existing = latestUpdateMap.get(row.course_id);
+      if (!existing || folderDate > existing) {
+        latestUpdateMap.set(row.course_id, folderDate);
+      }
+    });
+
+    // Sort courses by most recently updated material and get top 3
+    const enrolledCourses = [...allEnrolledCourses]
+      .map(course => {
+        const latestMaterialUpdate = latestUpdateMap.get(course.id) || new Date(0);
+        return { course, latestMaterialUpdate };
+      })
+      .sort((a, b) => b.latestMaterialUpdate - a.latestMaterialUpdate)
+      .slice(0, 3)
+      .map(item => item.course);
+
+    // Get all course IDs for statistics (from all enrolled courses)
+    const courseIds = allEnrolledCourses.map(course => course.id);
     
     // Get upcoming assignments (not submitted, deadline in future)
     const upcomingAssignments = await Assignment.findAll({
@@ -193,8 +253,8 @@ export const showDashboard = async (req, res) => {
       limit: 5
     });
 
-    // Calculate statistics
-    const totalCourses = enrolledCourses.length;
+    // Calculate statistics (use allEnrolledCourses for accurate counts)
+    const totalCourses = allEnrolledCourses.length;
     const totalAssignments = await Assignment.count({
       where: { course_id: { [Op.in]: courseIds } }
     });
@@ -227,6 +287,7 @@ export const showDashboard = async (req, res) => {
       title: 'Student Dashboard',
       user: req.user,
       enrolledCourses,
+      totalEnrolledCourses: allEnrolledCourses.length,
       pendingAssignments,
       recentGradedSubmissions,
       stats: {
