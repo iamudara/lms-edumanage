@@ -214,8 +214,11 @@ export const showDashboard = async (req, res) => {
     const recentUsers = await User.findAll({
       order: [['created_at', 'DESC']],
       limit: 5,
-      attributes: ['full_name', 'role', 'created_at']
+      attributes: ['full_name', 'role', 'created_at'],
+      raw: true
     });
+
+    console.log('Recent users data:', recentUsers); // Debug log
 
     const recentSubmissions = await Submission.findAll({
       order: [['submitted_at', 'DESC']],
