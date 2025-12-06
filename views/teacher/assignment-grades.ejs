@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grades - <%= course.title %> | LMS EduManage</title>
+  <link rel="stylesheet" href="/css/output.css">
+  <link rel="stylesheet" href="/css/custom.css">
+</head>
+<body>
+  <%- include('../shared/navbar', { user }) %>
+
+  <main class="container mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs mb-6">
+      <ul>
+        <li><a href="/teacher/dashboard">Dashboard</a></li>
+        <li><a href="/teacher/courses">Courses</a></li>
+        <li><a href="/teacher/courses/<%= course.id %>"><%= course.title %></a></li>
+        <li>Grades</li>
+      </ul>
+    </div>
+
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+      <div>
+        <h1 class="text-3xl font-bold">Assignment Grades</h1>
+        <p class="text-base-content/70 mt-1">
+          <%= course.code %> - <%= course.title %>
+        </p>
+      </div>
+      <a href="/teacher/courses/<%= course.id %>" class="btn btn-outline">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        Back to Course
+      </a>
+    </div>
+
+    <!-- Statistics Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div class="card bg-base-100 shadow-md">
+        <div class="card-body p-4">
+          <div class="stat p-0">
+            <div class="stat-title text-sm">Total Assignments</div>
+            <div class="stat-value text-2xl text-primary"><%= assignments.length %></div>
+          </div>
+        </div>
+      </div>
+      <div class="card bg-base-100 shadow-md">
+        <div class="card-body p-4">
+          <div class="stat p-0">
+            <div class="stat-title text-sm">Total Submissions</div>
+            <div class="stat-value text-2xl text-info">
+              <%= assignments.reduce((sum, a) => sum + a.submissionCount, 0) %>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card bg-base-100 shadow-md">
+        <div class="card-body p-4">
+          <div class="stat p-0">
+            <div class="stat-title text-sm">Graded</div>
+            <div class="stat-value text-2xl text-success">
+              <%= assignments.reduce((sum, a) => sum + a.gradedCount, 0) %>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card bg-base-100 shadow-md">
+        <div class="card-body p-4">
+          <div class="stat p-0">
+            <div class="stat-title text-sm">Pending</div>
+            <div class="stat-value text-2xl text-warning">
+              <%= assignments.reduce((sum, a) => sum + (a.submissionCount - a.gradedCount), 0) %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assignments List -->
+    <div class="card bg-base-100 shadow-lg">
+      <div class="card-body">
+        <h2 class="card-title mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+          </svg>
+          Select an Assignment to Grade
+        </h2>
+
+        <% if (assignments.length === 0) { %>
+          <div class="alert alert-info">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span>No assignments created for this course yet. <a href="/teacher/courses/<%= course.id %>/assignments/create" class="link link-primary">Create one now</a></span>
+          </div>
+        <% } else { %>
+          <div class="overflow-x-auto">
+            <table class="table table-zebra w-full">
+              <thead>
+                <tr>
+                  <th>Assignment</th>
+                  <th>Deadline</th>
+                  <th>Submissions</th>
+                  <th>Grading Progress</th>
+                  <th>Average Score</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% assignments.forEach(assignment => { %>
+                  <% 
+                    const progressPercent = assignment.submissionCount > 0 
+                      ? Math.round((assignment.gradedCount / assignment.submissionCount) * 100)
+                      : 0;
+                    const isPastDeadline = new Date(assignment.deadline) < new Date();
+                    const pendingCount = assignment.submissionCount - assignment.gradedCount;
+                  %>
+                  <tr>
+                    <td>
+                      <div class="font-bold"><%= assignment.title %></div>
+                      <div class="text-sm text-base-content/60">
+                        <% if (assignment.description) { %>
+                          <%= assignment.description.substring(0, 50) %><%= assignment.description.length > 50 ? '...' : '' %>
+                        <% } %>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="text-sm">
+                        <%= new Date(assignment.deadline).toLocaleDateString('en-US', { 
+                          month: 'short', day: 'numeric', year: 'numeric' 
+                        }) %>
+                      </div>
+                      <div class="text-xs text-base-content/60">
+                        <%= new Date(assignment.deadline).toLocaleTimeString('en-US', { 
+                          hour: '2-digit', minute: '2-digit' 
+                        }) %>
+                      </div>
+                      <% if (isPastDeadline) { %>
+                        <span class="badge badge-error badge-xs">Closed</span>
+                      <% } else { %>
+                        <span class="badge badge-success badge-xs">Open</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <div class="flex items-center gap-2">
+                        <span class="text-lg font-semibold"><%= assignment.submissionCount %></span>
+                        <span class="text-sm text-base-content/60">submissions</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex items-center gap-3">
+                        <div class="w-24">
+                          <progress 
+                            class="progress <%= progressPercent === 100 ? 'progress-success' : progressPercent > 0 ? 'progress-warning' : 'progress-error' %>" 
+                            value="<%= progressPercent %>" 
+                            max="100"
+                          ></progress>
+                        </div>
+                        <div class="text-sm">
+                          <span class="font-semibold <%= progressPercent === 100 ? 'text-success' : 'text-warning' %>">
+                            <%= assignment.gradedCount %>/<%= assignment.submissionCount %>
+                          </span>
+                          <span class="text-base-content/60">graded</span>
+                        </div>
+                      </div>
+                      <% if (pendingCount > 0) { %>
+                        <div class="text-xs text-warning mt-1">
+                          <%= pendingCount %> pending
+                        </div>
+                      <% } %>
+                    </td>
+                    <td>
+                      <% if (assignment.gradedCount > 0) { %>
+                        <span class="text-lg font-semibold text-info">
+                          <%= assignment.averageScore.toFixed(1) %>%
+                        </span>
+                      <% } else { %>
+                        <span class="text-base-content/50">—</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <div class="flex gap-2">
+                        <a href="/teacher/assignments/<%= assignment.id %>/submissions" 
+                           class="btn btn-sm btn-primary"
+                           title="View Submissions & Grade">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0118 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3l1.5 1.5 3-3.75" />
+                          </svg>
+                          Grade
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </main>
+
+  <%- include('../shared/footer') %>
+</body>
+</html>

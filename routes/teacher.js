@@ -27,6 +27,8 @@ import {
   saveGrade,
   bulkUploadGrades,
   downloadGradeTemplate,
+  bulkUploadAssignmentGrades,
+  downloadAssignmentGradeTemplate,
   // Folder management
   createFolder,
   renameFolder,
@@ -172,6 +174,20 @@ router.delete('/assignments/:id', deleteAssignment);
  * Lists all student submissions for a specific assignment
  */
 router.get('/assignments/:id/submissions', getSubmissions);
+
+/**
+ * Bulk grade upload for an assignment
+ * POST /teacher/assignments/:id/grades/bulk
+ * Processes CSV file for bulk grading assignment submissions
+ */
+router.post('/assignments/:id/grades/bulk', uploadCsv, bulkUploadAssignmentGrades);
+
+/**
+ * Download CSV template for assignment grade upload
+ * GET /teacher/assignments/:id/grades/template
+ * Downloads a CSV template pre-filled with students who submitted
+ */
+router.get('/assignments/:id/grades/template', downloadAssignmentGradeTemplate);
 
 /**
  * View single submission for grading

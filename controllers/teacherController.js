@@ -1430,94 +1430,55 @@ export const getGrades = async (req, res) => {
       return res.status(404).send('Course not found or you do not have permission to access it');
     }
 
-    // Check if teacher can grade
-    const isOwner = await isTeacherPrimary(courseId, teacherId);
-    let canGrade = isOwner;
-    if (!isOwner) {
-      const courseTeacher = await CourseTeacher.findOne({
-        where: { course_id: courseId, teacher_id: teacherId }
-      });
-      canGrade = courseTeacher ? courseTeacher.can_grade : false;
-    }
-
-    // Get full course details with primary teacher info
-    const fullCourse = await Course.findByPk(courseId, {
-      include: [{
-        model: CourseTeacher,
-        as: 'courseTeachers',
-        where: { is_primary: true },
-        required: false,
-        include: [{
-          model: User,
-          as: 'teacher',
-          attributes: ['id', 'full_name', 'email']
-        }]
-      }]
-    });
-
-    // 2. Import gradeService
-    const { calculateSuggestedGrade } = await import('../services/gradeService.js');
-
-    // 3. Get all students who have submitted assignments in this course
-    const submissions = await Submission.findAll({
-      include: [
-        {
-          model: Assignment,
-          as: 'assignment',
-          where: { course_id: courseId },
-          attributes: ['id', 'title', 'course_id']
-        },
-        {
-          model: User,
-          as: 'student',
-          attributes: ['id', 'full_name', 'email', 'username']
-        }
-      ],
-      attributes: ['student_id'],
+    // 2. Get all assignments for this course with submission/grade stats
+    const assignments = await Assignment.findAll({
+      where: { course_id: courseId },
+      order: [['deadline', 'DESC']],
       raw: true
     });
 
-    // Get unique student IDs
-    const uniqueStudentIds = [...new Set(submissions.map(s => s.student_id))];
+    // 3. Get submission and grading statistics for each assignment
+    const assignmentsWithStats = await Promise.all(
+      assignments.map(async (assignment) => {
+        // Get total submissions count
+        const submissionCount = await Submission.count({
+          where: { assignment_id: assignment.id }
+        });
 
-    // 4. For each student, calculate suggested grade and fetch current grade
-    const studentGrades = await Promise.all(
-      uniqueStudentIds.map(async (studentId) => {
-        // Find student info
-        const studentSubmission = submissions.find(s => s.student_id === studentId);
-        const studentName = studentSubmission['student.full_name'];
-        const studentEmail = studentSubmission['student.email'];
-
-        // Calculate suggested grade
-        const gradeData = await calculateSuggestedGrade(studentId, courseId);
-
-        // Fetch current grade if exists
-        const currentGrade = await Grade.findOne({
-          where: {
-            course_id: courseId,
-            student_id: studentId
+        // Get graded submissions count (where marks is not null)
+        const gradedCount = await Submission.count({
+          where: { 
+            assignment_id: assignment.id,
+            marks: { [Op.not]: null }
           }
         });
 
+        // Calculate average score for graded submissions
+        const avgResult = await Submission.findOne({
+          where: { 
+            assignment_id: assignment.id,
+            marks: { [Op.not]: null }
+          },
+          attributes: [
+            [sequelize.fn('AVG', sequelize.col('marks')), 'avgScore']
+          ],
+          raw: true
+        });
+
         return {
-          studentId,
-          studentName,
-          studentEmail,
-          ...gradeData,
-          currentGrade: currentGrade ? {
-            grade: currentGrade.grade,
-            remarks: currentGrade.remarks
-          } : null
+          ...assignment,
+          submissionCount,
+          gradedCount,
+          averageScore: avgResult?.avgScore ? parseFloat(avgResult.avgScore) : 0
         };
       })
     );
 
-    // 5. Render grades page
-    res.render('teacher/grades', {
+    // 4. Render assignment grades selection page
+    res.render('teacher/assignment-grades', {
       user: req.user,
-      course: fullCourse,
-      studentGrades,
-      canGrade,
+      course,
+      assignments: assignmentsWithStats,
       success: req.query.success,
       error: req.query.error
     });
@@ -1802,6 +1763,245 @@ student3@example.com,B+,Well done`;
 
   } catch (error) {
     console.error('Download Template Error:', error);
+    res.status(500).send('Error generating template');
+  }
+};
+
+/**
+ * Bulk upload grades for a specific assignment
+ * POST /teacher/assignments/:id/grades/bulk
+ * Processes CSV file for bulk grading submissions
+ */
+export const bulkUploadAssignmentGrades = async (req, res) => {
+  const { sequelize } = await import('../models/index.js');
+  const transaction = await sequelize.transaction();
+  
+  try {
+    const teacherId = req.user.id;
+    const assignmentId = req.params.id;
+
+    // 1. Get assignment and verify teacher access
+    const assignment = await Assignment.findByPk(assignmentId, {
+      include: [{
+        model: Course,
+        as: 'course'
+      }]
+    });
+
+    if (!assignment) {
+      return res.redirect(`/teacher/assignments?error=Assignment not found`);
+    }
+
+    // 2. Verify teacher has grade permission
+    const course = await checkTeacherCourseAccess(assignment.course_id, teacherId, { requireGrade: true });
+
+    if (!course) {
+      return res.redirect(`/teacher/assignments/${assignmentId}/submissions?error=You do not have grade permission`);
+    }
+
+    // 3. Check if file was uploaded
+    if (!req.file) {
+      return res.redirect(`/teacher/assignments/${assignmentId}/submissions?error=No CSV file uploaded`);
+    }
+
+    // 4. Parse CSV
+    const { parseCsv } = await import('../services/csvService.js');
+    const parseResult = parseCsv(req.file.buffer);
+
+    if (!parseResult.success) {
+      const { formatErrors } = await import('../services/csvService.js');
+      const errorMsg = formatErrors(parseResult.errors);
+      return res.redirect(`/teacher/assignments/${assignmentId}/submissions?error=${encodeURIComponent('CSV Parse Error: ' + errorMsg)}`);
+    }
+
+    // 5. Get all submissions for this assignment with student info
+    const submissions = await Submission.findAll({
+      where: { assignment_id: assignmentId },
+      include: [{
+        model: User,
+        as: 'student',
+        attributes: ['id', 'email', 'username', 'full_name']
+      }],
+      raw: true
+    });
+
+    // Create student lookup map by email and username
+    const submissionMap = new Map();
+    for (const submission of submissions) {
+      const studentEmail = submission['student.email'];
+      const studentUsername = submission['student.username'];
+      
+      if (studentEmail) submissionMap.set(studentEmail.toLowerCase(), submission.id);
+      if (studentUsername) submissionMap.set(studentUsername.toLowerCase(), submission.id);
+    }
+
+    // 6. Process each row
+    const results = {
+      success: [],
+      skipped: [],
+      failed: []
+    };
+
+    for (const row of parseResult.data) {
+      try {
+        // Get student identifier
+        const identifier = (row.student_email || row.username || row.email || '').toLowerCase();
+        
+        if (!identifier) {
+          results.skipped.push({
+            identifier: 'Unknown',
+            reason: 'No student identifier provided'
+          });
+          continue;
+        }
+
+        const submissionId = submissionMap.get(identifier);
+
+        if (!submissionId) {
+          results.skipped.push({
+            identifier: row.student_email || row.username || row.email,
+            reason: 'Student not found or has not submitted this assignment'
+          });
+          continue;
+        }
+
+        // Get marks value
+        const marksValue = row.marks || row.score || row.grade;
+        if (marksValue === undefined || marksValue === null || marksValue === '') {
+          results.skipped.push({
+            identifier: row.student_email || row.username || row.email,
+            reason: 'No marks value provided'
+          });
+          continue;
+        }
+
+        // Validate marks format (0-100)
+        const marks = parseFloat(marksValue);
+        if (isNaN(marks) || marks < 0 || marks > 100) {
+          results.failed.push({
+            identifier: row.student_email || row.username || row.email,
+            reason: `Invalid marks value: ${marksValue} (must be 0-100)`
+          });
+          continue;
+        }
+
+        // Update submission with marks and feedback
+        await Submission.update({
+          marks: marks,
+          feedback: row.feedback || row.remarks || null
+        }, {
+          where: { id: submissionId },
+          transaction
+        });
+
+        results.success.push({
+          identifier: row.student_email || row.username || row.email,
+          marks: marks,
+          action: 'graded'
+        });
+
+      } catch (rowError) {
+        console.error('Row processing error:', rowError);
+        results.failed.push({
+          identifier: row.student_email || row.username || row.email,
+          reason: rowError.message
+        });
+      }
+    }
+
+    // 7. Commit transaction
+    await transaction.commit();
+
+    // 8. Build success message
+    let successMsg = `Bulk grading complete: ${results.success.length} submission(s) graded`;
+    if (results.skipped.length > 0) {
+      successMsg += `, ${results.skipped.length} skipped`;
+    }
+    if (results.failed.length > 0) {
+      successMsg += `, ${results.failed.length} failed`;
+    }
+
+    // Log details for debugging
+    console.log('Bulk Assignment Grade Upload Results:', {
+      assignmentId,
+      success: results.success.length,
+      skipped: results.skipped.length,
+      failed: results.failed.length
+    });
+
+    res.redirect(`/teacher/assignments/${assignmentId}/submissions?success=${encodeURIComponent(successMsg)}`);
+
+  } catch (error) {
+    await transaction.rollback();
+    console.error('Bulk Upload Assignment Grades Error:', error);
+    res.redirect(`/teacher/assignments/${req.params.id}/submissions?error=Error processing bulk upload: ${error.message}`);
+  }
+};
+
+/**
+ * Download CSV template for assignment grade upload
+ * GET /teacher/assignments/:id/grades/template
+ * Downloads a CSV template pre-filled with students who submitted
+ */
+export const downloadAssignmentGradeTemplate = async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+    const assignmentId = req.params.id;
+
+    // 1. Get assignment
+    const assignment = await Assignment.findByPk(assignmentId, {
+      include: [{
+        model: Course,
+        as: 'course'
+      }]
+    });
+
+    if (!assignment) {
+      return res.status(404).send('Assignment not found');
+    }
+
+    // 2. Verify teacher has access
+    const course = await checkTeacherCourseAccess(assignment.course_id, teacherId);
+    if (!course) {
+      return res.status(403).send('Access denied');
+    }
+
+    // 3. Get all submissions for this assignment
+    const submissions = await Submission.findAll({
+      where: { assignment_id: assignmentId },
+      include: [{
+        model: User,
+        as: 'student',
+        attributes: ['email', 'full_name']
+      }],
+      order: [[{ model: User, as: 'student' }, 'full_name', 'ASC']]
+    });
+
+    // 4. Generate CSV content
+    let csvContent = 'student_email,marks,feedback\n';
+    
+    if (submissions.length > 0) {
+      // Pre-fill with students who submitted
+      submissions.forEach(submission => {
+        const email = submission.student.email || '';
+        const existingMarks = submission.marks !== null ? submission.marks : '';
+        const existingFeedback = submission.feedback ? `"${submission.feedback.replace(/"/g, '""')}"` : '';
+        csvContent += `${email},${existingMarks},${existingFeedback}\n`;
+      });
+    } else {
+      // Provide example rows
+      csvContent += 'student@example.com,85,Good work\n';
+      csvContent += 'student2@example.com,90,Excellent\n';
+    }
+
+    // 5. Send file
+    const filename = `${assignment.title.replace(/[^a-z0-9]/gi, '-')}-grades-template.csv`;
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csvContent);
+
+  } catch (error) {
+    console.error('Download Assignment Grade Template Error:', error);
     res.status(500).send('Error generating template');
   }
 };
