@@ -209,6 +209,79 @@ export const showDashboard = async (req, res) => {
       });
     }
 
+    // Count active assignments (deadline not yet passed)
+    let activeAssignments = 0;
+    if (assignmentIds.length > 0) {
+      activeAssignments = await Assignment.count({
+        where: {
+          id: { [Op.in]: assignmentIds },
+          deadline: { [Op.gt]: new Date() }
+        }
+      });
+    }
+
+    // Count submissions received today
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+    
+    let submissionsToday = 0;
+    if (assignmentIds.length > 0) {
+      submissionsToday = await Submission.count({
+        where: {
+          assignment_id: { [Op.in]: assignmentIds },
+          submitted_at: {
+            [Op.between]: [todayStart, todayEnd]
+          }
+        }
+      });
+    }
+
+    // Calculate average submission rate (% of students submitting on time)
+    let avgSubmissionRate = 0;
+    if (assignmentIds.length > 0) {
+      // Get all assignments with deadline passed
+      const closedAssignments = await Assignment.findAll({
+        where: {
+          id: { [Op.in]: assignmentIds },
+          deadline: { [Op.lt]: new Date() }
+        },
+        attributes: ['id', 'deadline']
+      });
+
+      if (closedAssignments.length > 0) {
+        const closedAssignmentIds = closedAssignments.map(a => a.id);
+        
+        // Count on-time submissions (submitted before deadline)
+        const onTimeSubmissions = await Submission.count({
+          where: {
+            assignment_id: { [Op.in]: closedAssignmentIds }
+          },
+          include: [{
+            model: Assignment,
+            as: 'assignment',
+            where: sequelize.where(
+              sequelize.col('Submission.submitted_at'),
+              { [Op.lte]: sequelize.col('assignment.deadline') }
+            ),
+            attributes: []
+          }]
+        });
+
+        // Get total submissions for closed assignments
+        const totalClosedSubmissions = await Submission.count({
+          where: {
+            assignment_id: { [Op.in]: closedAssignmentIds }
+          }
+        });
+
+        if (totalClosedSubmissions > 0) {
+          avgSubmissionRate = Math.round((onTimeSubmissions / totalClosedSubmissions) * 100);
+        }
+      }
+    }
+
     // 4. Get recent activity (latest 5 submissions)
     let recentSubmissions = [];
     if (assignmentIds.length > 0) {
@@ -261,9 +334,9 @@ export const showDashboard = async (req, res) => {
       user: req.user,
       stats: {
         totalCourses,
-        totalStudents,
-        totalAssignments,
-        pendingSubmissions
+        activeAssignments,
+        submissionsToday,
+        avgSubmissionRate
       },
       courses,
       totalAllCourses: allCourses.length,

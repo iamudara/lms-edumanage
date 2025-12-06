@@ -22,51 +22,51 @@
 
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <!-- Total Courses -->
+      <!-- My Courses -->
       <div class="stats shadow bg-primary text-primary-content">
         <div class="stat">
           <div class="stat-figure text-primary-content/50">
             <i class="fas fa-book text-4xl"></i>
           </div>
-          <div class="stat-title text-primary-content/80">Total Courses</div>
+          <div class="stat-title text-primary-content/80">My Courses</div>
           <div class="stat-value"><%= stats.totalCourses %></div>
-          <div class="stat-desc text-primary-content/60">Your active courses</div>
+          <div class="stat-desc text-primary-content/60">Total courses teaching</div>
         </div>
       </div>
 
-      <!-- Total Students -->
+      <!-- Active Assignments -->
       <div class="stats shadow bg-secondary text-secondary-content">
         <div class="stat">
           <div class="stat-figure text-secondary-content/50">
-            <i class="fas fa-users text-4xl"></i>
+            <i class="fas fa-clipboard-check text-4xl"></i>
           </div>
-          <div class="stat-title text-secondary-content/80">Total Students</div>
-          <div class="stat-value"><%= stats.totalStudents %></div>
-          <div class="stat-desc text-secondary-content/60">Enrolled in your courses</div>
+          <div class="stat-title text-secondary-content/80">Active Assignments</div>
+          <div class="stat-value"><%= stats.activeAssignments %></div>
+          <div class="stat-desc text-secondary-content/60">Currently open assignments</div>
         </div>
       </div>
 
-      <!-- Total Assignments -->
+      <!-- Submissions Today -->
       <div class="stats shadow bg-accent text-accent-content">
         <div class="stat">
           <div class="stat-figure text-accent-content/50">
-            <i class="fas fa-clipboard-list text-4xl"></i>
+            <i class="fas fa-calendar-day text-4xl"></i>
           </div>
-          <div class="stat-title text-accent-content/80">Assignments</div>
-          <div class="stat-value"><%= stats.totalAssignments %></div>
-          <div class="stat-desc text-accent-content/60">Created by you</div>
+          <div class="stat-title text-accent-content/80">Submissions Today</div>
+          <div class="stat-value"><%= stats.submissionsToday %></div>
+          <div class="stat-desc text-accent-content/60">New submissions received today</div>
         </div>
       </div>
 
-      <!-- Pending Submissions -->
-      <div class="stats shadow bg-warning text-warning-content">
+      <!-- Average Submission Rate -->
+      <div class="stats shadow bg-info text-info-content">
         <div class="stat">
-          <div class="stat-figure text-warning-content/50">
-            <i class="fas fa-hourglass-half text-4xl"></i>
+          <div class="stat-figure text-info-content/50">
+            <i class="fas fa-chart-line text-4xl"></i>
           </div>
-          <div class="stat-title text-warning-content/80">Pending Grading</div>
-          <div class="stat-value"><%= stats.pendingSubmissions %></div>
-          <div class="stat-desc text-warning-content/60">Awaiting your review</div>
+          <div class="stat-title text-info-content/80">Avg Submission Rate</div>
+          <div class="stat-value"><%= stats.avgSubmissionRate %>%</div>
+          <div class="stat-desc text-info-content/60">Students submitting on time</div>
         </div>
       </div>
     </div>
