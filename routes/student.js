@@ -11,7 +11,6 @@ import {
   getCourseView,
   getAssignmentDetail,
   submitAssignment,
-  getSubmissions,
   getGrades
 } from '../controllers/studentController.js';
 import { uploadSubmission } from '../middleware/upload.js';
@@ -57,17 +56,9 @@ router.get('/assignments/:id', getAssignmentDetail);
 router.post('/assignments/:id/submit', uploadSubmission, submitAssignment);
 
 /**
- * Submission History
- * GET /student/submissions
- * Display: all submissions, status, scores, feedback
- * Optional: filter by course
- */
-router.get('/submissions', getSubmissions);
-
-/**
- * Grades View
+ * Grades View (with Submissions)
  * GET /student/grades
- * Display: all course grades, assignment scores breakdown, GPA/average
+ * Display: all course grades, assignment scores breakdown, submissions, organized by semester
  */
 router.get('/grades', getGrades);
 

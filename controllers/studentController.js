@@ -843,14 +843,15 @@ export const getSubmissions = async (req, res) => {
 /**
  * Get Grades View
  * GET /student/grades
- * Display: assignment scores breakdown by course
+ * Display: assignment scores breakdown by course, organized by semester
+ * Shows submission details with view submission button for each assignment
  */
 export const getGrades = async (req, res) => {
   try {
     const studentId = req.user.id;
     const batchId = req.user.batch_id;
 
-    // Get student's enrolled courses with teacher info
+    // Get student's enrolled courses with teacher info and semester
     const enrolledCourses = await Course.findAll({
       include: [
         {
@@ -870,11 +871,11 @@ export const getGrades = async (req, res) => {
           }]
         }
       ],
-      attributes: ['id', 'title', 'code'],
-      order: [['title', 'ASC']]
+      attributes: ['id', 'title', 'code', 'semester'],
+      order: [['semester', 'ASC'], ['title', 'ASC']]
     });
 
-    // Get all submissions for this student
+    // Get all submissions for this student with file URLs
     const submissions = await Submission.findAll({
       where: { student_id: studentId },
       include: [{
@@ -884,28 +885,49 @@ export const getGrades = async (req, res) => {
       }]
     });
 
+    // Sign submission file URLs for authenticated access
+    const signedSubmissions = signUrlsInArray(submissions, 'file_url', 'submission');
+
     // Create a map of submissions by assignment_id
     const submissionMap = {};
-    submissions.forEach(sub => {
+    signedSubmissions.forEach(sub => {
       submissionMap[sub.assignment_id] = sub;
     });
 
-    // Build course grades data
-    const courseGrades = [];
+    // Build course grades data organized by semester
+    const semesterData = {};
     let totalGradedAssignments = 0;
-    let totalAssignmentScore = 0;
+    let totalSubmissions = 0;
+    let pendingGrading = 0;
 
     for (const course of enrolledCourses) {
+      const semester = course.semester || 'Other';
+      
+      if (!semesterData[semester]) {
+        semesterData[semester] = {
+          courses: [],
+          totalGraded: 0,
+          totalScore: 0,
+          averageScore: null
+        };
+      }
+
       // Get all assignments for this course
       const assignments = await Assignment.findAll({
         where: { course_id: course.id },
-        attributes: ['id', 'title', 'deadline'],
+        attributes: ['id', 'title', 'deadline', 'description'],
         order: [['deadline', 'ASC']]
       });
 
       // Add submission info to each assignment
       const assignmentsWithSubmissions = assignments.map(assignment => {
         const submission = submissionMap[assignment.id] || null;
+        if (submission) {
+          totalSubmissions++;
+          if (submission.marks === null) {
+            pendingGrading++;
+          }
+        }
         return {
           id: assignment.id,
           title: assignment.title,
@@ -914,7 +936,9 @@ export const getGrades = async (req, res) => {
             id: submission.id,
             submitted_at: submission.submitted_at,
             marks: submission.marks,
-            feedback: submission.feedback
+            feedback: submission.feedback,
+            file_url: submission.file_url,
+            submission_text: submission.submission_text
           } : null
         };
       });
@@ -924,46 +948,66 @@ export const getGrades = async (req, res) => {
         a => a.submission && a.submission.marks !== null
       );
       const gradedCount = gradedAssignments.length;
-      const totalAssignments = assignments.length;
+      const totalAssignmentsCount = assignments.length;
 
       // Calculate average score for this course
-      let averageScore = null;
+      let courseAverageScore = null;
       if (gradedCount > 0) {
         const totalScore = gradedAssignments.reduce(
           (sum, a) => sum + parseFloat(a.submission.marks), 0
         );
-        averageScore = totalScore / gradedCount;
+        courseAverageScore = totalScore / gradedCount;
         totalGradedAssignments += gradedCount;
-        totalAssignmentScore += totalScore;
+        
+        // Add to semester totals
+        semesterData[semester].totalGraded += gradedCount;
+        semesterData[semester].totalScore += totalScore;
       }
 
-      courseGrades.push({
+      semesterData[semester].courses.push({
         course: {
           id: course.id,
           title: course.title,
           code: course.code,
+          semester: course.semester,
           courseTeachers: course.courseTeachers
         },
         assignments: assignmentsWithSubmissions,
-        totalAssignments,
+        totalAssignments: totalAssignmentsCount,
         gradedAssignments: gradedCount,
-        averageScore
+        submittedAssignments: assignmentsWithSubmissions.filter(a => a.submission).length,
+        averageScore: courseAverageScore
       });
     }
+
+    // Calculate semester averages
+    Object.keys(semesterData).forEach(semester => {
+      const data = semesterData[semester];
+      if (data.totalGraded > 0) {
+        data.averageScore = data.totalScore / data.totalGraded;
+      }
+    });
+
+    // Sort semesters (1-8, then 'Other')
+    const sortedSemesters = Object.keys(semesterData).sort((a, b) => {
+      if (a === 'Other') return 1;
+      if (b === 'Other') return -1;
+      return parseInt(a) - parseInt(b);
+    });
 
     // Calculate overall statistics
     const stats = {
       totalCourses: enrolledCourses.length,
       totalGradedAssignments,
-      averageAssignmentScore: totalGradedAssignments > 0 
-        ? totalAssignmentScore / totalGradedAssignments 
-        : null
+      totalSubmissions,
+      pendingGrading
     };
 
     res.render('student/grades', {
       title: 'My Grades',
       user: req.user,
-      courseGrades,
+      semesterData,
+      sortedSemesters,
       stats
     });
 
