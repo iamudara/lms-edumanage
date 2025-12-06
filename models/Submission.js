@@ -58,8 +58,12 @@ export default (sequelize) => {
     underscored: true,
     hooks: {
       beforeUpdate: (submission) => {
-        // Auto-update submitted_at on resubmission
-        submission.submitted_at = new Date();
+        // Only update submitted_at if file_url or submission_text changed (actual resubmission)
+        // Don't update when just grading (marks/feedback changes)
+        const changedFields = submission.changed();
+        if (changedFields && (changedFields.includes('file_url') || changedFields.includes('submission_text'))) {
+          submission.submitted_at = new Date();
+        }
       }
     }
   });
