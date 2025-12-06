@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= pageTitle %> - LMS EduManage</title>
+  <link href="/css/output.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- DataTables CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+  <!-- jQuery (required for DataTables) -->
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <!-- DataTables JS -->
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+</head>
+<body>
+  <%- include('../shared/navbar') %>
+
+  <div class="container mx-auto px-4 py-8">
+    <!-- Page Header -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-base-content mb-2">
+          <i class="fas fa-clipboard-list mr-2"></i>All Assignments
+        </h1>
+        <p class="text-base-content/70">Manage assignments across all your courses</p>
+      </div>
+      <% if (courses.length > 0) { %>
+        <div class="dropdown dropdown-end">
+          <label tabindex="0" class="btn btn-primary">
+            <i class="fas fa-plus mr-2"></i>Create Assignment
+            <i class="fas fa-chevron-down ml-2"></i>
+          </label>
+          <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-64 max-h-96 overflow-y-auto">
+            <li class="menu-title"><span>Select Course</span></li>
+            <% courses.forEach(course => { %>
+              <li>
+                <a href="/teacher/courses/<%= course.id %>/assignments/create">
+                  <span class="badge badge-ghost badge-sm"><%= course.code %></span>
+                  <%= course.title %>
+                </a>
+              </li>
+            <% }); %>
+          </ul>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <!-- Total Assignments -->
+      <div class="stats shadow bg-primary text-primary-content">
+        <div class="stat">
+          <div class="stat-figure text-primary-content/50">
+            <i class="fas fa-clipboard-list text-4xl"></i>
+          </div>
+          <div class="stat-title text-primary-content/80">Total Assignments</div>
+          <div class="stat-value"><%= stats.total %></div>
+          <div class="stat-desc text-primary-content/60">Across all courses</div>
+        </div>
+      </div>
+
+      <!-- Active Assignments -->
+      <div class="stats shadow bg-success text-success-content">
+        <div class="stat">
+          <div class="stat-figure text-success-content/50">
+            <i class="fas fa-clock text-4xl"></i>
+          </div>
+          <div class="stat-title text-success-content/80">Active</div>
+          <div class="stat-value"><%= stats.active %></div>
+          <div class="stat-desc text-success-content/60">Deadline not passed</div>
+        </div>
+      </div>
+
+      <!-- Overdue Assignments -->
+      <div class="stats shadow bg-error text-error-content">
+        <div class="stat">
+          <div class="stat-figure text-error-content/50">
+            <i class="fas fa-hourglass-end text-4xl"></i>
+          </div>
+          <div class="stat-title text-error-content/80">Overdue</div>
+          <div class="stat-value"><%= stats.overdue %></div>
+          <div class="stat-desc text-error-content/60">Deadline passed</div>
+        </div>
+      </div>
+
+      <!-- Pending Grading -->
+      <div class="stats shadow bg-warning text-warning-content">
+        <div class="stat">
+          <div class="stat-figure text-warning-content/50">
+            <i class="fas fa-pen text-4xl"></i>
+          </div>
+          <div class="stat-title text-warning-content/80">Pending Grading</div>
+          <div class="stat-value"><%= stats.pendingGrading %></div>
+          <div class="stat-desc text-warning-content/60">Submissions to grade</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card bg-base-100 shadow-xl mb-6">
+      <div class="card-body py-4">
+        <div class="flex flex-wrap gap-4 items-center">
+          <!-- Course Filter -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Filter by Course</span>
+            </label>
+            <select id="courseFilter" class="select select-bordered select-sm w-full max-w-xs">
+              <option value="">All Courses</option>
+              <% courses.forEach(course => { %>
+                <option value="<%= course.id %>"><%= course.code %> - <%= course.title %></option>
+              <% }); %>
+            </select>
+          </div>
+
+          <!-- Status Filter -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Status</span>
+            </label>
+            <select id="statusFilter" class="select select-bordered select-sm w-full max-w-xs">
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="overdue">Overdue</option>
+            </select>
+          </div>
+
+          <!-- Grading Status Filter -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Grading</span>
+            </label>
+            <select id="gradingFilter" class="select select-bordered select-sm w-full max-w-xs">
+              <option value="">All</option>
+              <option value="pending">Has Pending</option>
+              <option value="complete">All Graded</option>
+            </select>
+          </div>
+
+          <!-- Reset Button -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">&nbsp;</span>
+            </label>
+            <button onclick="resetFilters()" class="btn btn-ghost btn-sm">
+              <i class="fas fa-undo mr-1"></i>Reset
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assignments List -->
+    <% if (assignments.length === 0) { %>
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body text-center py-16">
+          <i class="fas fa-clipboard-list text-6xl text-base-content/20 mb-4"></i>
+          <h2 class="text-2xl font-bold mb-2">No Assignments Yet</h2>
+          <p class="text-base-content/70 mb-6">Create your first assignment to get started</p>
+          <% if (courses.length > 0) { %>
+            <div class="flex justify-center">
+              <a href="/teacher/courses/<%= courses[0].id %>/assignments/create" class="btn btn-primary btn-wide">
+                <i class="fas fa-plus mr-2"></i>Create First Assignment
+              </a>
+            </div>
+          <% } else { %>
+            <div class="flex justify-center">
+              <a href="/teacher/courses/create" class="btn btn-primary btn-wide">
+                <i class="fas fa-book mr-2"></i>Create a Course First
+              </a>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <div class="overflow-x-auto">
+            <table id="assignmentsTable" class="table table-zebra w-full">
+              <thead>
+                <tr>
+                  <th>Assignment</th>
+                  <th>Course</th>
+                  <th>Deadline</th>
+                  <th>Status</th>
+                  <th>Submissions</th>
+                  <th>Grading</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% assignments.forEach(assignment => { 
+                  const isOverdue = new Date(assignment.deadline) < new Date();
+                  const submissionCount = assignment.Submissions.length;
+                  const gradedCount = assignment.Submissions.filter(s => s.marks !== null).length;
+                  const pendingCount = submissionCount - gradedCount;
+                  const materialCount = assignment.materials ? assignment.materials.length : 0;
+                %>
+                  <tr data-course-id="<%= assignment.course.id %>" 
+                      data-status="<%= isOverdue ? 'overdue' : 'active' %>"
+                      data-pending="<%= pendingCount > 0 ? 'pending' : 'complete' %>">
+                    <!-- Assignment Title & Description -->
+                    <td>
+                      <div class="flex items-start gap-3">
+                        <div class="avatar placeholder">
+                          <div class="bg-<%= isOverdue ? 'error' : 'success' %> text-<%= isOverdue ? 'error' : 'success' %>-content rounded-lg w-12 h-12">
+                            <i class="fas fa-clipboard-list text-xl"></i>
+                          </div>
+                        </div>
+                        <div>
+                          <div class="font-bold"><%= assignment.title %></div>
+                          <div class="text-sm text-base-content/60 max-w-xs truncate">
+                            <%= assignment.description || 'No description' %>
+                          </div>
+                          <% if (materialCount > 0) { %>
+                            <div class="text-xs text-info mt-1">
+                              <i class="fas fa-paperclip mr-1"></i><%= materialCount %> material<%= materialCount > 1 ? 's' : '' %>
+                            </div>
+                          <% } %>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- Course -->
+                    <td>
+                      <a href="/teacher/courses/<%= assignment.course.id %>" class="link link-hover">
+                        <div class="badge badge-ghost badge-lg">
+                          <%= assignment.course.code %>
+                        </div>
+                        <div class="text-sm text-base-content/60"><%= assignment.course.title %></div>
+                      </a>
+                    </td>
+
+                    <!-- Deadline -->
+                    <td>
+                      <div class="text-sm">
+                        <%= new Date(assignment.deadline).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        }) %>
+                      </div>
+                      <div class="text-xs text-base-content/60">
+                        <%= new Date(assignment.deadline).toLocaleTimeString('en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        }) %>
+                      </div>
+                    </td>
+
+                    <!-- Status -->
+                    <td>
+                      <% if (isOverdue) { %>
+                        <span class="badge badge-error gap-1">
+                          <i class="fas fa-times-circle"></i>Overdue
+                        </span>
+                      <% } else { %>
+                        <span class="badge badge-success gap-1">
+                          <i class="fas fa-clock"></i>Active
+                        </span>
+                      <% } %>
+                    </td>
+
+                    <!-- Submissions Count -->
+                    <td>
+                      <div class="flex items-center gap-2">
+                        <i class="fas fa-file-alt text-info"></i>
+                        <span class="font-semibold"><%= submissionCount %></span>
+                      </div>
+                    </td>
+
+                    <!-- Grading Progress -->
+                    <td>
+                      <% if (submissionCount === 0) { %>
+                        <span class="text-base-content/50 text-sm">No submissions</span>
+                      <% } else if (pendingCount === 0) { %>
+                        <span class="badge badge-success gap-1">
+                          <i class="fas fa-check"></i>All graded
+                        </span>
+                      <% } else { %>
+                        <div class="flex items-center gap-2">
+                          <progress class="progress progress-warning w-16" value="<%= gradedCount %>" max="<%= submissionCount %>"></progress>
+                          <span class="text-xs"><%= gradedCount %>/<%= submissionCount %></span>
+                        </div>
+                        <div class="text-xs text-warning mt-1">
+                          <i class="fas fa-hourglass-half mr-1"></i><%= pendingCount %> pending
+                        </div>
+                      <% } %>
+                    </td>
+
+                    <!-- Actions -->
+                    <td>
+                      <div class="flex gap-1">
+                        <a href="/teacher/assignments/<%= assignment.id %>/submissions" 
+                           class="btn btn-sm btn-primary" title="View Submissions">
+                          <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="/teacher/assignments/<%= assignment.id %>/edit" 
+                           class="btn btn-sm btn-ghost" title="Edit Assignment">
+                          <i class="fas fa-edit"></i>
+                        </a>
+                        <button onclick="deleteAssignment('<%= assignment.id %>', '<%= assignment.title.replace(/'/g, "\\'") %>')" 
+                                class="btn btn-sm btn-error btn-outline" title="Delete Assignment">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <%- include('../shared/footer') %>
+
+  <script>
+    // Initialize DataTable
+    let table;
+    $(document).ready(function() {
+      table = $('#assignmentsTable').DataTable({
+        responsive: true,
+        order: [[2, 'desc']], // Sort by deadline descending
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        language: {
+          search: "_INPUT_",
+          searchPlaceholder: "Search assignments...",
+          lengthMenu: "Show _MENU_ entries"
+        },
+        dom: '<"flex flex-wrap justify-between items-center mb-4"lf>rt<"flex flex-wrap justify-between items-center mt-4"ip>',
+        columnDefs: [
+          { orderable: false, targets: [6] } // Disable sorting on Actions column
+        ]
+      });
+
+      // Course filter
+      $('#courseFilter').on('change', function() {
+        applyFilters();
+      });
+
+      // Status filter
+      $('#statusFilter').on('change', function() {
+        applyFilters();
+      });
+
+      // Grading filter
+      $('#gradingFilter').on('change', function() {
+        applyFilters();
+      });
+    });
+
+    function applyFilters() {
+      const courseId = $('#courseFilter').val();
+      const status = $('#statusFilter').val();
+      const grading = $('#gradingFilter').val();
+
+      // Custom filtering function
+      $.fn.dataTable.ext.search.pop(); // Remove previous filter
+      $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+        const row = table.row(dataIndex).node();
+        const rowCourseId = $(row).data('course-id').toString();
+        const rowStatus = $(row).data('status');
+        const rowPending = $(row).data('pending');
+
+        // Course filter
+        if (courseId && rowCourseId !== courseId) {
+          return false;
+        }
+
+        // Status filter
+        if (status && rowStatus !== status) {
+          return false;
+        }
+
+        // Grading filter
+        if (grading && rowPending !== grading) {
+          return false;
+        }
+
+        return true;
+      });
+
+      table.draw();
+    }
+
+    function resetFilters() {
+      $('#courseFilter').val('');
+      $('#statusFilter').val('');
+      $('#gradingFilter').val('');
+      $.fn.dataTable.ext.search.pop();
+      table.draw();
+    }
+
+    /**
+     * Delete assignment with confirmation
+     */
+    async function deleteAssignment(assignmentId, assignmentTitle) {
+      if (!confirm(`Are you sure you want to delete "${assignmentTitle}"?\n\nThis will permanently delete:\n- The assignment\n- All assignment materials\n- All student submissions\n- All grades for this assignment\n\nThis action cannot be undone.`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/teacher/assignments/${assignmentId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Show success message and reload page
+          alert(result.message);
+          window.location.reload();
+        } else {
+          alert('Error: ' + result.message);
+        }
+      } catch (error) {
+        console.error('Delete error:', error);
+        alert('Error deleting assignment. Please try again.');
+      }
+    }
+  </script>
+</body>
+</html>

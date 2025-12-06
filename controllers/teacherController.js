@@ -360,6 +360,106 @@ export const getCourses = async (req, res) => {
 };
 
 /**
+ * Get All Assignments
+ * GET /teacher/assignments
+ * 
+ * Displays list of all assignments the teacher has created across all courses
+ * with filtering by course, status (active/overdue), and sorting options
+ */
+export const getAssignments = async (req, res) => {
+  try {
+    const teacherId = req.user.id;
+
+    // Get all course IDs teacher has access to
+    const courseIds = await getTeacherCourseIds(teacherId);
+
+    if (courseIds.length === 0) {
+      return res.render('teacher/assignments', {
+        user: req.user,
+        assignments: [],
+        courses: [],
+        stats: {
+          total: 0,
+          active: 0,
+          overdue: 0,
+          pendingGrading: 0
+        },
+        pageTitle: 'All Assignments'
+      });
+    }
+
+    // Fetch all assignments for teacher's courses
+    const assignments = await Assignment.findAll({
+      where: { course_id: { [Op.in]: courseIds } },
+      include: [
+        {
+          model: Course,
+          as: 'course',
+          attributes: ['id', 'title', 'code']
+        },
+        {
+          model: Submission,
+          attributes: ['id', 'marks', 'submitted_at']
+        },
+        {
+          model: AssignmentMaterial,
+          as: 'materials',
+          attributes: ['id', 'title', 'type']
+        },
+        {
+          model: User,
+          as: 'creator',
+          attributes: ['id', 'full_name']
+        }
+      ],
+      order: [['deadline', 'DESC']]
+    });
+
+    // Get courses for filter dropdown
+    const courses = await Course.findAll({
+      where: { id: { [Op.in]: courseIds } },
+      attributes: ['id', 'title', 'code'],
+      order: [['title', 'ASC']]
+    });
+
+    // Calculate statistics
+    const now = new Date();
+    let activeCount = 0;
+    let overdueCount = 0;
+    let pendingGradingCount = 0;
+
+    assignments.forEach(assignment => {
+      const isOverdue = new Date(assignment.deadline) < now;
+      if (isOverdue) {
+        overdueCount++;
+      } else {
+        activeCount++;
+      }
+      // Count submissions without grades
+      const pendingSubmissions = assignment.Submissions.filter(s => s.marks === null).length;
+      pendingGradingCount += pendingSubmissions;
+    });
+
+    res.render('teacher/assignments', {
+      user: req.user,
+      assignments,
+      courses,
+      stats: {
+        total: assignments.length,
+        active: activeCount,
+        overdue: overdueCount,
+        pendingGrading: pendingGradingCount
+      },
+      pageTitle: 'All Assignments'
+    });
+
+  } catch (error) {
+    console.error('Get Assignments Error:', error);
+    res.status(500).send('Error loading assignments: ' + error.message);
+  }
+};
+
+/**
  * Show Course Creation Form
  * GET /teacher/courses/create
  */

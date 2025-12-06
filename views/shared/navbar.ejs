@@ -11,8 +11,9 @@
                     <li><a href="/admin"><i class="fas fa-cog"></i> AdminJS Panel</a></li>
                 <% } else if (user.role === 'teacher') { %>
                     <li><a href="/teacher/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
-                <li><a href="/teacher/courses"><i class="fas fa-book"></i> My Courses</a></li>
-                <li><a href="/teacher/courses/create"><i class="fas fa-plus-circle"></i> New Course</a></li>
+                    <li><a href="/teacher/courses"><i class="fas fa-book"></i> My Courses</a></li>
+                    <li><a href="/teacher/assignments"><i class="fas fa-clipboard-list"></i> Assignments</a></li>
+                    <li><a href="/teacher/courses/create"><i class="fas fa-plus-circle"></i> New Course</a></li>
                 <% } else if (user.role === 'student') { %>
                     <li><a href="/student/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
                     <li><a href="/student/courses"><i class="fas fa-book"></i> My Courses</a></li>
@@ -44,6 +45,7 @@
                         </ul>
                     </details>
                 </li>
+                <li><a href="/teacher/assignments"><i class="fas fa-clipboard-list"></i> Assignments</a></li>
             <% } else if (user.role === 'student') { %>
                 <li><a href="/student/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
                 <li><a href="/student/courses"><i class="fas fa-book"></i> My Courses</a></li>

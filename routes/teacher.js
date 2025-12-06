@@ -8,6 +8,7 @@ import express from 'express';
 import { 
   showDashboard,
   getCourses,
+  getAssignments,
   showCreateCourse,
   createCourse,
   getCourseDetail,
@@ -62,6 +63,17 @@ router.get('/dashboard', showDashboard);
  * Lists all courses created by this teacher
  */
 router.get('/courses', getCourses);
+
+// ============================================
+// ASSIGNMENT MANAGEMENT (All Assignments View)
+// ============================================
+
+/**
+ * Get all assignments across all courses
+ * GET /teacher/assignments
+ * Lists all assignments for all courses this teacher has access to
+ */
+router.get('/assignments', getAssignments);
 
 /**
  * Show course creation form
