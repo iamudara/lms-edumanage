@@ -329,8 +329,8 @@
       const deadlineInput = document.getElementById('deadlineInput');
       const now = new Date();
       
-      // Add 1 hour to current time as minimum
-      now.setHours(now.getHours() + 1);
+      // Add 10 minutes to current time as minimum
+      now.setMinutes(now.getMinutes() + 10);
       
       // Format to YYYY-MM-DDTHH:MM
       const year = now.getFullYear();

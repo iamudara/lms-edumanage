@@ -223,8 +223,32 @@
             <% } else { %>
               <div class="space-y-3">
                 <% pendingAssignments.forEach(assignment => { 
-                  const daysUntilDue = Math.ceil((new Date(assignment.deadline) - new Date()) / (1000 * 60 * 60 * 24));
-                  const isUrgent = daysUntilDue <= 2;
+                  const deadline = new Date(assignment.deadline);
+                  const now = new Date();
+                  const diffMs = deadline - now;
+                  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                  const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                  const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                  
+                  let timeRemaining = '';
+                  let badgeClass = 'badge-success';
+                  let isUrgent = false;
+                  
+                  if (diffDays > 0) {
+                    timeRemaining = diffDays + ' day' + (diffDays > 1 ? 's' : '') + ' ' + diffHours + 'h';
+                    if (diffDays <= 1) {
+                      badgeClass = 'badge-warning';
+                      isUrgent = true;
+                    }
+                  } else if (diffHours > 0) {
+                    timeRemaining = diffHours + 'h ' + diffMinutes + 'm';
+                    badgeClass = 'badge-warning';
+                    isUrgent = true;
+                  } else {
+                    timeRemaining = diffMinutes + ' min';
+                    badgeClass = 'badge-error';
+                    isUrgent = true;
+                  }
                 %>
                   <div class="card bg-base-200 <%= isUrgent ? 'border-2 border-error' : '' %>">
                     <div class="card-body p-4">
@@ -232,21 +256,19 @@
                         <div class="flex-1">
                           <h3 class="font-bold">
                             <%= assignment.title %>
-                            <% if (isUrgent) { %>
+                            <% if (diffDays <= 0 && diffHours < 1) { %>
                               <span class="badge badge-error badge-sm ml-2">URGENT</span>
                             <% } %>
                           </h3>
                           <p class="text-sm text-base-content/70 mt-1">
                             <%= assignment.course.code %> - <%= assignment.course.title %>
                           </p>
-                          <div class="flex items-center gap-2 mt-2 text-xs">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-                              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span class="<%= isUrgent ? 'text-error font-semibold' : 'text-base-content/60' %>">
-                              Due <%= new Date(assignment.deadline).toLocaleDateString() %> 
-                              (<%= daysUntilDue %> day<%= daysUntilDue !== 1 ? 's' : '' %>)
+                          <div class="flex items-center gap-3 mt-2 text-xs">
+                            <span class="text-base-content/60">
+                              Due <%= deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %> 
+                              at <%= deadline.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) %>
                             </span>
+                            <span class="badge <%= badgeClass %> badge-sm"><%= timeRemaining %> left</span>
                           </div>
                         </div>
                         <a href="/student/assignments/<%= assignment.id %>" class="btn btn-sm <%= isUrgent ? 'btn-error' : 'btn-primary' %>">

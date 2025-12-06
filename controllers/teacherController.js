@@ -238,7 +238,25 @@ export const showDashboard = async (req, res) => {
     // 5. Calculate total assignments
     const totalAssignments = assignmentIds.length;
 
-    // 6. Render dashboard
+    // 6. Get ongoing assignments (deadline not yet passed)
+    let ongoingAssignments = [];
+    if (assignmentIds.length > 0) {
+      ongoingAssignments = await Assignment.findAll({
+        where: {
+          id: { [Op.in]: assignmentIds },
+          deadline: { [Op.gt]: new Date() }
+        },
+        include: [{
+          model: Course,
+          as: 'course',
+          attributes: ['id', 'title', 'code']
+        }],
+        order: [['deadline', 'ASC']],
+        limit: 5
+      });
+    }
+
+    // 7. Render dashboard
     res.render('teacher/dashboard', {
       user: req.user,
       stats: {
@@ -250,6 +268,7 @@ export const showDashboard = async (req, res) => {
       courses,
       totalAllCourses: allCourses.length,
       recentSubmissions,
+      ongoingAssignments,
       pageTitle: 'Teacher Dashboard'
     });
 

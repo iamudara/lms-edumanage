@@ -232,6 +232,94 @@
         </div>
       </div>
     </div>
+
+    <!-- Ongoing Assignments Section -->
+    <div class="mt-8">
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title text-2xl mb-4">
+            <i class="fas fa-tasks mr-2"></i>Ongoing Assignments
+            <span class="badge badge-info"><%= ongoingAssignments.length %> Active</span>
+          </h2>
+
+          <% if (ongoingAssignments.length === 0) { %>
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle"></i>
+              <span>No ongoing assignments. All deadlines have passed or no assignments created yet.</span>
+            </div>
+          <% } else { %>
+            <div class="overflow-x-auto">
+              <table class="table table-zebra">
+                <thead>
+                  <tr>
+                    <th>Assignment</th>
+                    <th>Course</th>
+                    <th>Deadline</th>
+                    <th>Time Remaining</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% ongoingAssignments.forEach(assignment => { 
+                    const deadline = new Date(assignment.deadline);
+                    const now = new Date();
+                    const diffMs = deadline - now;
+                    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                    
+                    let timeRemaining = '';
+                    let badgeClass = 'badge-success';
+                    if (diffDays > 0) {
+                      timeRemaining = diffDays + ' day' + (diffDays > 1 ? 's' : '') + ' ' + diffHours + 'h';
+                      if (diffDays <= 1) badgeClass = 'badge-warning';
+                    } else if (diffHours > 0) {
+                      timeRemaining = diffHours + 'h ' + diffMinutes + 'm';
+                      badgeClass = 'badge-warning';
+                    } else {
+                      timeRemaining = diffMinutes + ' min';
+                      badgeClass = 'badge-error';
+                    }
+                  %>
+                    <tr>
+                      <td>
+                        <div class="font-bold"><%= assignment.title %></div>
+                        <div class="text-xs text-base-content/60">Max: <%= assignment.max_marks %> marks</div>
+                      </td>
+                      <td>
+                        <span class="badge badge-primary badge-sm"><%= assignment.course.code %></span>
+                        <div class="text-xs text-base-content/70 mt-1"><%= assignment.course.title %></div>
+                      </td>
+                      <td>
+                        <div class="text-sm">
+                          <%= deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                        </div>
+                        <div class="text-xs text-base-content/60">
+                          <%= deadline.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) %>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="badge <%= badgeClass %>"><%= timeRemaining %></span>
+                      </td>
+                      <td>
+                        <div class="flex gap-2">
+                          <a href="/teacher/courses/<%= assignment.course.id %>/assignments/<%= assignment.id %>/submissions" class="btn btn-xs btn-primary">
+                            <i class="fas fa-eye mr-1"></i>Submissions
+                          </a>
+                          <a href="/teacher/courses/<%= assignment.course.id %>/assignments/<%= assignment.id %>/edit" class="btn btn-xs btn-ghost">
+                            <i class="fas fa-edit"></i>
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
   </div>
 
   <%- include('../shared/footer') %>
