@@ -52,7 +52,10 @@
           
           const assignmentCount = course.Assignments ? course.Assignments.length : 0;
           const batchCount = course.BatchEnrollments ? course.BatchEnrollments.length : 0;
-          const isOwner = course.isOwner !== undefined ? course.isOwner : true;
+          
+          // Check if current user is primary teacher
+          const primaryTeacher = course.courseTeachers?.find(ct => ct.is_primary);
+          const isOwner = primaryTeacher?.teacher_id === user.id;
         %>
           <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow cursor-pointer" onclick="window.location.href='/teacher/courses/<%= course.id %>'">
             <div class="card-body">
@@ -75,10 +78,10 @@
               </h2>
 
               <!-- Primary Teacher (if assigned course) -->
-              <% if (!isOwner && course.teacher) { %>
+              <% if (!isOwner && primaryTeacher && primaryTeacher.teacher) { %>
                 <p class="text-xs text-base-content/60 mb-2">
                   <i class="fas fa-user-tie mr-1"></i>
-                  Primary: <%= course.teacher.full_name %>
+                  Primary: <%= primaryTeacher.teacher.full_name %>
                 </p>
               <% } %>
 

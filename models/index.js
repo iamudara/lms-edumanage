@@ -47,11 +47,6 @@ User.belongsTo(Batch, {
   as: 'batch' 
 });
 
-User.hasMany(Course, { 
-  foreignKey: 'teacher_id', 
-  as: 'courses' 
-});
-
 User.hasMany(Submission, {
   foreignKey: 'student_id',
   as: 'submissions'
@@ -63,11 +58,6 @@ User.hasMany(Grade, {
 });
 
 // Course associations
-Course.belongsTo(User, { 
-  foreignKey: 'teacher_id', 
-  as: 'teacher' 
-});
-
 Course.hasMany(CourseTeacher, {
   foreignKey: 'course_id',
   as: 'courseTeachers',

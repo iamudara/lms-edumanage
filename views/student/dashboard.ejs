@@ -107,7 +107,9 @@
               </div>
             <% } else { %>
               <div class="space-y-3">
-                <% enrolledCourses.forEach(course => { %>
+                <% enrolledCourses.forEach(course => { 
+                  const primaryTeacher = course.courseTeachers?.find(ct => ct.is_primary)?.teacher;
+                %>
                   <div class="card bg-base-200 hover:bg-base-300 transition-colors cursor-pointer">
                     <div class="card-body p-4">
                       <div class="flex justify-between items-start">
@@ -117,7 +119,7 @@
                             <span class="badge badge-primary badge-sm ml-2"><%= course.code %></span>
                           </h3>
                           <p class="text-sm text-base-content/70 mt-1">
-                            👨‍🏫 <%= course.teacher.full_name %>
+                            👨‍🏫 <%= primaryTeacher ? primaryTeacher.full_name : 'Unknown' %>
                           </p>
                           <div class="flex gap-4 mt-2 text-xs text-base-content/60">
                             <span>📝 <%= course.Assignments?.length || 0 %> Assignment<%= (course.Assignments?.length || 0) !== 1 ? 's' : '' %></span>

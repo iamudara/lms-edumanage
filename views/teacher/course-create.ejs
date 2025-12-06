@@ -100,6 +100,31 @@
             </label>
           </div>
 
+          <!-- Semester -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">
+                <i class="fas fa-calendar-alt mr-1"></i>Semester
+                <span class="text-error">*</span>
+              </span>
+            </label>
+            <select 
+              name="semester" 
+              class="select select-bordered w-full"
+              required
+            >
+              <option value="" disabled <%= !locals.formData || !locals.formData.semester ? 'selected' : '' %>>Select a semester</option>
+              <% for (let i = 1; i <= 8; i++) { %>
+                <option value="Semester <%= i %>" <%= locals.formData && locals.formData.semester === 'Semester ' + i ? 'selected' : '' %>>Semester <%= i %></option>
+              <% } %>
+            </select>
+            <label class="label">
+              <span class="label-text-alt text-base-content/60">
+                The semester when this course is offered
+              </span>
+            </label>
+          </div>
+
           <!-- Course Description -->
           <div class="form-control">
             <label class="label">

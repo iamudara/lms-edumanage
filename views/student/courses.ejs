@@ -51,7 +51,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                   <span class="text-base-content/60">Instructor:</span>
-                  <span class="font-medium"><%= course.teacher.full_name %></span>
+                  <% const primaryTeacher = course.courseTeachers?.find(ct => ct.is_primary)?.teacher; %>
+                  <span class="font-medium"><%= primaryTeacher ? primaryTeacher.full_name : 'Unknown' %></span>
                 </div>
 
                 <% if (course.BatchEnrollments && course.BatchEnrollments[0] && course.BatchEnrollments[0].batch) { %>

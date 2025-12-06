@@ -142,11 +142,11 @@ const adminJs = new AdminJS({
     {
       resource: Course,
       options: {
-        listProperties: ['id', 'title', 'code', 'teacher_id'],
-        editProperties: ['title', 'code', 'description', 'teacher_id'],
+        listProperties: ['id', 'title', 'code', 'semester'],
+        editProperties: ['title', 'code', 'description', 'semester'],
         properties: {
-          teacher_id: {
-            description: 'Primary teacher (creator) of the course. Use "Course Teachers" to assign additional teachers.'
+          semester: {
+            description: 'Semester/term when this course is offered (e.g., "2024 Fall", "Semester 1")'
           }
         },
         actions: {

@@ -5,6 +5,7 @@
 
 import { 
   Course, 
+  CourseTeacher,
   Batch,
   BatchEnrollment, 
   Assignment,
@@ -115,9 +116,15 @@ export const showDashboard = async (req, res) => {
           required: true
         },
         {
-          model: User,
-          as: 'teacher',
-          attributes: ['id', 'full_name', 'email']
+          model: CourseTeacher,
+          as: 'courseTeachers',
+          where: { is_primary: true },
+          required: false,
+          include: [{
+            model: User,
+            as: 'teacher',
+            attributes: ['id', 'full_name', 'email']
+          }]
         },
         {
           model: Assignment,
@@ -269,9 +276,15 @@ export const getAllCourses = async (req, res) => {
           ]
         },
         {
-          model: User,
-          as: 'teacher',
-          attributes: ['id', 'full_name', 'email']
+          model: CourseTeacher,
+          as: 'courseTeachers',
+          where: { is_primary: true },
+          required: false,
+          include: [{
+            model: User,
+            as: 'teacher',
+            attributes: ['id', 'full_name', 'email']
+          }]
         },
         {
           model: Assignment,
@@ -319,9 +332,15 @@ export const getCourseView = async (req, res) => {
     const course = await Course.findByPk(courseId, {
       include: [
         {
-          model: User,
-          as: 'teacher',
-          attributes: ['id', 'full_name', 'email']
+          model: CourseTeacher,
+          as: 'courseTeachers',
+          where: { is_primary: true },
+          required: false,
+          include: [{
+            model: User,
+            as: 'teacher',
+            attributes: ['id', 'full_name', 'email']
+          }]
         },
         {
           model: BatchEnrollment,
@@ -449,9 +468,15 @@ export const getAssignmentDetail = async (req, res) => {
           attributes: ['id', 'title', 'code'],
           include: [
             {
-              model: User,
-              as: 'teacher',
-              attributes: ['id', 'full_name', 'email']
+              model: CourseTeacher,
+              as: 'courseTeachers',
+              where: { is_primary: true },
+              required: false,
+              include: [{
+                model: User,
+                as: 'teacher',
+                attributes: ['id', 'full_name', 'email']
+              }]
             },
             {
               model: BatchEnrollment,
@@ -773,9 +798,15 @@ export const getGrades = async (req, res) => {
           attributes: []
         },
         {
-          model: User,
-          as: 'teacher',
-          attributes: ['id', 'full_name']
+          model: CourseTeacher,
+          as: 'courseTeachers',
+          where: { is_primary: true },
+          required: false,
+          include: [{
+            model: User,
+            as: 'teacher',
+            attributes: ['id', 'full_name']
+          }]
         }
       ],
       attributes: ['id', 'title', 'code'],
@@ -850,7 +881,7 @@ export const getGrades = async (req, res) => {
           id: course.id,
           title: course.title,
           code: course.code,
-          teacher: course.teacher
+          courseTeachers: course.courseTeachers
         },
         assignments: assignmentsWithSubmissions,
         totalAssignments,

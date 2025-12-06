@@ -36,19 +36,14 @@ import cloudinary, { generateSignedUrl, signUrlsInArray, deleteCloudinaryFile } 
 async function checkTeacherCourseAccess(courseId, teacherId, options = {}) {
   const { requireEdit = false, requireGrade = false } = options;
   
-  // First check if teacher is the primary teacher (owner)
+  // First check if course exists
   const course = await Course.findOne({
     where: { id: courseId }
   });
   
   if (!course) return null;
   
-  // Primary teacher has full access
-  if (course.teacher_id === teacherId) {
-    return course;
-  }
-  
-  // Check CourseTeacher table for additional access
+  // Check CourseTeacher table for access
   const accessQuery = {
     course_id: courseId,
     teacher_id: teacherId
@@ -61,6 +56,7 @@ async function checkTeacherCourseAccess(courseId, teacherId, options = {}) {
     where: accessQuery
   });
   
+  // Primary teacher (is_primary=true) has full access to all features
   if (courseTeacher) {
     return course;
   }
@@ -69,29 +65,35 @@ async function checkTeacherCourseAccess(courseId, teacherId, options = {}) {
 }
 
 /**
+ * Helper function to check if a teacher is the primary teacher for a course
+ * @param {number} courseId - The course ID
+ * @param {number} teacherId - The teacher's user ID
+ * @returns {boolean} True if teacher is primary, false otherwise
+ */
+async function isTeacherPrimary(courseId, teacherId) {
+  const courseTeacher = await CourseTeacher.findOne({
+    where: { 
+      course_id: courseId, 
+      teacher_id: teacherId,
+      is_primary: true
+    }
+  });
+  return !!courseTeacher;
+}
+
+/**
  * Helper function to get all courses a teacher has access to
  * @param {number} teacherId - The teacher's user ID
  * @returns {Array} Array of course IDs
  */
 async function getTeacherCourseIds(teacherId) {
-  // Get courses where teacher is the primary teacher
-  const ownedCourses = await Course.findAll({
-    where: { teacher_id: teacherId },
-    attributes: ['id']
-  });
-  
-  // Get courses where teacher is assigned via CourseTeacher
+  // Get all courses where teacher has access via CourseTeacher
   const assignedCourses = await CourseTeacher.findAll({
     where: { teacher_id: teacherId },
     attributes: ['course_id']
   });
   
-  const courseIds = new Set([
-    ...ownedCourses.map(c => c.id),
-    ...assignedCourses.map(ct => ct.course_id)
-  ]);
-  
-  return Array.from(courseIds);
+  return assignedCourses.map(ct => ct.course_id);
 }
 
 /**
@@ -126,10 +128,6 @@ export const showDashboard = async (req, res) => {
         }]
       }, {
         model: Assignment
-      }, {
-        model: User,
-        as: 'teacher',
-        attributes: ['id', 'full_name']
       }, {
         model: CourseTeacher,
         as: 'courseTeachers',
@@ -252,10 +250,6 @@ export const getCourses = async (req, res) => {
       }, {
         model: Assignment
       }, {
-        model: User,
-        as: 'teacher',
-        attributes: ['id', 'full_name']
-      }, {
         model: CourseTeacher,
         as: 'courseTeachers',
         include: [{
@@ -267,11 +261,18 @@ export const getCourses = async (req, res) => {
       order: [['created_at', 'DESC']]
     });
 
-    // Add a flag to indicate if current teacher is the owner
-    const coursesWithOwnership = courses.map(course => ({
-      ...course.toJSON(),
-      isOwner: course.teacher_id === teacherId
-    }));
+    // Add a flag to indicate if current teacher is the primary teacher
+    const coursesWithOwnership = courses.map(course => {
+      const courseJson = course.toJSON();
+      // Check if this teacher has is_primary flag in courseTeachers
+      const isPrimary = courseJson.courseTeachers?.some(
+        ct => ct.teacher_id === teacherId && ct.is_primary
+      ) || false;
+      return {
+        ...courseJson,
+        isOwner: isPrimary
+      };
+    });
 
     res.render('teacher/courses', {
       user: req.user,
@@ -312,7 +313,7 @@ export const showCreateCourse = async (req, res) => {
  */
 export const createCourse = async (req, res) => {
   try {
-    const { title, code, description } = req.body;
+    const { title, code, description, semester } = req.body;
     const teacherId = req.user.id;
 
     // Validation
@@ -328,6 +329,12 @@ export const createCourse = async (req, res) => {
 
     if (!description || description.trim() === '') {
       errors.push('Course description is required');
+    }
+
+    // Validate semester (must be Semester 1-8)
+    const validSemesters = ['Semester 1', 'Semester 2', 'Semester 3', 'Semester 4', 'Semester 5', 'Semester 6', 'Semester 7', 'Semester 8'];
+    if (!semester || !validSemesters.includes(semester)) {
+      errors.push('Please select a valid semester (Semester 1-8)');
     }
 
     // Check if course code already exists
@@ -347,7 +354,7 @@ export const createCourse = async (req, res) => {
         user: req.user,
         pageTitle: 'Create New Course',
         errors,
-        formData: { title, code, description }
+        formData: { title, code, description, semester }
       });
     }
 
@@ -356,7 +363,16 @@ export const createCourse = async (req, res) => {
       title: title.trim(),
       code: code.trim().toUpperCase(),
       description: description.trim(),
-      teacher_id: teacherId
+      semester: semester ? semester.trim() : null
+    });
+
+    // Add teacher to CourseTeacher with primary access
+    await CourseTeacher.create({
+      course_id: newCourse.id,
+      teacher_id: teacherId,
+      is_primary: true,
+      can_edit: true,
+      can_grade: true
     });
 
     // Redirect to course detail page
@@ -406,10 +422,6 @@ export const getCourseDetail = async (req, res) => {
           as: 'materials'
         }]
       }, {
-        model: User,
-        as: 'teacher',
-        attributes: ['id', 'full_name', 'email']
-      }, {
         model: CourseTeacher,
         as: 'courseTeachers',
         include: [{
@@ -439,10 +451,10 @@ export const getCourseDetail = async (req, res) => {
       });
     });
 
-    // Check if current teacher is the owner
-    const isOwner = course.teacher_id === teacherId;
+    // Check if current teacher is the primary teacher
+    const isOwner = await isTeacherPrimary(courseId, teacherId);
 
-    // Get teacher's permissions if not owner
+    // Get teacher's permissions
     let permissions = { can_edit: true, can_grade: true };
     if (!isOwner) {
       const courseTeacher = await CourseTeacher.findOne({
@@ -500,7 +512,7 @@ export const getMaterials = async (req, res) => {
     }
 
     // Check edit permission
-    const isOwner = course.teacher_id === teacherId;
+    const isOwner = await isTeacherPrimary(courseId, teacherId);
     let canEdit = isOwner;
     if (!isOwner) {
       const courseTeacher = await CourseTeacher.findOne({
@@ -1061,7 +1073,7 @@ export const getSubmissions = async (req, res) => {
     }
 
     // Check if teacher can grade
-    const isOwner = course.teacher_id === teacherId;
+    const isOwner = await isTeacherPrimary(assignment.course_id, teacherId);
     let canGrade = isOwner;
     if (!isOwner) {
       const courseTeacher = await CourseTeacher.findOne({
@@ -1246,7 +1258,7 @@ export const getGrades = async (req, res) => {
     }
 
     // Check if teacher can grade
-    const isOwner = course.teacher_id === teacherId;
+    const isOwner = await isTeacherPrimary(courseId, teacherId);
     let canGrade = isOwner;
     if (!isOwner) {
       const courseTeacher = await CourseTeacher.findOne({
@@ -1255,12 +1267,18 @@ export const getGrades = async (req, res) => {
       canGrade = courseTeacher ? courseTeacher.can_grade : false;
     }
 
-    // Get full course details
+    // Get full course details with primary teacher info
     const fullCourse = await Course.findByPk(courseId, {
       include: [{
-        model: User,
-        as: 'teacher',
-        attributes: ['id', 'full_name', 'email']
+        model: CourseTeacher,
+        as: 'courseTeachers',
+        where: { is_primary: true },
+        required: false,
+        include: [{
+          model: User,
+          as: 'teacher',
+          attributes: ['id', 'full_name', 'email']
+        }]
       }]
     });
 
@@ -2506,7 +2524,7 @@ export const getMaterialsWithFolders = async (req, res) => {
     }
 
     // Check edit permission
-    const isOwner = course.teacher_id === teacherId;
+    const isOwner = await isTeacherPrimary(courseId, teacherId);
     let canEdit = isOwner;
     if (!isOwner) {
       const courseTeacher = await CourseTeacher.findOne({

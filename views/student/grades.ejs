@@ -109,7 +109,8 @@
                     <div class="flex items-center gap-2 text-base-content/70">
                       <span class="badge badge-outline"><%= courseData.course.code %></span>
                       <span>•</span>
-                      <span><%= courseData.course.teacher ? courseData.course.teacher.full_name : 'Unknown Instructor' %></span>
+                      <% const primaryTeacher = courseData.course.courseTeachers?.find(ct => ct.is_primary)?.teacher; %>
+                      <span><%= primaryTeacher ? primaryTeacher.full_name : 'Unknown Instructor' %></span>
                     </div>
                   </div>
                 </div>

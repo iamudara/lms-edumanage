@@ -20,13 +20,10 @@ export default (sequelize) => {
       type: DataTypes.TEXT,
       allowNull: true
     },
-    teacher_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'users',
-        key: 'id'
-      }
+    semester: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+      comment: 'e.g., "2024 Fall", "2025 Spring", "Semester 1"'
     }
   }, {
     tableName: 'courses',
