@@ -37,22 +37,35 @@
       </a>
     </div>
 
-    <!-- Statistics Overview -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <!-- Course Statistics Overview -->
+    <% 
+      const now = new Date();
+      const ongoingAssignments = assignments.filter(a => new Date(a.deadline) >= now);
+      const overdueAssignments = assignments.filter(a => new Date(a.deadline) < now);
+      
+      // Calculate course average score
+      const allGradedSubmissions = assignments.reduce((sum, a) => sum + a.gradedCount, 0);
+      const totalScoreSum = assignments.reduce((sum, a) => {
+        return sum + (a.averageScore * a.gradedCount);
+      }, 0);
+      const courseAverageScore = allGradedSubmissions > 0 
+        ? (totalScoreSum / allGradedSubmissions).toFixed(1)
+        : 'N/A';
+    %>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
       <div class="card bg-base-100 shadow-md">
         <div class="card-body p-4">
           <div class="stat p-0">
-            <div class="stat-title text-sm">Total Assignments</div>
-            <div class="stat-value text-2xl text-primary"><%= assignments.length %></div>
-          </div>
-        </div>
-      </div>
-      <div class="card bg-base-100 shadow-md">
-        <div class="card-body p-4">
-          <div class="stat p-0">
-            <div class="stat-title text-sm">Total Submissions</div>
+            <div class="stat-title text-sm">Course Average Score</div>
             <div class="stat-value text-2xl text-info">
-              <%= assignments.reduce((sum, a) => sum + a.submissionCount, 0) %>
+              <%= courseAverageScore %><% if (courseAverageScore !== 'N/A') { %>%<% } %>
+            </div>
+            <div class="stat-desc text-xs mt-1">
+              <% if (allGradedSubmissions > 0) { %>
+                Based on <%= allGradedSubmissions %> graded submission<%= allGradedSubmissions !== 1 ? 's' : '' %>
+              <% } else { %>
+                No graded submissions yet
+              <% } %>
             </div>
           </div>
         </div>
@@ -60,9 +73,10 @@
       <div class="card bg-base-100 shadow-md">
         <div class="card-body p-4">
           <div class="stat p-0">
-            <div class="stat-title text-sm">Graded</div>
-            <div class="stat-value text-2xl text-success">
-              <%= assignments.reduce((sum, a) => sum + a.gradedCount, 0) %>
+            <div class="stat-title text-sm">Ongoing Assignments</div>
+            <div class="stat-value text-2xl text-success"><%= ongoingAssignments.length %></div>
+            <div class="stat-desc text-xs mt-1">
+              Currently accepting submissions
             </div>
           </div>
         </div>
@@ -70,9 +84,10 @@
       <div class="card bg-base-100 shadow-md">
         <div class="card-body p-4">
           <div class="stat p-0">
-            <div class="stat-title text-sm">Pending</div>
-            <div class="stat-value text-2xl text-warning">
-              <%= assignments.reduce((sum, a) => sum + (a.submissionCount - a.gradedCount), 0) %>
+            <div class="stat-title text-sm">Overdue Assignments</div>
+            <div class="stat-value text-2xl text-error"><%= overdueAssignments.length %></div>
+            <div class="stat-desc text-xs mt-1">
+              Past deadline
             </div>
           </div>
         </div>
