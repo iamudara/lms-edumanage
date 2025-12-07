@@ -3,15 +3,44 @@
  * Protects routes and enforces role-based access control
  */
 
+import { User } from '../models/index.js';
+
 /**
- * Check if user is authenticated
+ * Check if user is authenticated and session is valid
  * Used to protect all routes that require login
  */
-export const isAuthenticated = (req, res, next) => {
-  if (req.isAuthenticated()) {
-    return next();
+export const isAuthenticated = async (req, res, next) => {
+  if (!req.isAuthenticated()) {
+    return res.redirect('/auth/login');
   }
-  res.redirect('/auth/login');
+
+  try {
+    // Check if the current session matches the user's active session
+    const user = await User.findByPk(req.user.id);
+    
+    if (!user) {
+      // User not found, logout
+      req.logout(() => {
+        req.session.error_msg = 'Session expired. Please login again.';
+        return res.redirect('/auth/login');
+      });
+      return;
+    }
+
+    // If active_session_id doesn't match current session, another device has logged in
+    if (user.active_session_id && user.active_session_id !== req.sessionID) {
+      req.logout(() => {
+        req.session.error_msg = 'Your account has been logged in from another device. Please login again.';
+        return res.redirect('/auth/login');
+      });
+      return;
+    }
+
+    return next();
+  } catch (error) {
+    console.error('Session validation error:', error);
+    return next(); // Continue on error to avoid blocking legitimate users
+  }
 };
 
 /**

@@ -56,32 +56,60 @@ export const processLogin = (req, res, next) => {
 
     // Establish login session
     // req.login() is provided by Passport
-    req.logIn(user, (err) => {
+    req.logIn(user, async (err) => {
       if (err) {
         console.error('Session establishment error:', err);
         req.session.error_msg = 'An error occurred. Please try again.';
         return res.redirect('/auth/login');
       }
 
-      // Authentication successful
-      req.session.success_msg = `Welcome back, ${user.full_name}!`;
-      
-      // Role-based redirect
-      return redirectToDashboard(req, res);
+      try {
+        // Store the current session ID in the user record
+        // This invalidates any previous session
+        await user.update({
+          active_session_id: req.sessionID
+        });
+
+        // Authentication successful
+        req.session.success_msg = `Welcome back, ${user.full_name}!`;
+        
+        // Role-based redirect
+        return redirectToDashboard(req, res);
+      } catch (updateErr) {
+        console.error('Error updating session ID:', updateErr);
+        // Continue with login even if session update fails
+        req.session.success_msg = `Welcome back, ${user.full_name}!`;
+        return redirectToDashboard(req, res);
+      }
     });
   })(req, res, next);
 };
 
 /**
  * Logout User
- * GET /auth/logout
+ * POST /auth/logout
  */
 export const logout = (req, res, next) => {
+  const user = req.user;
+  
   // req.logout() is provided by Passport
-  req.logout((err) => {
+  req.logout(async (err) => {
     if (err) {
       console.error('Logout error:', err);
       return next(err);
+    }
+
+    try {
+      // Clear the active session ID from user record
+      if (user) {
+        await User.update(
+          { active_session_id: null },
+          { where: { id: user.id } }
+        );
+      }
+    } catch (updateErr) {
+      console.error('Error clearing session ID:', updateErr);
+      // Continue with logout even if update fails
     }
 
     // Clear session messages

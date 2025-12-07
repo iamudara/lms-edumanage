@@ -19,6 +19,11 @@ export default (sequelize) => {
         allowNull: true, // NULL for admin/teacher, required for students
         references: { model: "batches", key: "id" },
       },
+      active_session_id: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        comment: 'Current active session ID - only one session allowed per user'
+      },
     },
     {
       tableName: "users",
