@@ -281,7 +281,8 @@
         </div>
       </div>
     <% } else { %>
-      <div class="card bg-base-100 shadow-xl">
+      <!-- Desktop Table View (hidden on mobile) -->
+      <div class="card bg-base-100 shadow-xl hidden lg:block">
         <div class="card-body p-2 sm:p-6">
           <div class="overflow-x-auto lg:overflow-x-visible -mx-2 sm:mx-0">
             <table id="assignmentsTable" class="table table-zebra w-full">
@@ -420,6 +421,117 @@
           </div>
         </div>
       </div>
+
+      <!-- Mobile Card View (visible on mobile only) -->
+      <div class="lg:hidden space-y-3">
+        <% assignments.forEach((assignment, idx) => { 
+          const isOverdue = new Date(assignment.deadline) < new Date();
+          const submissionCount = assignment.Submissions.length;
+          const gradedCount = assignment.Submissions.filter(s => s.marks !== null).length;
+          const pendingCount = submissionCount - gradedCount;
+          const materialCount = assignment.materials ? assignment.materials.length : 0;
+        %>
+          <div class="collapse collapse-arrow bg-base-100 shadow-lg" data-course-id="<%= assignment.course.id %>" 
+               data-status="<%= isOverdue ? 'overdue' : 'active' %>"
+               data-pending="<%= pendingCount > 0 ? 'pending' : 'complete' %>">
+            <input type="checkbox" id="assignment-mobile-<%= assignment.id %>-<%= idx %>" />
+            <div class="collapse-title p-4">
+              <div class="flex items-start gap-3">
+                <div class="avatar placeholder flex-shrink-0">
+                  <div class="rounded-lg w-12 h-12 flex items-center justify-center" style="background: <%= isOverdue ? 'linear-gradient(135deg, #f87272 0%, #e85858 100%)' : 'linear-gradient(135deg, #36d399 0%, #2ab880 100%)' %>; color: white;">
+                    <i class="fas fa-clipboard-list text-lg"></i>
+                  </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-bold text-sm truncate"><%= assignment.title %></div>
+                  <div class="flex flex-wrap items-center gap-2 mt-1">
+                    <span class="badge badge-ghost badge-sm"><%= assignment.course.code %></span>
+                    <% if (isOverdue) { %>
+                      <span class="badge badge-error badge-xs">Overdue</span>
+                    <% } else { %>
+                      <span class="badge badge-success badge-xs">Active</span>
+                    <% } %>
+                  </div>
+                  <div class="text-xs text-base-content/60 mt-1">
+                    <i class="fas fa-calendar-alt mr-1"></i>
+                    Due: <%= new Date(assignment.deadline).toLocaleDateString('en-US', { 
+                      month: 'short', day: 'numeric', year: 'numeric',
+                      hour: '2-digit', minute: '2-digit'
+                    }) %>
+                  </div>
+                </div>
+                <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                  <div class="flex items-center gap-1 text-sm">
+                    <i class="fas fa-file-alt text-info text-xs"></i>
+                    <span class="font-semibold"><%= submissionCount %></span>
+                  </div>
+                  <% if (submissionCount > 0 && pendingCount > 0) { %>
+                    <span class="badge badge-warning badge-xs"><%= pendingCount %> pending</span>
+                  <% } else if (submissionCount > 0 && pendingCount === 0) { %>
+                    <span class="badge badge-success badge-xs">All graded</span>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+            <div class="collapse-content px-4 pb-4">
+              <div class="pt-2 space-y-3">
+                <!-- Course Info -->
+                <div class="flex justify-between items-start text-sm">
+                  <span class="text-base-content/70">Course:</span>
+                  <a href="/teacher/courses/<%= assignment.course.id %>" class="link link-hover text-right">
+                    <%= assignment.course.title %>
+                  </a>
+                </div>
+
+                <!-- Description -->
+                <% if (assignment.description) { %>
+                  <div class="text-sm">
+                    <span class="text-base-content/70">Description:</span>
+                    <p class="mt-1 text-base-content/80"><%= assignment.description %></p>
+                  </div>
+                <% } %>
+
+                <!-- Materials -->
+                <% if (materialCount > 0) { %>
+                  <div class="flex justify-between items-center text-sm">
+                    <span class="text-base-content/70">Materials:</span>
+                    <span class="badge badge-info badge-sm">
+                      <i class="fas fa-paperclip mr-1"></i><%= materialCount %>
+                    </span>
+                  </div>
+                <% } %>
+
+                <!-- Grading Progress -->
+                <% if (submissionCount > 0) { %>
+                  <div class="text-sm">
+                    <div class="flex justify-between items-center mb-1">
+                      <span class="text-base-content/70">Grading:</span>
+                      <span class="text-xs"><%= gradedCount %>/<%= submissionCount %></span>
+                    </div>
+                    <progress class="progress progress-warning w-full" value="<%= gradedCount %>" max="<%= submissionCount %>"></progress>
+                  </div>
+                <% } %>
+                
+                <!-- Actions -->
+                <div class="flex gap-2 pt-2">
+                  <a href="/teacher/assignments/<%= assignment.id %>/submissions" 
+                     class="btn btn-primary btn-sm flex-1" style="border-radius: 9999px;">
+                    <i class="fas fa-eye mr-2"></i>View
+                  </a>
+                  <a href="/teacher/assignments/<%= assignment.id %>/edit" 
+                     class="btn btn-primary btn-sm flex-1" style="border-radius: 9999px;">
+                    <i class="fas fa-edit mr-2"></i>Edit
+                  </a>
+                  <button onclick="deleteAssignment('<%= assignment.id %>', '<%= assignment.title.replace(/'/g, "\\'") %>')" 
+                          class="btn btn-sm flex-1" style="border-radius: 9999px; background-color: #ef4444; border-color: #ef4444; color: white;">
+                    <i class="fas fa-trash mr-2"></i>Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
     <% } %>
   </div>
 
@@ -466,7 +578,7 @@
       const status = $('#statusFilter').val();
       const grading = $('#gradingFilter').val();
 
-      // Custom filtering function
+      // Filter desktop table
       $.fn.dataTable.ext.search.pop(); // Remove previous filter
       $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
         const row = table.row(dataIndex).node();
@@ -493,6 +605,33 @@
       });
 
       table.draw();
+
+      // Filter mobile cards
+      const mobileCards = document.querySelectorAll('.lg\\:hidden .collapse');
+      mobileCards.forEach(card => {
+        const cardCourseId = card.dataset.courseId;
+        const cardStatus = card.dataset.status;
+        const cardPending = card.dataset.pending;
+
+        let show = true;
+
+        // Course filter
+        if (courseId && cardCourseId !== courseId) {
+          show = false;
+        }
+
+        // Status filter
+        if (status && cardStatus !== status) {
+          show = false;
+        }
+
+        // Grading filter
+        if (grading && cardPending !== grading) {
+          show = false;
+        }
+
+        card.style.display = show ? '' : 'none';
+      });
     }
 
     function resetFilters() {
@@ -501,6 +640,12 @@
       $('#gradingFilter').val('');
       $.fn.dataTable.ext.search.pop();
       table.draw();
+      
+      // Reset mobile cards
+      const mobileCards = document.querySelectorAll('.lg\\:hidden .collapse');
+      mobileCards.forEach(card => {
+        card.style.display = '';
+      });
     }
 
     /**
