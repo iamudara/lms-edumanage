@@ -211,15 +211,18 @@
             </h2>
             
             <div class="space-y-2">
-              <div class="grid grid-cols-3 gap-2">
-                <a href="/teacher/courses/<%= course.id %>/materials" class="btn btn-outline btn-sm justify-center">
-                  <i class="fas fa-file-alt"></i>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <a href="/teacher/courses/<%= course.id %>/materials" class="btn btn-outline btn-sm">
+                  <i class="fas fa-file-alt mr-2"></i>
+                  <span>Materials</span>
                 </a>
-                <a href="/teacher/courses/<%= course.id %>/assignments/create" class="btn btn-outline btn-sm justify-center">
-                  <i class="fas fa-plus-circle"></i>
+                <a href="/teacher/courses/<%= course.id %>/assignments/create" class="btn btn-outline btn-sm">
+                  <i class="fas fa-plus-circle mr-2"></i>
+                  <span>New Assignment</span>
                 </a>
-                <a href="/teacher/courses/<%= course.id %>/grades" class="btn btn-outline btn-sm justify-center">
-                  <i class="fas fa-chart-bar"></i>
+                <a href="/teacher/courses/<%= course.id %>/grades" class="btn btn-outline btn-sm">
+                  <i class="fas fa-chart-bar mr-2"></i>
+                  <span>Grades</span>
                 </a>
               </div>
               <a href="/teacher/courses" class="btn btn-ghost btn-block justify-start">
