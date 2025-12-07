@@ -1,29 +1,31 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="corporate">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title %> - LMS EduManage</title>
-  <link rel="stylesheet" href="/css/output.css">
-  <link rel="stylesheet" href="/css/custom.css">
+  <link href="/css/output.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+  <link href="/css/teacher-theme.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-base-200 min-h-screen">
   <%- include('../shared/navbar') %>
 
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-4 py-4 sm:py-8">
     <!-- Page Header -->
-    <div class="mb-8">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div class="mb-6 sm:mb-8">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 class="text-4xl font-bold text-base-content mb-2">
-            <i class="fas fa-graduation-cap mr-3"></i>My Grades & Submissions
+          <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-base-content mb-2">
+            <i class="fas fa-graduation-cap mr-2"></i>
+            <span class="hidden xs:inline">My </span>Grades & Submissions
           </h1>
-          <p class="text-base-content/70">
+          <p class="text-sm sm:text-base text-base-content/70">
             View your assignment scores, submissions, and performance by semester.
           </p>
         </div>
-        <a href="/student/dashboard" class="btn btn-ghost">
+        <a href="/student/dashboard" class="btn btn-ghost w-full sm:w-auto" style="border-radius: 9999px;">
           <i class="fas fa-arrow-left mr-2"></i>
           Back to Dashboard
         </a>
@@ -31,7 +33,7 @@
     </div>
 
     <!-- Overall Statistics -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
       <!-- Total Courses -->
       <div class="stats shadow bg-primary text-primary-content">
         <div class="stat">
@@ -82,27 +84,35 @@
     <% if (sortedSemesters.length === 0) { %>
       <!-- No Grades Yet -->
       <div class="card bg-base-100 shadow-lg">
-        <div class="card-body text-center py-16">
-          <div class="text-6xl mb-4"><i class="fas fa-chart-bar text-base-content/20"></i></div>
-          <h3 class="text-xl font-semibold text-base-content/70 mb-2">No Grades Yet</h3>
-          <p class="text-base-content/50 mb-6">You don't have any course grades yet. Complete assignments to see your grades here.</p>
-          <a href="/student/courses" class="btn btn-primary">
+        <div class="card-body text-center py-12 sm:py-16">
+          <div class="text-6xl sm:text-8xl mb-4"><i class="fas fa-chart-bar text-base-content/20"></i></div>
+          <h3 class="text-lg sm:text-xl font-semibold text-base-content/70 mb-2">No Grades Yet</h3>
+          <p class="text-sm sm:text-base text-base-content/50 mb-6">You don't have any course grades yet. Complete assignments to see your grades here.</p>
+          <a href="/student/courses" class="btn btn-primary w-full sm:w-auto" style="border-radius: 9999px;">
             <i class="fas fa-book mr-2"></i>
             View My Courses
           </a>
         </div>
       </div>
     <% } else { %>
-      <!-- Semester Tabs -->
-      <div class="tabs tabs-boxed bg-base-100 p-2 mb-6 shadow-lg">
-        <% sortedSemesters.forEach((semester, index) => { %>
-          <button class="tab tab-lg semester-tab <%= index === 0 ? 'tab-active' : '' %>" 
-                  data-semester="<%= semester %>"
-                  onclick="showSemester('<%= semester %>')">
-            <i class="fas fa-calendar-alt mr-2"></i>
-            <%= semester === 'Other' ? 'Other' : 'Semester ' + semester %>
-          </button>
-        <% }); %>
+      <!-- Semester Filter -->
+      <div class="card bg-base-100 shadow-xl mb-6">
+        <div class="card-body p-4 sm:py-4">
+          <div class="form-control w-full">
+            <label class="label py-1">
+              <span class="label-text font-semibold text-xs sm:text-sm">
+                <i class="fas fa-calendar-alt mr-1"></i>Filter by Semester
+              </span>
+            </label>
+            <select id="semesterSelect" class="select select-bordered select-sm w-full" onchange="showSemesterFromSelect(this.value)">
+              <% sortedSemesters.forEach((semester, index) => { %>
+                <option value="<%= semester %>" <%= index === 0 ? 'selected' : '' %>>
+                  <%= semester === 'Other' ? 'Other Courses' : 'Semester ' + semester %>
+                </option>
+              <% }); %>
+            </select>
+          </div>
+        </div>
       </div>
 
       <!-- Semester Content -->
@@ -192,9 +202,10 @@
                               max="<%= courseData.totalAssignments %>"></progress>
                   </div>
 
-                  <!-- Assignments Table -->
+                  <!-- Assignments List -->
                   <% if (courseData.assignments.length > 0) { %>
-                    <div class="overflow-x-auto">
+                    <!-- Desktop Table View (hidden on mobile) -->
+                    <div class="hidden lg:block overflow-x-auto">
                       <table class="table table-sm">
                         <thead>
                           <tr>
@@ -287,14 +298,14 @@
                               
                               <!-- Actions -->
                               <td>
-                                <div class="flex gap-1">
+                                <div class="flex flex-row gap-1">
                                   <a href="/student/assignments/<%= assignment.id %>" 
-                                     class="btn btn-ghost btn-xs" title="View Assignment">
+                                     class="btn btn-primary btn-xs" title="View Assignment" style="border-radius: 9999px; min-width: 2rem;">
                                     <i class="fas fa-eye"></i>
                                   </a>
                                   <% if (assignment.submission && assignment.submission.file_url) { %>
                                     <a href="<%= assignment.submission.file_url %>" 
-                                       target="_blank" class="btn btn-primary btn-xs" title="Download Submission">
+                                       target="_blank" class="btn btn-accent btn-xs" title="Download Submission" style="border-radius: 9999px; min-width: 2rem;">
                                       <i class="fas fa-download"></i>
                                     </a>
                                   <% } %>
@@ -304,6 +315,85 @@
                           <% }); %>
                         </tbody>
                       </table>
+                    </div>
+
+                    <!-- Mobile Card View (visible on mobile only) -->
+                    <div class="lg:hidden space-y-3">
+                      <% courseData.assignments.forEach((assignment, idx) => { 
+                        const isPastDeadline = new Date(assignment.deadline) < new Date();
+                        const isLate = assignment.submission && 
+                          new Date(assignment.submission.submitted_at) > new Date(assignment.deadline);
+                      %>
+                        <div class="collapse collapse-arrow bg-base-200">
+                          <input type="checkbox" id="assignment-<%= assignment.id %>-<%= idx %>" />
+                          <div class="collapse-title">
+                            <div class="flex items-start justify-between gap-2">
+                              <div class="flex-1">
+                                <div class="font-medium text-sm"><%= assignment.title %></div>
+                                <div class="text-xs text-base-content/60 mt-1">
+                                  <i class="fas fa-calendar-alt mr-1"></i>
+                                  Due: <%= new Date(assignment.deadline).toLocaleDateString('en-US', { 
+                                    month: 'short', day: 'numeric', year: 'numeric',
+                                    hour: '2-digit', minute: '2-digit'
+                                  }) %>
+                                </div>
+                              </div>
+                              <div class="flex flex-col items-end gap-1">
+                                <% if (!assignment.submission) { %>
+                                  <% if (isPastDeadline) { %>
+                                    <span class="badge badge-error badge-xs">Missing</span>
+                                  <% } else { %>
+                                    <span class="badge badge-warning badge-xs">Pending</span>
+                                  <% } %>
+                                <% } else if (assignment.submission.marks !== null) { %>
+                                  <span class="badge badge-success badge-xs">Graded</span>
+                                  <span class="font-bold text-sm <%= 
+                                    assignment.submission.marks >= 70 ? 'text-success' : 
+                                    assignment.submission.marks >= 50 ? 'text-warning' : 'text-error'
+                                  %>">
+                                    <%= assignment.submission.marks %>%
+                                  </span>
+                                <% } else { %>
+                                  <span class="badge badge-info badge-xs">Submitted</span>
+                                <% } %>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="collapse-content">
+                            <div class="pt-2 space-y-3">
+                              <!-- Submitted Info -->
+                              <% if (assignment.submission) { %>
+                                <div class="flex justify-between items-center text-sm">
+                                  <span class="text-base-content/70">Submitted:</span>
+                                  <span class="font-medium">
+                                    <%= new Date(assignment.submission.submitted_at).toLocaleDateString('en-US', { 
+                                      month: 'short', day: 'numeric', year: 'numeric',
+                                      hour: '2-digit', minute: '2-digit'
+                                    }) %>
+                                    <% if (isLate) { %>
+                                      <span class="badge badge-error badge-xs ml-1">Late</span>
+                                    <% } %>
+                                  </span>
+                                </div>
+                              <% } %>
+                              
+                              <!-- Actions -->
+                              <div class="flex gap-2">
+                                <a href="/student/assignments/<%= assignment.id %>" 
+                                   class="btn btn-primary btn-sm flex-1" style="border-radius: 9999px;">
+                                  <i class="fas fa-eye mr-2"></i>View
+                                </a>
+                                <% if (assignment.submission && assignment.submission.file_url) { %>
+                                  <a href="<%= assignment.submission.file_url %>" 
+                                     target="_blank" class="btn btn-accent btn-sm flex-1" style="border-radius: 9999px;">
+                                    <i class="fas fa-download mr-2"></i>Download
+                                  </a>
+                                <% } %>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      <% }); %>
                     </div>
                   <% } else { %>
                     <div class="text-center py-4 text-base-content/50">
@@ -408,23 +498,15 @@
   <%- include('../shared/footer') %>
 
   <script>
-    // Semester tab switching
-    function showSemester(semester) {
+    // Semester dropdown switching
+    function showSemesterFromSelect(semester) {
       // Hide all semester content
       document.querySelectorAll('.semester-content').forEach(el => {
         el.classList.add('hidden');
       });
       
-      // Remove active from all tabs
-      document.querySelectorAll('.semester-tab').forEach(el => {
-        el.classList.remove('tab-active');
-      });
-      
       // Show selected semester content
       document.querySelector(`.semester-content[data-semester="${semester}"]`).classList.remove('hidden');
-      
-      // Activate selected tab
-      document.querySelector(`.semester-tab[data-semester="${semester}"]`).classList.add('tab-active');
     }
 
     // View submission modal

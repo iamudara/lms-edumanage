@@ -1,22 +1,24 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="corporate">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title %> - LMS EduManage</title>
-  <link rel="stylesheet" href="/css/output.css">
-  <link rel="stylesheet" href="/css/custom.css">
+  <link href="/css/output.css" rel="stylesheet">
+  <link href="/css/custom.css" rel="stylesheet">
+  <link href="/css/teacher-theme.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-base-200 min-h-screen">
   <%- include('../shared/navbar') %>
 
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-4 py-4 sm:py-8">
     <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-4xl font-bold text-base-content mb-2">
-        📚 My Courses
+    <div class="mb-6 sm:mb-8">
+      <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-base-content mb-2">
+        <i class="fas fa-book mr-2"></i>My Courses
       </h1>
-      <p class="text-base-content/70">
+      <p class="text-sm sm:text-base text-base-content/70">
         All courses you are enrolled in through your batch, organized by semester
       </p>
     </div>
@@ -44,12 +46,12 @@
       %>
 
       <!-- Semester Filter Tabs -->
-      <div class="flex flex-wrap gap-2 mb-6">
-        <button class="btn btn-primary btn-sm semester-tab" data-semester="all" onclick="filterBySemester('all', this)">
+      <div class="flex flex-wrap gap-2 mb-4 sm:mb-6">
+        <button class="btn btn-primary btn-sm semester-tab" data-semester="all" onclick="filterBySemester('all', this)" style="border-radius: 9999px; border: none; padding-left: 1.5rem; padding-right: 1.5rem;">
           All
         </button>
         <% sortedSemesters.forEach(semester => { %>
-          <button class="btn btn-ghost btn-sm semester-tab" data-semester="<%= semester %>" onclick="filterBySemester('<%= semester %>', this)">
+          <button class="btn btn-ghost btn-sm semester-tab" data-semester="<%= semester %>" onclick="filterBySemester('<%= semester %>', this)" style="border-radius: 9999px; border: none; padding-left: 1.5rem; padding-right: 1.5rem;">
             <%= semester %>
           </button>
         <% }) %>
@@ -57,7 +59,7 @@
 
       <!-- Courses grouped by semester -->
       <% sortedSemesters.forEach(semester => { %>
-        <div class="semester-section mb-8" data-semester="<%= semester %>">
+        <div class="semester-section mb-6 sm:mb-8" data-semester="<%= semester %>">
           <div class="flex items-center gap-3 mb-4">
             <div class="badge badge-lg badge-primary gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -68,14 +70,14 @@
             <span class="text-base-content/60 text-sm"><%= coursesBySemester[semester].length %> course<%= coursesBySemester[semester].length !== 1 ? 's' : '' %></span>
           </div>
           
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <% coursesBySemester[semester].forEach(course => { %>
               <div class="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow">
-                <div class="card-body">
+                <div class="card-body p-4 sm:p-6">
                   <!-- Course Header -->
                   <div class="flex items-start justify-between mb-4">
                     <div class="flex-1">
-                      <h2 class="card-title text-xl mb-2">
+                      <h2 class="card-title text-lg sm:text-xl mb-2">
                         <%= course.title %>
                       </h2>
                       <div class="flex gap-2 mb-3">
@@ -128,12 +130,9 @@
 
                   <!-- Action Button -->
                   <div class="card-actions justify-end">
-                    <a href="/student/courses/<%= course.id %>" class="btn btn-primary btn-block">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                      View Course
+                    <a href="/student/courses/<%= course.id %>" class="btn btn-primary w-full sm:w-auto" style="border-radius: 9999px;">
+                      <i class="fas fa-eye mr-2"></i>
+                      <span class="hidden xs:inline">View </span>Course
                     </a>
                   </div>
                 </div>
@@ -143,18 +142,19 @@
         </div>
       <% }) %>
 
-      <!-- Summary Card -->
+      <!-- Course Summary -->
       <div class="card bg-base-100 shadow-lg mt-8">
-        <div class="card-body">
-          <h3 class="card-title">Course Summary</h3>
-          <div class="stats stats-horizontal shadow">
-            <div class="stat">
+        <div class="card-body p-4 sm:p-6">
+          <h3 class="card-title text-lg sm:text-xl mb-4">Course Summary</h3>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="stat place-items-center">
               <div class="stat-title">Total Enrolled</div>
               <div class="stat-value text-primary"><%= courses.length %></div>
               <div class="stat-desc">Active courses</div>
             </div>
             
-            <div class="stat">
+            <div class="stat place-items-center">
               <div class="stat-title">Total Materials</div>
               <div class="stat-value text-info">
                 <%= courses.reduce((sum, c) => sum + (c.Materials ? c.Materials.length : 0), 0) %>
@@ -162,7 +162,7 @@
               <div class="stat-desc">Available resources</div>
             </div>
             
-            <div class="stat">
+            <div class="stat place-items-center">
               <div class="stat-title">Total Assignments</div>
               <div class="stat-value text-warning">
                 <%= courses.reduce((sum, c) => sum + (c.Assignments ? c.Assignments.length : 0), 0) %>
@@ -176,19 +176,15 @@
     <% } else { %>
       <!-- Empty State -->
       <div class="card bg-base-100 shadow-lg">
-        <div class="card-body text-center py-16">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 mx-auto text-base-content/30 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-          </svg>
-          <h2 class="text-2xl font-bold text-base-content mb-2">No Courses Yet</h2>
-          <p class="text-base-content/60 mb-6">
+        <div class="card-body text-center py-12 sm:py-16">
+          <div class="text-6xl sm:text-8xl mb-4"><i class="fas fa-book text-base-content/20"></i></div>
+          <h2 class="text-xl sm:text-2xl font-bold text-base-content mb-2">No Courses Yet</h2>
+          <p class="text-sm sm:text-base text-base-content/60 mb-6">
             You are not enrolled in any courses yet. Please contact your administrator.
           </p>
           <div class="flex gap-4 justify-center">
-            <a href="/student/dashboard" class="btn btn-primary">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
+            <a href="/student/dashboard" class="btn btn-primary w-full sm:w-auto" style="border-radius: 9999px;">
+              <i class="fas fa-home mr-2"></i>
               Go to Dashboard
             </a>
           </div>
