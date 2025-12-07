@@ -11,6 +11,109 @@
   <!-- DataTables CSS -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
   <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+  <style>
+    /* DataTables custom styling */
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_length select,
+    select[name="assignmentsTable_length"] {
+      padding: 0.5rem 2rem 0.5rem 0.75rem !important;
+      border: 1px solid rgba(0, 0, 0, 0.1) !important;
+      border-radius: 0.5rem !important;
+      background-color: white !important;
+      font-size: 0.875rem !important;
+      min-height: 2.5rem !important;
+      appearance: auto !important;
+    }
+    
+    [data-theme="dark"] .dataTables_wrapper .dataTables_length select,
+    [data-theme="dark"] .dataTables_length select,
+    [data-theme="dark"] select[name="assignmentsTable_length"] {
+      background-color: #374151 !important;
+      border-color: rgba(75, 107, 251, 0.2) !important;
+      color: #f3f4f6 !important;
+    }
+    
+    /* DataTables responsive - full width on mobile when expanded */
+    @media screen and (max-width: 1023px) {
+      table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control,
+      table.dataTable.dtr-inline.collapsed > tbody > tr > th.dtr-control {
+        position: relative;
+      }
+      
+      table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.child,
+      table.dataTable > tbody > tr.child {
+        padding: 1rem !important;
+      }
+      
+      table.dataTable > tbody > tr.child ul.dtr-details {
+        width: 100% !important;
+      }
+      
+      table.dataTable > tbody > tr.child ul.dtr-details > li {
+        border-bottom: none !important;
+        padding: 0.75rem 0;
+      }
+    }
+    
+    .dataTables_wrapper .dataTables_filter input {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 0.5rem;
+      background-color: white;
+      font-size: 0.875rem;
+      min-height: 2.5rem;
+      margin-left: 0.5rem;
+    }
+    
+    [data-theme="dark"] .dataTables_wrapper .dataTables_filter input {
+      background-color: #374151;
+      border-color: rgba(75, 107, 251, 0.2);
+      color: #f3f4f6;
+    }
+    
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    
+    .dataTables_wrapper .dataTables_length label,
+    .dataTables_wrapper .dataTables_filter label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+      padding: 0.5rem 0.75rem;
+      margin: 0 0.125rem;
+      border-radius: 0.5rem;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      background-color: white;
+      color: inherit;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+      background: linear-gradient(135deg, #4b6bfb 0%, #3b5bdb 100%);
+      color: white;
+      border-color: transparent;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+      background: rgba(75, 107, 251, 0.1);
+      border-color: rgba(75, 107, 251, 0.3);
+      color: inherit;
+    }
+    
+    [data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button {
+      background-color: #1f2937;
+      border-color: rgba(75, 107, 251, 0.2);
+    }
+    
+    [data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+      background-color: rgba(75, 107, 251, 0.15);
+    }
+  </style>
   <!-- jQuery (required for DataTables) -->
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <!-- DataTables JS -->
@@ -51,66 +154,66 @@
     </div>
 
     <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
       <!-- Total Assignments -->
-      <div class="stats shadow bg-primary text-primary-content">
+      <div class="stats shadow bg-primary">
         <div class="stat">
-          <div class="stat-figure text-primary-content/50">
-            <i class="fas fa-clipboard-list text-4xl"></i>
+          <div class="stat-figure">
+            <i class="fas fa-clipboard-list text-3xl sm:text-4xl"></i>
           </div>
-          <div class="stat-title text-primary-content/80">Total Assignments</div>
-          <div class="stat-value"><%= stats.total %></div>
-          <div class="stat-desc text-primary-content/60">Across all courses</div>
+          <div class="stat-title">Total Assignments</div>
+          <div class="stat-value text-2xl sm:text-3xl"><%= stats.total %></div>
+          <div class="stat-desc">Across all courses</div>
         </div>
       </div>
 
       <!-- Active Assignments -->
-      <div class="stats shadow bg-success text-success-content">
+      <div class="stats shadow" style="background: linear-gradient(135deg, #36d399 0%, #2ab880 100%); color: white;">
         <div class="stat">
-          <div class="stat-figure text-success-content/50">
-            <i class="fas fa-clock text-4xl"></i>
+          <div class="stat-figure">
+            <i class="fas fa-clock text-3xl sm:text-4xl"></i>
           </div>
-          <div class="stat-title text-success-content/80">Active</div>
-          <div class="stat-value"><%= stats.active %></div>
-          <div class="stat-desc text-success-content/60">Deadline not passed</div>
+          <div class="stat-title" style="color: rgba(255,255,255,0.9);">Active</div>
+          <div class="stat-value text-2xl sm:text-3xl"><%= stats.active %></div>
+          <div class="stat-desc" style="color: rgba(255,255,255,0.7);">Deadline not passed</div>
         </div>
       </div>
 
       <!-- Overdue Assignments -->
-      <div class="stats shadow bg-error text-error-content">
+      <div class="stats shadow" style="background: linear-gradient(135deg, #f87272 0%, #e85858 100%); color: white;">
         <div class="stat">
-          <div class="stat-figure text-error-content/50">
-            <i class="fas fa-hourglass-end text-4xl"></i>
+          <div class="stat-figure">
+            <i class="fas fa-hourglass-end text-3xl sm:text-4xl"></i>
           </div>
-          <div class="stat-title text-error-content/80">Overdue</div>
-          <div class="stat-value"><%= stats.overdue %></div>
-          <div class="stat-desc text-error-content/60">Deadline passed</div>
+          <div class="stat-title" style="color: rgba(255,255,255,0.9);">Overdue</div>
+          <div class="stat-value text-2xl sm:text-3xl"><%= stats.overdue %></div>
+          <div class="stat-desc" style="color: rgba(255,255,255,0.7);">Deadline passed</div>
         </div>
       </div>
 
       <!-- Pending Grading -->
-      <div class="stats shadow bg-warning text-warning-content">
+      <div class="stats shadow" style="background: linear-gradient(135deg, #fbbd23 0%, #e0a720 100%); color: #1f2937;">
         <div class="stat">
-          <div class="stat-figure text-warning-content/50">
-            <i class="fas fa-pen text-4xl"></i>
+          <div class="stat-figure">
+            <i class="fas fa-pen text-3xl sm:text-4xl"></i>
           </div>
-          <div class="stat-title text-warning-content/80">Pending Grading</div>
-          <div class="stat-value"><%= stats.pendingGrading %></div>
-          <div class="stat-desc text-warning-content/60">Submissions to grade</div>
+          <div class="stat-title" style="color: rgba(31,41,55,0.8);">Pending Grading</div>
+          <div class="stat-value text-2xl sm:text-3xl"><%= stats.pendingGrading %></div>
+          <div class="stat-desc" style="color: rgba(31,41,55,0.6);">Submissions to grade</div>
         </div>
       </div>
     </div>
 
     <!-- Filters -->
     <div class="card bg-base-100 shadow-xl mb-6">
-      <div class="card-body py-4">
-        <div class="flex flex-wrap gap-4 items-center">
+      <div class="card-body p-4 sm:py-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <!-- Course Filter -->
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold">Filter by Course</span>
+          <div class="form-control w-full">
+            <label class="label py-1">
+              <span class="label-text font-semibold text-xs sm:text-sm"><i class="fas fa-book mr-1"></i>Filter by Course</span>
             </label>
-            <select id="courseFilter" class="select select-bordered select-sm w-full max-w-xs">
+            <select id="courseFilter" class="select select-bordered select-sm w-full">
               <option value="">All Courses</option>
               <% courses.forEach(course => { %>
                 <option value="<%= course.id %>"><%= course.code %> - <%= course.title %></option>
@@ -119,11 +222,11 @@
           </div>
 
           <!-- Status Filter -->
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold">Status</span>
+          <div class="form-control w-full">
+            <label class="label py-1">
+              <span class="label-text font-semibold text-xs sm:text-sm"><i class="fas fa-info-circle mr-1"></i>Status</span>
             </label>
-            <select id="statusFilter" class="select select-bordered select-sm w-full max-w-xs">
+            <select id="statusFilter" class="select select-bordered select-sm w-full">
               <option value="">All Status</option>
               <option value="active">Active</option>
               <option value="overdue">Overdue</option>
@@ -131,11 +234,11 @@
           </div>
 
           <!-- Grading Status Filter -->
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text font-semibold">Grading</span>
+          <div class="form-control w-full">
+            <label class="label py-1">
+              <span class="label-text font-semibold text-xs sm:text-sm"><i class="fas fa-check-circle mr-1"></i>Grading</span>
             </label>
-            <select id="gradingFilter" class="select select-bordered select-sm w-full max-w-xs">
+            <select id="gradingFilter" class="select select-bordered select-sm w-full">
               <option value="">All</option>
               <option value="pending">Has Pending</option>
               <option value="complete">All Graded</option>
@@ -143,12 +246,12 @@
           </div>
 
           <!-- Reset Button -->
-          <div class="form-control">
-            <label class="label">
+          <div class="form-control w-full">
+            <label class="label py-1">
               <span class="label-text">&nbsp;</span>
             </label>
-            <button onclick="resetFilters()" class="btn btn-ghost btn-sm">
-              <i class="fas fa-undo mr-1"></i>Reset
+            <button onclick="resetFilters()" class="btn btn-ghost btn-sm w-full">
+              <i class="fas fa-undo mr-1 sm:mr-2"></i>Reset
             </button>
           </div>
         </div>
@@ -179,8 +282,8 @@
       </div>
     <% } else { %>
       <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-          <div class="overflow-x-auto">
+        <div class="card-body p-2 sm:p-6">
+          <div class="overflow-x-auto lg:overflow-x-visible -mx-2 sm:mx-0">
             <table id="assignmentsTable" class="table table-zebra w-full">
               <thead>
                 <tr>
@@ -207,8 +310,8 @@
                     <!-- Assignment Title & Description -->
                     <td>
                       <div class="flex items-start gap-3">
-                        <div class="avatar placeholder">
-                          <div class="bg-<%= isOverdue ? 'error' : 'success' %> text-<%= isOverdue ? 'error' : 'success' %>-content rounded-lg w-12 h-12">
+                        <div class="avatar placeholder flex-shrink-0">
+                          <div class="rounded-lg w-12 h-12 flex items-center justify-center" style="background: <%= isOverdue ? 'linear-gradient(135deg, #f87272 0%, #e85858 100%)' : 'linear-gradient(135deg, #36d399 0%, #2ab880 100%)' %>; color: white;">
                             <i class="fas fa-clipboard-list text-xl"></i>
                           </div>
                         </div>
@@ -295,18 +398,18 @@
 
                     <!-- Actions -->
                     <td>
-                      <div class="flex gap-1">
+                      <div class="flex flex-row gap-1">
                         <a href="/teacher/assignments/<%= assignment.id %>/submissions" 
-                           class="btn btn-sm btn-primary" title="View Submissions">
-                          <i class="fas fa-eye"></i>
+                           class="btn btn-xs sm:btn-sm btn-primary" title="View Submissions">
+                          <i class="fas fa-eye text-xs"></i>
                         </a>
                         <a href="/teacher/assignments/<%= assignment.id %>/edit" 
-                           class="btn btn-sm btn-ghost" title="Edit Assignment">
-                          <i class="fas fa-edit"></i>
+                           class="btn btn-xs sm:btn-sm btn-ghost" title="Edit Assignment">
+                          <i class="fas fa-edit text-xs"></i>
                         </a>
                         <button onclick="deleteAssignment('<%= assignment.id %>', '<%= assignment.title.replace(/'/g, "\\'") %>')" 
-                                class="btn btn-sm btn-error btn-outline" title="Delete Assignment">
-                          <i class="fas fa-trash"></i>
+                                class="btn btn-xs sm:btn-sm btn-error" title="Delete Assignment">
+                          <i class="fas fa-trash text-xs"></i>
                         </button>
                       </div>
                     </td>
