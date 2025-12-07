@@ -127,7 +127,7 @@
     <!-- Breadcrumb -->
     <div class="text-sm breadcrumbs mb-4 sm:mb-6">
       <ul>
-        <li><a href="/teacher/dashboard"><i class="fas fa-home mr-1"></i>Dashboard</a></li>
+        <li class="hidden sm:inline"><a href="/teacher/dashboard"><i class="fas fa-home mr-1"></i>Dashboard</a></li>
         <li><a href="/teacher/courses"><i class="fas fa-book mr-1"></i>Courses</a></li>
         <li><a href="/teacher/courses/<%= course.id %>"><%= course.title %></a></li>
         <li>Submissions: <%= assignment.title %></li>
@@ -236,7 +236,7 @@
     </div>
 
     <!-- Submissions Table -->
-    <div class="card bg-base-100 shadow-xl mt-6 sm:mt-8">
+    <div class="card bg-base-100 shadow-xl mt-8 sm:mt-12">
       <div class="card-body p-2 sm:p-6">
         <h2 class="card-title mb-4 px-2 sm:px-0">
           <i class="fas fa-clipboard-list mr-2"></i>

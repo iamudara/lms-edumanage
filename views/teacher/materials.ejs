@@ -55,9 +55,9 @@
     <!-- Breadcrumb -->
     <div class="text-sm breadcrumbs mb-4 sm:mb-6">
       <ul>
-        <li><a href="/teacher/dashboard"><i class="fas fa-home mr-1"></i>Dashboard</a></li>
+        <li class="hidden sm:inline"><a href="/teacher/dashboard"><i class="fas fa-home mr-1"></i>Dashboard</a></li>
         <li><a href="/teacher/courses"><i class="fas fa-book mr-1"></i>Courses</a></li>
-        <li><a href="/teacher/courses/<%= course.id %>"><i class="fas fa-book-open mr-1"></i><%= course.code %></a></li>
+        <li><a href="/teacher/courses/<%= course.id %>"><%= course.title %></a></li>
         <li>Materials</li>
       </ul>
     </div>
@@ -79,10 +79,10 @@
     <% } %>
 
     <!-- Two Column Layout -->
-    <div class="flex gap-4" style="min-height: 500px;">
+    <div class="flex flex-col lg:flex-row gap-4" style="min-height: 500px;">
       
       <!-- Left: Folder Tree (Explorer) -->
-      <div class="w-96 flex-shrink-0">
+      <div class="w-full lg:w-96 flex-shrink-0">
         <div class="card bg-base-100 shadow h-full">
           <div class="card-body p-3">
             <!-- Header -->
@@ -165,23 +165,25 @@
       <!-- Right: Materials Panel -->
       <div class="flex-1">
         <div class="card bg-base-100 shadow h-full">
-          <div class="card-body p-4">
+          <div class="card-body p-3 sm:p-4">
             <!-- Header -->
-            <div class="flex items-center justify-between mb-4 pb-3 border-b">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 pb-3 border-b">
               <div class="flex items-center gap-2 flex-wrap">
                 <i class="fas fa-folder-open text-warning" id="folderIcon"></i>
-                <h2 class="font-bold text-lg" id="folderTitle">Course Materials</h2>
-                <span class="badge badge-primary" id="countBadge"><%= materials.length %></span>
+                <h2 class="font-bold text-base sm:text-lg" id="folderTitle">Course Materials</h2>
+                <span class="badge badge-primary badge-sm" id="countBadge"><%= materials.length %></span>
                 <span id="sharedIndicator" class="badge badge-success badge-sm hidden">
                   <i class="fas fa-share-alt mr-1"></i>Shared
                 </span>
               </div>
-              <div class="flex gap-2">
-                <button id="shareFolderBtn" onclick="openShareModal()" class="btn btn-outline btn-secondary btn-sm hidden">
-                  <i class="fas fa-share-alt mr-1"></i>Share
+              <div class="flex gap-2 w-full sm:w-auto">
+                <button id="shareFolderBtn" onclick="openShareModal()" class="btn btn-outline btn-secondary btn-sm hidden flex-1 sm:flex-none">
+                  <i class="fas fa-share-alt"></i>
+                  <span class="hidden xs:inline ml-1">Share</span>
                 </button>
-                <button id="uploadBtn" onclick="openUploadModal()" class="btn btn-primary btn-sm">
-                  <i class="fas fa-upload mr-1"></i>Upload
+                <button id="uploadBtn" onclick="openUploadModal()" class="btn btn-primary btn-sm flex-1 sm:flex-none">
+                  <i class="fas fa-upload"></i>
+                  <span class="hidden xs:inline ml-1">Upload</span>
                 </button>
               </div>
             </div>
@@ -212,16 +214,16 @@
                       else if (ext === 'doc' || ext === 'docx') ico = 'fas fa-file-word text-primary';
                       else if (ext === 'ppt' || ext === 'pptx') ico = 'fas fa-file-powerpoint text-warning';
                     %>
-                      <div class="material-item flex items-center gap-3 p-3 rounded-lg border">
-                        <div class="w-10 h-10 rounded bg-base-200 flex items-center justify-center">
-                          <i class="<%= ico %> text-lg"></i>
+                      <div class="material-item flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border">
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded bg-base-200 flex items-center justify-center flex-shrink-0">
+                          <i class="<%= ico %> text-base sm:text-lg"></i>
                         </div>
                         <div class="flex-1 min-w-0">
-                          <p class="font-medium"><%= m.title %></p>
+                          <p class="font-medium text-sm sm:text-base truncate"><%= m.title %></p>
                           <p class="text-xs text-base-content/50"><%= ext.toUpperCase() %></p>
                         </div>
-                        <a href="<%= m.file_url %>" target="_blank" class="btn btn-ghost btn-sm btn-square"><i class="fas fa-external-link-alt"></i></a>
-                        <button onclick="deleteMaterial(<%= m.id %>, '<%= m.title.replace(/'/g, "\\'") %>')" class="btn btn-ghost btn-sm btn-square text-error"><i class="fas fa-trash"></i></button>
+                        <a href="<%= m.file_url %>" target="_blank" class="btn btn-primary btn-xs sm:btn-sm min-w-[2rem] sm:min-w-[2.5rem]"><i class="fas fa-external-link-alt"></i></a>
+                        <button onclick="deleteMaterial(<%= m.id %>, '<%= m.title.replace(/'/g, "\\'") %>')" class="btn btn-xs sm:btn-sm min-w-[2rem] sm:min-w-[2.5rem]" style="background-color: #ef4444; border-color: #ef4444; color: white;"><i class="fas fa-trash"></i></button>
                       </div>
                     <% }); %>
                   </div>
@@ -252,16 +254,16 @@
                         else if (ext === 'doc' || ext === 'docx') ico = 'fas fa-file-word text-primary';
                         else if (ext === 'ppt' || ext === 'pptx') ico = 'fas fa-file-powerpoint text-warning';
                       %>
-                        <div class="material-item flex items-center gap-3 p-3 rounded-lg border">
-                          <div class="w-10 h-10 rounded bg-base-200 flex items-center justify-center">
-                            <i class="<%= ico %> text-lg"></i>
+                        <div class="material-item flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg border">
+                          <div class="w-8 h-8 sm:w-10 sm:h-10 rounded bg-base-200 flex items-center justify-center flex-shrink-0">
+                            <i class="<%= ico %> text-base sm:text-lg"></i>
                           </div>
                           <div class="flex-1 min-w-0">
-                            <p class="font-medium"><%= m.title %></p>
+                            <p class="font-medium text-sm sm:text-base truncate"><%= m.title %></p>
                             <p class="text-xs text-base-content/50"><%= ext.toUpperCase() %></p>
                           </div>
-                          <a href="<%= m.file_url %>" target="_blank" class="btn btn-ghost btn-sm btn-square"><i class="fas fa-external-link-alt"></i></a>
-                          <button onclick="deleteMaterial(<%= m.id %>, '<%= m.title.replace(/'/g, "\\'") %>')" class="btn btn-ghost btn-sm btn-square text-error"><i class="fas fa-trash"></i></button>
+                          <a href="<%= m.file_url %>" target="_blank" class="btn btn-primary btn-xs sm:btn-sm min-w-[2rem] sm:min-w-[2.5rem]"><i class="fas fa-external-link-alt"></i></a>
+                          <button onclick="deleteMaterial(<%= m.id %>, '<%= m.title.replace(/'/g, "\\'") %>')" class="btn btn-xs sm:btn-sm min-w-[2rem] sm:min-w-[2.5rem]" style="background-color: #ef4444; border-color: #ef4444; color: white;"><i class="fas fa-trash"></i></button>
                         </div>
                       <% }); %>
                     </div>

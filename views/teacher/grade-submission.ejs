@@ -15,8 +15,8 @@
     <!-- Breadcrumb -->
     <div class="text-sm breadcrumbs mb-4 sm:mb-6">
       <ul>
-        <li><a href="/teacher/dashboard"><i class="fas fa-home mr-1"></i>Dashboard</a></li>
-        <li><a href="/teacher/courses"><i class="fas fa-book mr-1"></i>Courses</a></li>
+        <li class="hidden sm:inline"><a href="/teacher/dashboard"><i class="fas fa-home mr-1"></i>Dashboard</a></li>
+        <li class="hidden sm:inline"><a href="/teacher/courses"><i class="fas fa-book mr-1"></i>Courses</a></li>
         <li><a href="/teacher/courses/<%= course.id %>"><%= course.title %></a></li>
         <li><a href="/teacher/assignments/<%= assignment.id %>/submissions">Submissions</a></li>
         <li>Grade Submission</li>
