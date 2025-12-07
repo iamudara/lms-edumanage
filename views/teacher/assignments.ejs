@@ -20,18 +20,18 @@
 <body>
   <%- include('../shared/navbar') %>
 
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-4 py-4 sm:py-8">
     <!-- Page Header -->
-    <div class="flex justify-between items-center mb-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
       <div>
-        <h1 class="text-3xl font-bold text-base-content mb-2">
+        <h1 class="text-2xl sm:text-3xl font-bold text-base-content mb-2">
           <i class="fas fa-clipboard-list mr-2"></i>All Assignments
         </h1>
-        <p class="text-base-content/70">Manage assignments across all your courses</p>
+        <p class="text-sm sm:text-base text-base-content/70">Manage assignments across all your courses</p>
       </div>
       <% if (courses.length > 0) { %>
-        <div class="dropdown dropdown-end">
-          <label tabindex="0" class="btn btn-primary">
+        <div class="dropdown dropdown-end w-full sm:w-auto">
+          <label tabindex="0" class="btn btn-primary w-full sm:w-auto">
             <i class="fas fa-plus mr-2"></i>Create Assignment
             <i class="fas fa-chevron-down ml-2"></i>
           </label>

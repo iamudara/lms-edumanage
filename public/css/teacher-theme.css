@@ -132,6 +132,24 @@ body {
   box-shadow: 0 4px 12px rgba(31, 178, 165, 0.4);
 }
 
+/* Batch filter active state */
+.batch-filter-btn.active-batch {
+  background: linear-gradient(135deg, #4b6bfb 0%, #3b5bdb 100%) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.batch-filter-btn.active-batch:hover {
+  background: linear-gradient(135deg, #3b5bdb 0%, #2b4bcb 100%) !important;
+}
+
+.batch-filter-btn:focus,
+.batch-filter-btn:active,
+.batch-filter-btn:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
+}
+
 /* ============================================
    BADGES - Professional Colors
    ============================================ */
@@ -746,6 +764,56 @@ body {
 /* Dark mode - Avatar in activity */
 [data-theme="dark"] .avatar .bg-primary {
   background: linear-gradient(135deg, #4b6bfb 0%, #3b5bdb 100%) !important;
+}
+
+/* Dark mode - form elements */
+[data-theme="dark"] .input,
+[data-theme="dark"] .textarea,
+[data-theme="dark"] .select {
+  background-color: #374151 !important;
+  border-color: rgba(75, 107, 251, 0.2) !important;
+  color: #f3f4f6 !important;
+}
+
+[data-theme="dark"] .input:focus,
+[data-theme="dark"] .textarea:focus,
+[data-theme="dark"] .select:focus {
+  border-color: rgba(75, 107, 251, 0.5) !important;
+  outline: none !important;
+}
+
+[data-theme="dark"] .input::placeholder,
+[data-theme="dark"] .textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Dark mode - alerts */
+[data-theme="dark"] .alert {
+  border: 1px solid rgba(75, 107, 251, 0.2) !important;
+}
+
+/* Dark mode - breadcrumbs */
+[data-theme="dark"] .breadcrumbs a {
+  color: #60a5fa !important;
+}
+
+[data-theme="dark"] .breadcrumbs a:hover {
+  color: #93c5fd !important;
+}
+
+/* Dark mode - dropdown menus */
+[data-theme="dark"] .dropdown-content {
+  background-color: #1f2937 !important;
+  border: 1px solid rgba(75, 107, 251, 0.2) !important;
+}
+
+[data-theme="dark"] .menu li > * {
+  color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .menu li > *:hover {
+  background-color: rgba(75, 107, 251, 0.15) !important;
+  color: #60a5fa !important;
 }
 
 /* ============================================

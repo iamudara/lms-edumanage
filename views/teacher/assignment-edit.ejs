@@ -20,9 +20,9 @@
 <body>
   <%- include('../shared/navbar', { user }) %>
   
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-4 py-4 sm:py-8">
     <!-- Breadcrumb -->
-    <div class="text-sm breadcrumbs mb-6">
+    <div class="text-sm breadcrumbs mb-4 sm:mb-6">
       <ul>
         <li><a href="/teacher/dashboard"><i class="fas fa-home mr-1"></i>Dashboard</a></li>
         <li><a href="/teacher/courses/<%= course.id %>"><%= course.title %></a></li>
@@ -31,11 +31,11 @@
     </div>
 
     <!-- Page Header -->
-    <div class="mb-6">
-      <h1 class="text-3xl font-bold mb-2">
-        <i class="fas fa-edit mr-2 text-primary"></i>Edit Assignment
+    <div class="mb-6 sm:mb-8">
+      <h1 class="text-2xl sm:text-3xl font-bold mb-2">
+        <i class="fas fa-edit mr-2"></i>Edit Assignment
       </h1>
-      <p class="text-base-content/70">Update assignment details and deadline</p>
+      <p class="text-sm sm:text-base text-base-content/70">Update assignment details and deadline</p>
     </div>
 
     <!-- Flash Messages -->

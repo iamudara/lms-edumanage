@@ -12,9 +12,9 @@
 <body>
   <%- include('../shared/navbar') %>
 
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-4 py-4 sm:py-8">
     <!-- Breadcrumb -->
-    <div class="text-sm breadcrumbs mb-6">
+    <div class="text-sm breadcrumbs mb-4 sm:mb-6">
       <ul>
         <li><a href="/teacher/dashboard"><i class="fas fa-home mr-1"></i>Dashboard</a></li>
         <li><a href="/teacher/courses"><i class="fas fa-book mr-1"></i>Courses</a></li>
@@ -207,15 +207,17 @@
             </h2>
             
             <div class="space-y-2">
-              <a href="/teacher/courses/<%= course.id %>/materials" class="btn btn-outline btn-block justify-start">
-                <i class="fas fa-file-alt mr-2"></i>Manage Materials
-              </a>
-              <a href="/teacher/courses/<%= course.id %>/assignments/create" class="btn btn-outline btn-block justify-start">
-                <i class="fas fa-plus-circle mr-2"></i>Create Assignment
-              </a>
-              <a href="/teacher/courses/<%= course.id %>/grades" class="btn btn-outline btn-block justify-start">
-                <i class="fas fa-chart-bar mr-2"></i>Grade Assignments
-              </a>
+              <div class="grid grid-cols-3 gap-2">
+                <a href="/teacher/courses/<%= course.id %>/materials" class="btn btn-outline btn-sm justify-center">
+                  <i class="fas fa-file-alt"></i>
+                </a>
+                <a href="/teacher/courses/<%= course.id %>/assignments/create" class="btn btn-outline btn-sm justify-center">
+                  <i class="fas fa-plus-circle"></i>
+                </a>
+                <a href="/teacher/courses/<%= course.id %>/grades" class="btn btn-outline btn-sm justify-center">
+                  <i class="fas fa-chart-bar"></i>
+                </a>
+              </div>
               <a href="/teacher/courses" class="btn btn-ghost btn-block justify-start">
                 <i class="fas fa-arrow-left mr-2"></i>Back to Courses
               </a>

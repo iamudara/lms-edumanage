@@ -9,12 +9,12 @@
   <link rel="stylesheet" href="/css/teacher-theme.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-base-200">
+<body>
   <%- include('../shared/navbar') %>
 
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-4 py-4 sm:py-8">
     <!-- Breadcrumb -->
-    <div class="text-sm breadcrumbs mb-6">
+    <div class="text-sm breadcrumbs mb-4 sm:mb-6">
       <ul>
         <li><a href="/teacher/dashboard"><i class="fas fa-home mr-1"></i>Dashboard</a></li>
         <li><a href="/teacher/courses"><i class="fas fa-book mr-1"></i>Courses</a></li>
@@ -24,11 +24,11 @@
     </div>
 
     <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-4xl font-bold mb-2">
-        <i class="fas fa-tasks mr-3 text-primary"></i>Create Assignment
+    <div class="mb-6 sm:mb-8">
+      <h1 class="text-2xl sm:text-3xl font-bold mb-2">
+        <i class="fas fa-tasks mr-2"></i>Create Assignment
       </h1>
-      <p class="text-base-content/70">
+      <p class="text-sm sm:text-base text-base-content/70">
         <%= course.code %> - <%= course.title %>
       </p>
     </div>
