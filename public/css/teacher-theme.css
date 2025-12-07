@@ -1,0 +1,870 @@
+/* Teacher Theme - Professional Blue Color Scheme */
+/* Applied on top of DaisyUI light theme */
+
+/* ============================================
+   PAGE BACKGROUND - Better contrast for cards
+   ============================================ */
+
+body {
+  background-color: #f1f5f9 !important;
+}
+
+.bg-base-200 {
+  background-color: #e2e8f0 !important;
+}
+
+/* ============================================
+   STATS CARDS - Professional Blue Gradient
+   ============================================ */
+
+/* My Courses - Primary Blue */
+.stats.bg-primary {
+  background: linear-gradient(135deg, #4b6bfb 0%, #3b5bdb 100%) !important;
+  color: white !important;
+}
+
+.stats.bg-primary .stat-title,
+.stats.bg-primary .stat-value,
+.stats.bg-primary .stat-desc,
+.stats.bg-primary .stat-figure {
+  color: white !important;
+}
+
+.stats.bg-primary .stat-title { opacity: 0.9; }
+.stats.bg-primary .stat-desc { opacity: 0.8; }
+.stats.bg-primary .stat-figure { opacity: 0.7; }
+
+/* Active Assignments - Secondary Blue-Gray */
+.stats.bg-secondary {
+  background: linear-gradient(135deg, #7c8db5 0%, #6b7aa0 100%) !important;
+  color: white !important;
+}
+
+.stats.bg-secondary .stat-title,
+.stats.bg-secondary .stat-value,
+.stats.bg-secondary .stat-desc,
+.stats.bg-secondary .stat-figure {
+  color: white !important;
+}
+
+.stats.bg-secondary .stat-title { opacity: 0.9; }
+.stats.bg-secondary .stat-desc { opacity: 0.8; }
+.stats.bg-secondary .stat-figure { opacity: 0.7; }
+
+/* Submissions Today - Accent Teal */
+.stats.bg-accent {
+  background: linear-gradient(135deg, #1fb2a5 0%, #15a090 100%) !important;
+  color: white !important;
+}
+
+.stats.bg-accent .stat-title,
+.stats.bg-accent .stat-value,
+.stats.bg-accent .stat-desc,
+.stats.bg-accent .stat-figure {
+  color: white !important;
+}
+
+.stats.bg-accent .stat-title { opacity: 0.9; }
+.stats.bg-accent .stat-desc { opacity: 0.8; }
+.stats.bg-accent .stat-figure { opacity: 0.7; }
+
+/* Avg Submission Rate - Info Blue */
+.stats.bg-info {
+  background: linear-gradient(135deg, #3abff8 0%, #22a0d8 100%) !important;
+  color: white !important;
+}
+
+.stats.bg-info .stat-title,
+.stats.bg-info .stat-value,
+.stats.bg-info .stat-desc,
+.stats.bg-info .stat-figure {
+  color: white !important;
+}
+
+.stats.bg-info .stat-title { opacity: 0.9; }
+.stats.bg-info .stat-desc { opacity: 0.8; }
+.stats.bg-info .stat-figure { opacity: 0.7; }
+
+/* ============================================
+   BUTTONS - Professional Blue with Rounded Style (Cupcake-like)
+   ============================================ */
+
+/* All buttons get rounded corners like Cupcake theme */
+.btn {
+  border-radius: 9999px !important; /* rounded-full */
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #4b6bfb 0%, #3b5bdb 100%) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #3b5bdb 0%, #2b4bcb 100%) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(75, 107, 251, 0.4);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #7c8db5 0%, #6b7aa0 100%) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(135deg, #6b7aa0 0%, #5a6990 100%) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(124, 141, 181, 0.4);
+}
+
+.btn-accent {
+  background: linear-gradient(135deg, #1fb2a5 0%, #15a090 100%) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.btn-accent:hover {
+  background: linear-gradient(135deg, #15a090 0%, #0b9080 100%) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(31, 178, 165, 0.4);
+}
+
+/* ============================================
+   BADGES - Professional Colors
+   ============================================ */
+
+.badge-primary {
+  background-color: #4b6bfb !important;
+  color: white !important;
+  border: none !important;
+}
+
+.badge-secondary {
+  background-color: #7c8db5 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.badge-accent {
+  background-color: #1fb2a5 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.badge-info {
+  background-color: #3abff8 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.badge-success {
+  background-color: #36d399 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.badge-warning {
+  background-color: #fbbd23 !important;
+  color: #1f2937 !important;
+  border: none !important;
+}
+
+.badge-error {
+  background-color: #f87272 !important;
+  color: white !important;
+  border: none !important;
+}
+
+/* ============================================
+   CARDS - Clean Styling with Border
+   ============================================ */
+
+.card {
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+  color: #1f2937;
+}
+
+/* Course card specific */
+.course-card {
+  background-color: white;
+}
+
+.course-card:hover {
+  border-color: #4b6bfb;
+}
+
+/* ============================================
+   NAVBAR - Professional Styling
+   ============================================ */
+
+.navbar {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.navbar .text-primary {
+  color: #4b6bfb !important;
+}
+
+.navbar .btn-ghost:hover {
+  background-color: rgba(75, 107, 251, 0.1);
+}
+
+/* Active nav item */
+.navbar .menu li a.active,
+.navbar .menu li a:hover {
+  background-color: rgba(75, 107, 251, 0.1);
+  color: #4b6bfb;
+}
+
+/* ============================================
+   ALERTS - Consistent Styling
+   ============================================ */
+
+.alert-info {
+  background-color: #dbeafe !important;
+  color: #1e40af !important;
+  border-color: #93c5fd !important;
+}
+
+.alert-success {
+  background-color: #d1fae5 !important;
+  color: #065f46 !important;
+  border-color: #6ee7b7 !important;
+}
+
+.alert-warning {
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
+  border-color: #fcd34d !important;
+}
+
+.alert-error {
+  background-color: #fee2e2 !important;
+  color: #991b1b !important;
+  border-color: #fca5a5 !important;
+}
+
+/* ============================================
+   LINKS - Professional Blue
+   ============================================ */
+
+.link-primary {
+  color: #4b6bfb !important;
+}
+
+.link-primary:hover {
+  color: #3b5bdb !important;
+}
+
+/* ============================================
+   AVATAR - Professional Style
+   ============================================ */
+
+.avatar .bg-primary {
+  background: linear-gradient(135deg, #4b6bfb 0%, #3b5bdb 100%) !important;
+  color: white !important;
+}
+
+/* ============================================
+   TABLES - Clean Styling
+   ============================================ */
+
+.table thead th {
+  background-color: #f8fafc;
+  color: #374151;
+  font-weight: 600;
+}
+
+.table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* ============================================
+   FORMS - Professional Styling
+   ============================================ */
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: #4b6bfb !important;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(75, 107, 251, 0.2);
+}
+
+.checkbox:checked,
+.radio:checked {
+  background-color: #4b6bfb !important;
+  border-color: #4b6bfb !important;
+}
+
+/* ============================================
+   MOBILE RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+@media (max-width: 768px) {
+  /* Stats cards stack properly */
+  .stats {
+    flex-direction: column !important;
+  }
+  
+  .stat {
+    padding: 1rem !important;
+  }
+  
+  /* Card body padding */
+  .card-body {
+    padding: 1rem !important;
+  }
+  
+  /* Badge sizing */
+  .badge {
+    font-size: 0.65rem !important;
+    padding: 0.15rem 0.4rem !important;
+  }
+  
+  /* Button sizing */
+  .btn-sm {
+    padding: 0.375rem 0.5rem !important;
+    font-size: 0.75rem !important;
+  }
+  
+  /* Course cards */
+  .course-card {
+    flex-direction: column !important;
+  }
+  
+  .course-card .card-actions {
+    width: 100% !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    gap: 0.5rem !important;
+    margin-top: 0.5rem !important;
+  }
+  
+  .course-card .card-actions .btn {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+}
+
+/* ============================================
+   FOOTER - Professional Style
+   ============================================ */
+
+.footer {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-top: 1px solid #e2e8f0;
+}
+
+.footer .text-primary {
+  color: #4b6bfb !important;
+}
+
+/* ============================================
+   MISC ENHANCEMENTS
+   ============================================ */
+
+/* Menu dropdown styling */
+.menu {
+  border-radius: 0.5rem;
+}
+
+.menu li a {
+  border-radius: 0.375rem;
+}
+
+/* Smooth transitions */
+.btn,
+.card,
+.badge,
+.alert {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Stats hover effect */
+.stats:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Card hover effect */
+.card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Theme toggle button */
+#theme-btn {
+  color: #4b6bfb;
+  transition: all 0.3s ease !important;
+}
+
+#theme-btn:hover {
+  background-color: rgba(75, 107, 251, 0.1) !important;
+}
+
+[data-theme="dark"] #theme-btn {
+  color: #60a5fa;
+}
+
+[data-theme="dark"] #theme-btn:hover {
+  background-color: rgba(96, 165, 250, 0.1) !important;
+}
+
+/* Active Navigation Highlighting */
+.menu li a.active {
+  background-color: rgba(75, 107, 251, 0.15) !important;
+  color: #4b6bfb !important;
+  font-weight: 600;
+  position: relative;
+}
+
+.menu li a.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #4b6bfb;
+  border-radius: 0 3px 3px 0;
+}
+
+.menu-horizontal li a.active::before {
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: 0;
+  width: auto;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+}
+
+[data-theme="dark"] .menu li a.active {
+  background-color: rgba(96, 165, 250, 0.2) !important;
+  color: #60a5fa !important;
+}
+
+[data-theme="dark"] .menu li a.active::before {
+  background: #60a5fa;
+}
+
+/* Navbar sticky with blur */
+.navbar {
+  backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .navbar {
+  background-color: rgba(17, 24, 39, 0.95) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Avatar - fixed size, perfectly rounded */
+.dropdown-end .avatar {
+  cursor: pointer;
+}
+
+.dropdown-end .avatar > div {
+  width: 2.5rem !important;
+  height: 2.5rem !important;
+  border-radius: 9999px !important;
+  flex-shrink: 0;
+}
+
+.dropdown-end .avatar:hover > div {
+  opacity: 0.9;
+  transform: scale(1.05);
+  transition: all 0.2s ease;
+}
+
+.btn-circle {
+  border-radius: 9999px !important;
+}
+
+/* Dark mode badge improvements */
+[data-theme="dark"] .badge-info {
+  background-color: #3abff8 !important;
+  color: #111827 !important;
+  border: none !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="dark"] .badge-secondary {
+  background-color: #7c8db5 !important;
+  color: white !important;
+  border: none !important;
+  font-weight: 600 !important;
+}
+
+/* Hide scrollbar for batch filter tabs */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================
+   DARK THEME FIXES
+   ============================================ */
+
+[data-theme="dark"] {
+  /* Ensure text is visible */
+  --base-content: #e5e7eb;
+}
+
+[data-theme="dark"] body {
+  background-color: #111827 !important;
+}
+
+[data-theme="dark"] .bg-base-200 {
+  background-color: #0f172a !important;
+}
+
+[data-theme="dark"] .bg-base-100 {
+  background-color: #1e293b !important;
+}
+
+[data-theme="dark"] .text-base-content,
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] p,
+[data-theme="dark"] span,
+[data-theme="dark"] label {
+  color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .text-base-content\/70 {
+  color: rgba(229, 231, 235, 0.7) !important;
+}
+
+[data-theme="dark"] .text-base-content\/60 {
+  color: rgba(229, 231, 235, 0.6) !important;
+}
+
+[data-theme="dark"] .text-base-content\/50 {
+  color: rgba(229, 231, 235, 0.5) !important;
+}
+
+/* Dark mode cards - softer borders */
+[data-theme="dark"] .card {
+  background-color: #1f2937 !important;
+  border: 1px solid rgba(75, 107, 251, 0.15) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .course-card {
+  background-color: #1f2937 !important;
+  border: 1px solid rgba(75, 107, 251, 0.15) !important;
+}
+
+[data-theme="dark"] .course-card:hover {
+  border-color: rgba(96, 165, 250, 0.4) !important;
+  box-shadow: 0 4px 6px rgba(96, 165, 250, 0.2) !important;
+}
+
+[data-theme="dark"] .card-title {
+  color: #f3f4f6 !important;
+}
+
+[data-theme="dark"] .card-body {
+  color: #e5e7eb !important;
+}
+
+/* Dark mode navbar - no harsh borders */
+[data-theme="dark"] .navbar {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%) !important;
+  border-bottom: 1px solid rgba(75, 107, 251, 0.15) !important;
+}
+
+/* Dark mode footer - no harsh borders */
+[data-theme="dark"] .footer {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%) !important;
+  border-top: 1px solid rgba(75, 107, 251, 0.15) !important;
+}
+
+/* Dark mode tables */
+[data-theme="dark"] .table thead th {
+  background-color: #1f2937 !important;
+  color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .table tbody tr:hover {
+  background-color: #374151 !important;
+}
+
+/* Dark mode inputs */
+[data-theme="dark"] .input,
+[data-theme="dark"] .select,
+[data-theme="dark"] .textarea {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #e5e7eb !important;
+}
+
+/* Dark mode alerts */
+[data-theme="dark"] .alert-info {
+  background-color: #1e3a5f !important;
+  color: #93c5fd !important;
+  border-color: #3b82f6 !important;
+}
+
+[data-theme="dark"] .alert-success {
+  background-color: #14532d !important;
+  color: #86efac !important;
+  border-color: #22c55e !important;
+}
+
+[data-theme="dark"] .alert-warning {
+  background-color: #713f12 !important;
+  color: #fde047 !important;
+  border-color: #eab308 !important;
+}
+
+[data-theme="dark"] .alert-error {
+  background-color: #7f1d1d !important;
+  color: #fca5a5 !important;
+  border-color: #ef4444 !important;
+}
+
+/* Dark mode menu */
+[data-theme="dark"] .menu {
+  background-color: #1f2937 !important;
+}
+
+[data-theme="dark"] .menu li a {
+  color: #e5e7eb !important;
+}
+
+[data-theme="dark"] .menu li a:hover {
+  background-color: #374151 !important;
+}
+
+/* Dark mode dropdown */
+[data-theme="dark"] .dropdown-content {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+/* Dark mode badges - keep their colors */
+[data-theme="dark"] .badge-primary {
+  background-color: #4b6bfb !important;
+  color: white !important;
+}
+
+/* Dark mode stats cards - keep gradients, remove borders */
+[data-theme="dark"] .stats.bg-primary,
+[data-theme="dark"] .stats.bg-secondary,
+[data-theme="dark"] .stats.bg-accent,
+[data-theme="dark"] .stats.bg-info {
+  border: none !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Dark mode stat boxes in course cards */
+[data-theme="dark"] .course-card .bg-base-200 {
+  background-color: #374151 !important;
+  border: none !important;
+}
+
+/* Dark mode - softer dividers */
+[data-theme="dark"] .divider {
+  border-color: rgba(75, 107, 251, 0.15) !important;
+}
+
+/* Dark mode - softer table borders */
+[data-theme="dark"] .table {
+  border-color: rgba(75, 107, 251, 0.1) !important;
+}
+
+[data-theme="dark"] .table thead,
+[data-theme="dark"] .table tbody tr {
+  border-color: rgba(75, 107, 251, 0.1) !important;
+}
+
+[data-theme="dark"] .table td,
+[data-theme="dark"] .table th {
+  border-color: rgba(75, 107, 251, 0.1) !important;
+}
+
+/* Dark mode - badges with subtle borders */
+[data-theme="dark"] .badge {
+  border: 1px solid rgba(75, 107, 251, 0.2) !important;
+}
+
+/* Dark mode - remove borders from outline badges in course cards */
+[data-theme="dark"] .course-card .badge-outline {
+  border: none !important;
+  background-color: transparent !important;
+  color: #9ca3af !important;
+}
+
+/* Dark mode - remove all badge borders */
+[data-theme="dark"] .badge-outline {
+  border: none !important;
+  background-color: transparent !important;
+  color: #9ca3af !important;
+}
+
+/* Dark mode - better section separation */
+[data-theme="dark"] .card.bg-base-100 {
+  background-color: #1f2937 !important;
+  border: 1px solid rgba(75, 107, 251, 0.2) !important;
+}
+
+[data-theme="dark"] .card .bg-base-200 {
+  background-color: #374151 !important;
+  border: 1px solid rgba(75, 107, 251, 0.1) !important;
+}
+
+[data-theme="dark"] .card .bg-base-200:hover {
+  background-color: #4b5563 !important;
+}
+
+/* Dark mode - Recent Activity cards */
+[data-theme="dark"] .space-y-3 .card {
+  background-color: #374151 !important;
+}
+
+[data-theme="dark"] .space-y-3 .card:hover {
+  background-color: #4b5563 !important;
+}
+
+/* Dark mode - Avatar in activity */
+[data-theme="dark"] .avatar .bg-primary {
+  background: linear-gradient(135deg, #4b6bfb 0%, #3b5bdb 100%) !important;
+}
+
+/* ============================================
+   COURSES PAGE MOBILE RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+  /* Page header - stack on mobile */
+  .flex.justify-between.items-center.mb-8 {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+  }
+  
+  .flex.justify-between.items-center.mb-8 .btn {
+    width: 100% !important;
+  }
+  
+  /* Batch filter tabs - scrollable */
+  .flex.flex-wrap.gap-2.mb-6 {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    padding-bottom: 0.5rem !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .flex.flex-wrap.gap-2.mb-6 .btn {
+    flex-shrink: 0 !important;
+    font-size: 0.75rem !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+  
+  /* Course cards grid - single column on mobile */
+  .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3 {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Course card internal layout */
+  .course-card .card-body {
+    padding: 1rem !important;
+  }
+  
+  /* Course card stats */
+  .course-card .stats {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+  
+  .course-card .stat {
+    padding: 0.5rem !important;
+    text-align: center !important;
+  }
+  
+  .course-card .stat-value {
+    font-size: 1.25rem !important;
+  }
+  
+  .course-card .stat-title {
+    font-size: 0.65rem !important;
+  }
+  
+  /* Course card action buttons - horizontal row */
+  .course-card .flex.flex-wrap.gap-2 {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    margin-top: 0.75rem !important;
+  }
+  
+  .course-card .flex.flex-wrap.gap-2 .btn {
+    flex: 1 1 calc(50% - 0.25rem) !important;
+    min-width: 0 !important;
+    font-size: 0.75rem !important;
+    padding: 0.5rem !important;
+  }
+  
+  /* Full-width button when only one */
+  .course-card .flex.flex-wrap.gap-2 .btn:only-child {
+    flex: 1 1 100% !important;
+  }
+}
+
+/* Smaller screens */
+@media (max-width: 480px) {
+  /* Stats cards - compact on very small screens */
+  .stats .stat-title {
+    font-size: 0.75rem !important;
+  }
+  
+  .stats .stat-value {
+    font-size: 1.5rem !important;
+  }
+  
+  .stats .stat-desc {
+    font-size: 0.7rem !important;
+  }
+  
+  /* Smaller badges */
+  .badge {
+    font-size: 0.65rem !important;
+    padding: 0.25rem 0.5rem !important;
+  }
+  
+  /* Better touch targets for buttons */
+  .btn {
+    min-height: 2rem !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+  
+  .btn-xs {
+    min-height: 1.75rem !important;
+    font-size: 0.7rem !important;
+  }
+  
+  /* Compact navbar */
+  .navbar {
+    min-height: 3.5rem !important;
+  }
+}

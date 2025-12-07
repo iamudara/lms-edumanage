@@ -1,108 +1,168 @@
-<div class="navbar bg-base-100 shadow-lg">
+<% 
+  // Get current path for active nav highlighting
+  const currentPath = typeof req !== 'undefined' ? req.path : '';
+  const isActive = (path) => currentPath.startsWith(path);
+%>
+
+<nav class="navbar bg-base-100 shadow-lg sticky top-0 z-50">
     <div class="navbar-start">
+        <!-- Mobile Menu Toggle -->
         <div class="dropdown">
-            <label tabindex="0" class="btn btn-ghost lg:hidden">
+            <label tabindex="0" class="btn btn-ghost btn-circle lg:hidden">
                 <i class="fas fa-bars text-xl"></i>
             </label>
-            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-60">
                 <% if (user.role === 'admin') { %>
-                    <li><a href="/admin/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
-                    <li><a href="/admin/tools"><i class="fas fa-tools"></i> Bulk Operations</a></li>
-                    <li><a href="/admin"><i class="fas fa-cog"></i> AdminJS Panel</a></li>
+                    <li><a href="/admin/dashboard" class="<%= isActive('/admin/dashboard') ? 'active' : '' %>"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                    <li><a href="/admin/tools" class="<%= isActive('/admin/tools') ? 'active' : '' %>"><i class="fas fa-tools"></i> Bulk Operations</a></li>
+                    <li><a href="/admin" class="<%= currentPath === '/admin' ? 'active' : '' %>"><i class="fas fa-cog"></i> AdminJS</a></li>
                 <% } else if (user.role === 'teacher') { %>
-                    <li><a href="/teacher/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
-                    <li><a href="/teacher/courses"><i class="fas fa-book"></i> My Courses</a></li>
-                    <li><a href="/teacher/assignments"><i class="fas fa-clipboard-list"></i> Assignments</a></li>
-                    <li><a href="/teacher/courses/create"><i class="fas fa-plus-circle"></i> New Course</a></li>
+                    <li><a href="/teacher/dashboard" class="<%= isActive('/teacher/dashboard') ? 'active' : '' %>"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                    <li><a href="/teacher/courses" class="<%= isActive('/teacher/courses') ? 'active' : '' %>"><i class="fas fa-book"></i> Courses</a></li>
+                    <li><a href="/teacher/assignments" class="<%= isActive('/teacher/assignments') ? 'active' : '' %>"><i class="fas fa-clipboard-list"></i> Assignments</a></li>
                 <% } else if (user.role === 'student') { %>
-                    <li><a href="/student/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
-                    <li><a href="/student/courses"><i class="fas fa-book"></i> My Courses</a></li>
-                    <li><a href="/student/grades"><i class="fas fa-graduation-cap"></i> Grades</a></li>
+                    <li><a href="/student/dashboard" class="<%= isActive('/student/dashboard') ? 'active' : '' %>"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                    <li><a href="/student/courses" class="<%= isActive('/student/courses') ? 'active' : '' %>"><i class="fas fa-book"></i> Courses</a></li>
+                    <li><a href="/student/grades" class="<%= isActive('/student/grades') ? 'active' : '' %>"><i class="fas fa-graduation-cap"></i> Grades</a></li>
                 <% } %>
             </ul>
         </div>
-        <a href="/" class="btn btn-ghost normal-case text-xl">
-            <i class="fas fa-graduation-cap text-primary"></i>
-            <span class="ml-2">LMS EduManage</span>
+        
+        <!-- Logo -->
+        <a href="/" class="btn btn-ghost normal-case text-lg sm:text-xl hover:bg-transparent">
+            <i class="fas fa-graduation-cap text-primary text-2xl"></i>
+            <span class="ml-2 hidden sm:inline font-bold">LMS EduManage</span>
         </a>
     </div>
     
+    <!-- Desktop Menu -->
     <div class="navbar-center hidden lg:flex">
         <ul class="menu menu-horizontal px-1">
             <% if (user.role === 'admin') { %>
-                <li><a href="/admin/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
-                <li><a href="/admin/tools"><i class="fas fa-tools"></i> Bulk Operations</a></li>
-                <li><a href="/admin"><i class="fas fa-cog"></i> AdminJS Panel</a></li>
+                <li><a href="/admin/dashboard" class="<%= isActive('/admin/dashboard') ? 'active' : '' %>"><i class="fas fa-chart-line mr-2"></i>Dashboard</a></li>
+                <li><a href="/admin/tools" class="<%= isActive('/admin/tools') ? 'active' : '' %>"><i class="fas fa-tools mr-2"></i>Bulk Operations</a></li>
+                <li><a href="/admin" class="<%= currentPath === '/admin' ? 'active' : '' %>"><i class="fas fa-cog mr-2"></i>AdminJS</a></li>
             <% } else if (user.role === 'teacher') { %>
-                <li><a href="/teacher/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
-                <li>
-                    <details>
-                        <summary><i class="fas fa-book"></i> Courses</summary>
-                        <ul class="p-2 bg-base-100 z-[1]">
-                            <li><a href="/teacher/courses"><i class="fas fa-list"></i> All Courses</a></li>
-                            <li><a href="/teacher/courses/create"><i class="fas fa-plus-circle"></i> New Course</a></li>
-                        </ul>
-                    </details>
-                </li>
-                <li><a href="/teacher/assignments"><i class="fas fa-clipboard-list"></i> Assignments</a></li>
+                <li><a href="/teacher/dashboard" class="<%= isActive('/teacher/dashboard') ? 'active' : '' %>"><i class="fas fa-chart-line mr-2"></i>Dashboard</a></li>
+                <li><a href="/teacher/courses" class="<%= isActive('/teacher/courses') ? 'active' : '' %>"><i class="fas fa-book mr-2"></i>Courses</a></li>
+                <li><a href="/teacher/assignments" class="<%= isActive('/teacher/assignments') ? 'active' : '' %>"><i class="fas fa-clipboard-list mr-2"></i>Assignments</a></li>
             <% } else if (user.role === 'student') { %>
-                <li><a href="/student/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
-                <li><a href="/student/courses"><i class="fas fa-book"></i> My Courses</a></li>
-                <li><a href="/student/grades"><i class="fas fa-graduation-cap"></i> Grades</a></li>
+                <li><a href="/student/dashboard" class="<%= isActive('/student/dashboard') ? 'active' : '' %>"><i class="fas fa-chart-line mr-2"></i>Dashboard</a></li>
+                <li><a href="/student/courses" class="<%= isActive('/student/courses') ? 'active' : '' %>"><i class="fas fa-book mr-2"></i>Courses</a></li>
+                <li><a href="/student/grades" class="<%= isActive('/student/grades') ? 'active' : '' %>"><i class="fas fa-graduation-cap mr-2"></i>Grades</a></li>
             <% } %>
         </ul>
     </div>
     
-    <div class="navbar-end">
-        <!-- Theme Switcher -->
-        <div class="dropdown dropdown-end mr-2">
-            <label tabindex="0" class="btn btn-ghost btn-circle">
-                <i class="fas fa-palette text-xl"></i>
-            </label>
-            <ul tabindex="0" class="menu dropdown-content z-[1] p-2 shadow bg-base-100 rounded-box w-52 mt-4">
-                <li><a onclick="changeTheme('corporate')"><i class="fas fa-briefcase"></i> Corporate</a></li>
-                <li><a onclick="changeTheme('light')"><i class="fas fa-sun"></i> Light</a></li>
-                <li><a onclick="changeTheme('dark')"><i class="fas fa-moon"></i> Dark</a></li>
-            </ul>
-        </div>
+    <div class="navbar-end gap-2">
+        <!-- Theme Toggle -->
+        <button id="theme-btn" class="btn btn-ghost btn-circle" aria-label="Toggle theme">
+            <svg id="theme-icon-light" class="h-5 w-5 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M5.64,17l-.71.71a1,1,0,0,0,0,1.41,1,1,0,0,0,1.41,0l.71-.71A1,1,0,0,0,5.64,17ZM5,12a1,1,0,0,0-1-1H3a1,1,0,0,0,0,2H4A1,1,0,0,0,5,12Zm7-7a1,1,0,0,0,1-1V3a1,1,0,0,0-2,0V4A1,1,0,0,0,12,5ZM5.64,7.05a1,1,0,0,0,.7.29,1,1,0,0,0,.71-.29,1,1,0,0,0,0-1.41l-.71-.71A1,1,0,0,0,4.93,6.34Zm12,.29a1,1,0,0,0,.7-.29l.71-.71a1,1,0,1,0-1.41-1.41L17,5.64a1,1,0,0,0,0,1.41A1,1,0,0,0,17.66,7.34ZM21,11H20a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Zm-9,8a1,1,0,0,0-1,1v1a1,1,0,0,0,2,0V20A1,1,0,0,0,12,19ZM18.36,17A1,1,0,0,0,17,18.36l.71.71a1,1,0,0,0,1.41,0,1,1,0,0,0,0-1.41ZM12,6.5A5.5,5.5,0,1,0,17.5,12,5.51,5.51,0,0,0,12,6.5Zm0,9A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/>
+            </svg>
+            <svg id="theme-icon-dark" class="h-5 w-5 fill-current hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13Zm-9.5,6.69A8.14,8.14,0,0,1,7.08,5.22v.27A10.15,10.15,0,0,0,17.22,15.63a9.79,9.79,0,0,0,2.1-.22A8.11,8.11,0,0,1,12.14,19.73Z"/>
+            </svg>
+        </button>
         
-        <!-- User Dropdown -->
+        <!-- User Avatar -->
         <div class="dropdown dropdown-end">
-            <label tabindex="0" class="btn btn-ghost btn-circle avatar">
-                <div class="w-10 rounded-full bg-primary text-primary-content flex items-center justify-center">
-                    <span class="text-lg font-bold"><%= user.full_name.charAt(0).toUpperCase() %></span>
-                </div>
-            </label>
-            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-                <li class="menu-title">
-                    <span><%= user.full_name %></span>
-                    <span class="badge badge-sm badge-<%= user.role === 'admin' ? 'error' : user.role === 'teacher' ? 'warning' : 'info' %>">
-                        <%= user.role.toUpperCase() %>
+            <div tabindex="0" role="button" class="avatar">
+                <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+                    <span class="text-primary-content text-base font-semibold">
+                        <%= user.full_name.charAt(0).toUpperCase() %>
                     </span>
+                </div>
+            </div>
+            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-lg bg-base-100 rounded-box w-60">
+                <li class="menu-title px-4 py-2">
+                    <div class="flex flex-col gap-1">
+                        <span class="font-semibold text-base"><%= user.full_name %></span>
+                        <span class="badge badge-sm badge-<%= user.role === 'admin' ? 'error' : user.role === 'teacher' ? 'warning' : 'info' %> w-fit">
+                            <%= user.role.toUpperCase() %>
+                        </span>
+                    </div>
                 </li>
-                <li><a href="/auth/change-password"><i class="fas fa-key"></i> Change Password</a></li>
+                <div class="divider my-1"></div>
+                <li><a href="/auth/change-password" class="py-3"><i class="fas fa-key mr-2"></i>Change Password</a></li>
                 <li>
                     <form action="/auth/logout" method="POST" class="p-0 m-0">
-                        <button type="submit" class="w-full text-left">
-                            <i class="fas fa-sign-out-alt"></i> Logout
+                        <button type="submit" class="w-full text-left py-3">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
                         </button>
                     </form>
                 </li>
             </ul>
         </div>
     </div>
-</div>
+</nav>
 
 <script>
-    // Theme switcher functionality
-    function changeTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
+    // Theme toggle functionality
+    const themeBtn = document.getElementById('theme-btn');
+    const lightIcon = document.getElementById('theme-icon-light');
+    const darkIcon = document.getElementById('theme-icon-dark');
+    
+    function updateThemeIcons(theme) {
+        if (theme === 'dark') {
+            lightIcon.classList.add('hidden');
+            darkIcon.classList.remove('hidden');
+        } else {
+            lightIcon.classList.remove('hidden');
+            darkIcon.classList.add('hidden');
+        }
+    }
+    
+    if (themeBtn) {
+        themeBtn.addEventListener('click', function() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcons(newTheme);
+        });
     }
     
     // Load saved theme on page load
     window.addEventListener('DOMContentLoaded', () => {
-        const savedTheme = localStorage.getItem('theme') || 'corporate';
+        const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcons(savedTheme);
+    });
+</script>
+
+<script>
+    // Simple theme toggle with icon switching
+    const themeBtn = document.getElementById('theme-btn');
+    const lightIcon = document.getElementById('theme-icon-light');
+    const darkIcon = document.getElementById('theme-icon-dark');
+    
+    // Function to update icons based on theme
+    function updateThemeIcons(theme) {
+        if (theme === 'dark') {
+            lightIcon.classList.add('hidden');
+            darkIcon.classList.remove('hidden');
+        } else {
+            lightIcon.classList.remove('hidden');
+            darkIcon.classList.add('hidden');
+        }
+    }
+    
+    // Handle theme toggle click
+    if (themeBtn) {
+        themeBtn.addEventListener('click', function() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcons(newTheme);
+        });
+    }
+    
+    // Load saved theme on page load
+    window.addEventListener('DOMContentLoaded', () => {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcons(savedTheme);
     });
 </script>

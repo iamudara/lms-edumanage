@@ -1,38 +1,39 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="corporate">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= pageTitle %> - LMS EduManage</title>
   <link href="/css/output.css" rel="stylesheet">
   <link href="/css/custom.css" rel="stylesheet">
+  <link href="/css/teacher-theme.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
+<body class="min-h-screen">
   <%- include('../shared/navbar') %>
 
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-4 py-6 sm:py-8">
     <!-- Page Header -->
-    <div class="flex justify-between items-center mb-8">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
       <div>
-        <h1 class="text-3xl font-bold text-base-content mb-2">
+        <h1 class="text-2xl sm:text-3xl font-bold text-base-content mb-2">
           <i class="fas fa-book mr-2"></i>My Courses
         </h1>
         <p class="text-base-content/70">Manage all your courses</p>
       </div>
-      <a href="/teacher/courses/create" class="btn btn-primary">
+      <a href="/teacher/courses/create" class="btn btn-primary w-full sm:w-auto">
         <i class="fas fa-plus mr-2"></i>Create New Course
       </a>
     </div>
 
     <!-- Batch Filter Tabs -->
     <% if (batches && batches.length > 0) { %>
-      <div class="flex flex-wrap gap-2 mb-6">
-        <button class="btn btn-primary batch-filter-btn" data-batch="all">
-          <i class="fas fa-th-large mr-1"></i>All Batches
+      <div class="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+        <button class="btn btn-primary btn-sm batch-filter-btn flex-shrink-0" data-batch="all">
+          <i class="fas fa-th-large mr-1"></i><span class="hidden sm:inline">All Batches</span><span class="sm:hidden">All</span>
         </button>
         <% batches.forEach(batch => { %>
-          <button class="btn btn-ghost batch-filter-btn" data-batch="<%= batch.id %>">
+          <button class="btn btn-ghost btn-sm batch-filter-btn flex-shrink-0" data-batch="<%= batch.id %>">
             <i class="fas fa-users mr-1"></i><%= batch.name %>
           </button>
         <% }); %>
@@ -41,7 +42,7 @@
 
     <!-- Courses Grid -->
     <% if (courses.length === 0) { %>
-      <div class="card bg-base-100 shadow-xl">
+      <div class="card bg-base-100 shadow-xl border border-base-300">
         <div class="card-body text-center py-16">
           <i class="fas fa-book-open text-6xl text-base-content/20 mb-4"></i>
           <h2 class="text-2xl font-bold mb-2">No Courses Yet</h2>
@@ -73,9 +74,9 @@
           const primaryTeacher = course.courseTeachers?.find(ct => ct.is_primary);
           const isOwner = primaryTeacher?.teacher_id === user.id;
         %>
-          <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow cursor-pointer course-card" 
+          <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow cursor-pointer course-card border border-base-300" 
                onclick="window.location.href='/teacher/courses/<%= course.id %>'"
-               data-batch-ids="<%= courseBatchIds.join(',') %>">>
+               data-batch-ids="<%= courseBatchIds.join(',') %>">
             <div class="card-body">
               <!-- Course Code Badge and Ownership -->
               <div class="flex justify-between items-start mb-2">
@@ -125,15 +126,15 @@
               </div>
 
               <!-- Action Buttons -->
-              <div class="card-actions justify-end gap-2">
-                <a href="/teacher/courses/<%= course.id %>/assignments/create" class="btn btn-primary btn-sm" onclick="event.stopPropagation();">
-                  <i class="fas fa-plus mr-1"></i>Assignment
+              <div class="flex flex-wrap gap-2 mt-auto">
+                <a href="/teacher/courses/<%= course.id %>/assignments/create" class="btn btn-primary btn-sm flex-1 sm:flex-none" onclick="event.stopPropagation();">
+                  <i class="fas fa-plus"></i><span class="hidden sm:inline ml-1">Assignment</span>
                 </a>
-                <a href="/teacher/courses/<%= course.id %>/materials" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();">
-                  <i class="fas fa-file-alt mr-1"></i>Materials
+                <a href="/teacher/courses/<%= course.id %>/materials" class="btn btn-secondary btn-sm flex-1 sm:flex-none" onclick="event.stopPropagation();">
+                  <i class="fas fa-file-alt"></i><span class="hidden sm:inline ml-1">Materials</span>
                 </a>
-                <a href="/teacher/courses/<%= course.id %>/grades" class="btn btn-accent btn-sm" onclick="event.stopPropagation();">
-                  <i class="fas fa-chart-bar mr-1"></i>Grades
+                <a href="/teacher/courses/<%= course.id %>/grades" class="btn btn-accent btn-sm flex-1 sm:flex-none" onclick="event.stopPropagation();">
+                  <i class="fas fa-chart-bar"></i><span class="hidden sm:inline ml-1">Grades</span>
                 </a>
               </div>
 

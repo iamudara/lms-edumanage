@@ -1,34 +1,50 @@
-<footer class="footer footer-center p-10 bg-base-100 text-base-content mt-16">
-    <div class="grid grid-flow-col gap-4">
-        <a href="/about" class="link link-hover">About</a>
-        <a href="/contact" class="link link-hover">Contact</a>
-        <a href="/privacy" class="link link-hover">Privacy Policy</a>
-        <a href="/terms" class="link link-hover">Terms of Service</a>
-    </div>
-    
-    <div>
-        <div class="grid grid-flow-col gap-4">
-            <a href="#" class="link link-hover" aria-label="Twitter">
-                <i class="fab fa-twitter text-2xl"></i>
-            </a>
-            <a href="#" class="link link-hover" aria-label="YouTube">
-                <i class="fab fa-youtube text-2xl"></i>
-            </a>
-            <a href="#" class="link link-hover" aria-label="Facebook">
-                <i class="fab fa-facebook text-2xl"></i>
-            </a>
-            <a href="#" class="link link-hover" aria-label="GitHub">
-                <i class="fab fa-github text-2xl"></i>
-            </a>
+<footer class="footer bg-base-200 text-base-content mt-auto">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Main Footer Content -->
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+            <!-- Logo & Description -->
+            <div class="text-center md:text-left">
+                <div class="flex items-center justify-center md:justify-start gap-2 mb-2">
+                    <i class="fas fa-graduation-cap text-primary text-2xl"></i>
+                    <span class="font-bold text-lg">LMS EduManage</span>
+                </div>
+                <p class="text-sm opacity-70">
+                    Learning Management System for Modern Education
+                </p>
+            </div>
+            
+            <!-- Social Icons & Version -->
+            <div class="flex items-center gap-4">
+                <div class="flex gap-2">
+                    <a href="#" class="btn btn-ghost btn-sm btn-circle" aria-label="Twitter">
+                        <i class="fab fa-twitter text-lg"></i>
+                    </a>
+                    <a href="#" class="btn btn-ghost btn-sm btn-circle" aria-label="YouTube">
+                        <i class="fab fa-youtube text-lg"></i>
+                    </a>
+                    <a href="#" class="btn btn-ghost btn-sm btn-circle" aria-label="Facebook">
+                        <i class="fab fa-facebook text-lg"></i>
+                    </a>
+                    <a href="#" class="btn btn-ghost btn-sm btn-circle" aria-label="GitHub">
+                        <i class="fab fa-github text-lg"></i>
+                    </a>
+                </div>
+                
+            </div>
         </div>
-    </div>
-    
-    <div>
-        <p class="font-bold">
-            <i class="fas fa-graduation-cap text-primary"></i>
-            LMS EduManage
-        </p>
-        <p>Learning Management System for Modern Education</p>
-        <p class="text-sm opacity-70">Copyright © <%= new Date().getFullYear() %> - All rights reserved</p>
+        
+        <!-- Bottom Bar -->
+        <div class="divider my-3"></div>
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-3 text-sm">
+            <div class="opacity-70 text-center sm:text-left">
+                <i class="fas fa-copyright mr-1"></i>
+                <%= new Date().getFullYear() %> LMS EduManage. All rights reserved.
+            </div>
+            <div class="flex flex-wrap justify-center gap-4 text-xs opacity-60">
+                <span><i class="fas fa-code mr-1"></i>Node.js</span>
+                <span><i class="fas fa-database mr-1"></i>MySQL</span>
+                <span><i class="fas fa-paint-brush mr-1"></i>DaisyUI</span>
+            </div>
+        </div>
     </div>
 </footer>
