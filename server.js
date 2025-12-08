@@ -48,6 +48,11 @@ import {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust Railway proxy for secure cookies (CRITICAL for production HTTPS)
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // 6. Register AdminJS adapter (BEFORE creating AdminJS instance)
 AdminJS.registerAdapter({
   Resource: AdminJSSequelize.Resource,
