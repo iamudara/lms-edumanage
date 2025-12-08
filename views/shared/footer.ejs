@@ -1,50 +1,24 @@
-<footer class="footer bg-base-200 text-base-content mt-auto">
-    <div class="container mx-auto px-4 py-6">
-        <!-- Main Footer Content -->
-        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
-            <!-- Logo & Description -->
-            <div class="text-center md:text-left">
-                <div class="flex items-center justify-center md:justify-start gap-2 mb-2">
-                    <i class="fas fa-graduation-cap text-primary text-2xl"></i>
-                    <span class="font-bold text-lg">LMS EduManage</span>
-                </div>
-                <p class="text-sm opacity-70">
-                    Learning Management System for Modern Education
-                </p>
-            </div>
-            
-            <!-- Social Icons & Version -->
-            <div class="flex items-center gap-4">
-                <div class="flex gap-2">
-                    <a href="#" class="btn btn-ghost btn-sm btn-circle" aria-label="Twitter">
-                        <i class="fab fa-twitter text-lg"></i>
-                    </a>
-                    <a href="#" class="btn btn-ghost btn-sm btn-circle" aria-label="YouTube">
-                        <i class="fab fa-youtube text-lg"></i>
-                    </a>
-                    <a href="#" class="btn btn-ghost btn-sm btn-circle" aria-label="Facebook">
-                        <i class="fab fa-facebook text-lg"></i>
-                    </a>
-                    <a href="#" class="btn btn-ghost btn-sm btn-circle" aria-label="GitHub">
-                        <i class="fab fa-github text-lg"></i>
-                    </a>
-                </div>
-                
-            </div>
+<footer class="bg-base-200 border-t border-base-300 mt-auto">
+  <div class="container mx-auto px-4 py-6">
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+      <!-- Brand -->
+      <div class="flex items-center gap-2">
+        <i class="fas fa-graduation-cap text-primary text-xl"></i>
+        <span class="font-semibold">LMS EduManage</span>
+      </div>
+
+      <!-- Copyright & Tech Stack -->
+      <div class="flex flex-col sm:flex-row items-center gap-4 text-sm opacity-70">
+        <span>© <%= new Date().getFullYear() %> All rights reserved</span>
+        <div class="hidden sm:block w-px h-4 bg-base-content opacity-20"></div>
+        <div class="flex gap-3 text-xs">
+          <span>Node.js</span>
+          <span>•</span>
+          <span>MySQL</span>
+          <span>•</span>
+          <span>DaisyUI</span>
         </div>
-        
-        <!-- Bottom Bar -->
-        <div class="divider my-3"></div>
-        <div class="flex flex-col sm:flex-row justify-between items-center gap-3 text-sm">
-            <div class="opacity-70 text-center sm:text-left">
-                <i class="fas fa-copyright mr-1"></i>
-                <%= new Date().getFullYear() %> LMS EduManage. All rights reserved.
-            </div>
-            <div class="flex flex-wrap justify-center gap-4 text-xs opacity-60">
-                <span><i class="fas fa-code mr-1"></i>Node.js</span>
-                <span><i class="fas fa-database mr-1"></i>MySQL</span>
-                <span><i class="fas fa-paint-brush mr-1"></i>DaisyUI</span>
-            </div>
-        </div>
+      </div>
     </div>
+  </div>
 </footer>
