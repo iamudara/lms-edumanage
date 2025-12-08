@@ -141,35 +141,41 @@ export const showDashboard = async (req, res) => {
     });
 
     // Get latest material update for each course (including materials in folders)
-    const courseLatestMaterials = await sequelize.query(`
-      SELECT 
-        c.id as course_id,
-        MAX(m.updated_at) as latest_material_update
-      FROM courses c
-      LEFT JOIN materials m ON m.course_id = c.id
-      LEFT JOIN folder_courses fc ON fc.course_id = c.id
-      LEFT JOIN materials fm ON fm.folder_id = fc.folder_id
-      WHERE c.id IN (:courseIds)
-      GROUP BY c.id
-      HAVING MAX(m.updated_at) IS NOT NULL OR MAX(fm.updated_at) IS NOT NULL
-    `, {
-      replacements: { courseIds: allEnrolledCourses.map(c => c.id) },
-      type: QueryTypes.SELECT
-    });
+    // Only run queries if student has enrolled courses
+    let courseLatestMaterials = [];
+    let folderMaterialUpdates = [];
+    
+    if (allEnrolledCourses.length > 0) {
+      courseLatestMaterials = await sequelize.query(`
+        SELECT 
+          c.id as course_id,
+          MAX(m.updated_at) as latest_material_update
+        FROM courses c
+        LEFT JOIN materials m ON m.course_id = c.id
+        LEFT JOIN folder_courses fc ON fc.course_id = c.id
+        LEFT JOIN materials fm ON fm.folder_id = fc.folder_id
+        WHERE c.id IN (:courseIds)
+        GROUP BY c.id
+        HAVING MAX(m.updated_at) IS NOT NULL OR MAX(fm.updated_at) IS NOT NULL
+      `, {
+        replacements: { courseIds: allEnrolledCourses.map(c => c.id) },
+        type: QueryTypes.SELECT
+      });
 
-    // Also get materials from folders
-    const folderMaterialUpdates = await sequelize.query(`
-      SELECT 
-        fc.course_id,
-        MAX(m.updated_at) as latest_folder_material_update
-      FROM folder_courses fc
-      JOIN materials m ON m.folder_id = fc.folder_id
-      WHERE fc.course_id IN (:courseIds)
-      GROUP BY fc.course_id
-    `, {
-      replacements: { courseIds: allEnrolledCourses.map(c => c.id) },
-      type: QueryTypes.SELECT
-    });
+      // Also get materials from folders
+      folderMaterialUpdates = await sequelize.query(`
+        SELECT 
+          fc.course_id,
+          MAX(m.updated_at) as latest_folder_material_update
+        FROM folder_courses fc
+        JOIN materials m ON m.folder_id = fc.folder_id
+        WHERE fc.course_id IN (:courseIds)
+        GROUP BY fc.course_id
+      `, {
+        replacements: { courseIds: allEnrolledCourses.map(c => c.id) },
+        type: QueryTypes.SELECT
+      });
+    }
 
     // Create a map of course_id to latest update time
     const latestUpdateMap = new Map();
