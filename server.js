@@ -62,22 +62,50 @@ const Components = {
 };
 
 // 8. Configure MySQL session store (NOT memory store - critical for Railway)
-const sessionStore = new MySQLStore({
-  host: process.env.DB_HOST,
-  port: 3306,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  createDatabaseTable: true,  // Auto-create sessions table
-  schema: {
-    tableName: 'sessions',
-    columnNames: {
-      session_id: 'session_id',
-      expires: 'expires',
-      data: 'data'
+// Support both connection URL (Railway) and individual vars (local dev)
+const databaseUrl = process.env.MYSQL_URL || process.env.DATABASE_URL;
+
+let sessionStoreConfig;
+if (databaseUrl) {
+  // Production: Parse connection URL
+  const url = new URL(databaseUrl);
+  sessionStoreConfig = {
+    host: url.hostname,
+    port: parseInt(url.port) || 3306,
+    user: url.username,
+    password: url.password,
+    database: url.pathname.slice(1), // Remove leading slash
+    createDatabaseTable: true,
+    schema: {
+      tableName: 'sessions',
+      columnNames: {
+        session_id: 'session_id',
+        expires: 'expires',
+        data: 'data'
+      }
     }
-  }
-});
+  };
+} else {
+  // Development: Use individual environment variables
+  sessionStoreConfig = {
+    host: process.env.DB_HOST,
+    port: 3306,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    createDatabaseTable: true,
+    schema: {
+      tableName: 'sessions',
+      columnNames: {
+        session_id: 'session_id',
+        expires: 'expires',
+        data: 'data'
+      }
+    }
+  };
+}
+
+const sessionStore = new MySQLStore(sessionStoreConfig);
 
 // 8. Setup middleware (ORDER CRITICAL)
 app.use(bodyParser.json({ limit: '10mb' }));
