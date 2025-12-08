@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 - Server Error | LMS EduManage</title>
+    
+    <!-- Tailwind CSS + DaisyUI -->
+    <link href="/css/output.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="/css/custom.css" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-base-200 min-h-screen flex items-center justify-center">
+    <div class="container mx-auto px-4 py-8">
+        <div class="card w-full max-w-2xl mx-auto bg-base-100 shadow-xl border border-base-300">
+            <div class="card-body text-center">
+                <!-- Error Icon -->
+                <div class="flex justify-center mb-6">
+                    <div class="text-error text-8xl">
+                        <i class="fas fa-server"></i>
+                    </div>
+                </div>
+
+                <!-- Error Code -->
+                <h1 class="text-6xl font-bold text-error mb-4">500</h1>
+                
+                <!-- Error Message -->
+                <h2 class="text-2xl font-semibold mb-2">Internal Server Error</h2>
+                <p class="text-base-content opacity-70 mb-8">
+                    Something went wrong on our end. We're working to fix it.
+                </p>
+
+                <!-- Error Details (Development Only) -->
+                <% if (process.env.NODE_ENV === 'development' && typeof error !== 'undefined') { %>
+                <div class="alert alert-warning text-left mb-6">
+                    <div class="flex flex-col gap-2 w-full">
+                        <div class="font-semibold">
+                            <i class="fas fa-bug"></i> Development Mode - Error Details:
+                        </div>
+                        <code class="text-xs bg-base-300 p-3 rounded overflow-auto max-h-40">
+                            <%= error.stack || error.message || error %>
+                        </code>
+                    </div>
+                </div>
+                <% } %>
+
+                <!-- Navigation Buttons -->
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <a href="javascript:history.back()" class="btn btn-outline">
+                        <i class="fas fa-arrow-left"></i>
+                        Go Back
+                    </a>
+                    <% if (typeof user !== 'undefined' && user) { %>
+                        <% if (user.role === 'admin') { %>
+                            <a href="/admin/dashboard" class="btn btn-primary">
+                                <i class="fas fa-home"></i>
+                                Admin Dashboard
+                            </a>
+                        <% } else if (user.role === 'teacher') { %>
+                            <a href="/teacher/dashboard" class="btn btn-primary">
+                                <i class="fas fa-home"></i>
+                                Teacher Dashboard
+                            </a>
+                        <% } else if (user.role === 'student') { %>
+                            <a href="/student/dashboard" class="btn btn-primary">
+                                <i class="fas fa-home"></i>
+                                Student Dashboard
+                            </a>
+                        <% } %>
+                    <% } else { %>
+                        <a href="/auth/login" class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt"></i>
+                            Login
+                        </a>
+                    <% } %>
+                </div>
+
+                <!-- Support Info -->
+                <div class="divider text-xs opacity-50 my-6">Need Help?</div>
+                <div class="text-sm opacity-70">
+                    <p>If this problem persists, please contact your system administrator.</p>
+                    <% if (process.env.NODE_ENV === 'production') { %>
+                    <p class="mt-2">
+                        <i class="fas fa-envelope"></i> 
+                        Error ID: <%= new Date().getTime() %>
+                    </p>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-6 text-sm opacity-60">
+            <p>&copy; <%= new Date().getFullYear() %> LMS EduManage. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

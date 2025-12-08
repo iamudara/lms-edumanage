@@ -559,15 +559,23 @@ app.use('/student', isAuthenticated, isStudent, studentRoutes);
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).send(`
-    <h1>404 - Page Not Found</h1>
-    <p>The page you're looking for doesn't exist.</p>
-    <a href="/">Go Home</a>
-  `);
+  res.status(404).render('error/404', {
+    user: req.user || null
+  });
 });
 
 // 12. Error handler (MUST be LAST middleware)
-app.use(errorHandler);
+app.use((err, req, res, next) => {
+  console.error('❌ Error:', err);
+  
+  // Don't expose error details in production
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
+  res.status(err.status || 500).render('error/500', {
+    user: req.user || null,
+    error: isDevelopment ? err : null
+  });
+});
 
 // 13. Sync database then start server (CRITICAL ORDER)
 async function startServer() {
