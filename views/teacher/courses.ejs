@@ -21,8 +21,8 @@
         </h1>
         <p class="text-base-content/70">Manage all your courses</p>
       </div>
-      <a href="/teacher/courses/create" class="btn btn-primary w-full sm:w-auto">
-        <i class="fas fa-plus mr-2"></i>Create New Course
+      <a href="/teacher/courses/create" class="btn-global-primary px-4 py-2 rounded-lg w-full sm:w-auto text-center flex items-center justify-center gap-2">
+        <i class="fas fa-plus"></i>Create New Course
       </a>
     </div>
 
@@ -48,7 +48,7 @@
           <h2 class="text-2xl font-bold mb-2">No Courses Yet</h2>
           <p class="text-base-content/70 mb-6">Start creating courses to manage your teaching content</p>
           <div>
-            <a href="/teacher/courses/create" class="btn btn-primary btn-wide">
+            <a href="/teacher/courses/create" class="btn-global-primary btn-wide">
               <i class="fas fa-plus mr-2"></i>Create Your First Course
             </a>
           </div>
@@ -127,7 +127,7 @@
 
               <!-- Action Buttons -->
               <div class="grid grid-cols-3 gap-2 mt-auto">
-                <a href="/teacher/courses/<%= course.id %>/assignments/create" class="btn btn-primary btn-sm" onclick="event.stopPropagation();">
+                <a href="/teacher/courses/<%= course.id %>/assignments/create" class="btn-global-primary btn-sm" onclick="event.stopPropagation();">
                   <i class="fas fa-plus sm:mr-1"></i><span class="hidden sm:inline text-xs">Assignment</span>
                 </a>
                 <a href="/teacher/courses/<%= course.id %>/materials" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();">

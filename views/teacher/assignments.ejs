@@ -134,7 +134,7 @@
       </div>
       <% if (courses.length > 0) { %>
         <div class="dropdown dropdown-end w-full sm:w-auto">
-          <label tabindex="0" class="btn btn-primary w-full sm:w-auto">
+          <label tabindex="0" class="btn-global-primary w-full sm:w-auto flex items-center justify-center">
             <i class="fas fa-plus mr-2"></i>Create Assignment
             <i class="fas fa-chevron-down ml-2"></i>
           </label>
@@ -267,13 +267,13 @@
           <p class="text-base-content/70 mb-6">Create your first assignment to get started</p>
           <% if (courses.length > 0) { %>
             <div class="flex justify-center">
-              <a href="/teacher/courses/<%= courses[0].id %>/assignments/create" class="btn btn-primary btn-wide">
+              <a href="/teacher/courses/<%= courses[0].id %>/assignments/create" class="btn-global-primary btn-wide">
                 <i class="fas fa-plus mr-2"></i>Create First Assignment
               </a>
             </div>
           <% } else { %>
             <div class="flex justify-center">
-              <a href="/teacher/courses/create" class="btn btn-primary btn-wide">
+              <a href="/teacher/courses/create" class="btn-global-primary btn-wide">
                 <i class="fas fa-book mr-2"></i>Create a Course First
               </a>
             </div>
@@ -402,7 +402,7 @@
                     <td>
                       <div class="flex flex-row gap-1">
                         <a href="/teacher/assignments/<%= assignment.id %>/submissions" 
-                           class="btn btn-xs sm:btn-sm btn-primary" title="View Submissions">
+                           class="btn-global-primary btn-xs sm:btn-sm" title="View Submissions">
                           <i class="fas fa-eye text-xs"></i>
                         </a>
                         <a href="/teacher/assignments/<%= assignment.id %>/edit" 
@@ -410,7 +410,7 @@
                           <i class="fas fa-edit text-xs"></i>
                         </a>
                         <button onclick="deleteAssignment('<%= assignment.id %>', '<%= safeTitle %>')" 
-                                class="btn btn-xs sm:btn-sm btn-error" title="Delete Assignment">
+                                class="btn-global-danger btn-xs sm:btn-sm" title="Delete Assignment">
                           <i class="fas fa-trash text-xs"></i>
                         </button>
                       </div>
@@ -517,15 +517,15 @@
                 <!-- Actions -->
                 <div class="flex gap-2 pt-2">
                   <a href="/teacher/assignments/<%= assignment.id %>/submissions" 
-                     class="btn btn-primary btn-sm flex-1" style="border-radius: 9999px;">
+                     class="btn-global-primary btn-sm flex-1" style="border-radius: 9999px;">
                     <i class="fas fa-eye mr-2"></i>View
                   </a>
                   <a href="/teacher/assignments/<%= assignment.id %>/edit" 
-                     class="btn btn-primary btn-sm flex-1" style="border-radius: 9999px;">
+                     class="btn-global-primary btn-sm flex-1" style="border-radius: 9999px;">
                     <i class="fas fa-edit mr-2"></i>Edit
                   </a>
                   <button onclick="deleteAssignment('<%= assignment.id %>', '<%= safeTitle %>')" 
-                          class="btn btn-sm flex-1" style="border-radius: 9999px; background-color: #ef4444; border-color: #ef4444; color: white;">
+                          class="btn-global-danger btn-sm flex-1" style="border-radius: 9999px; background-color: #ef4444; border-color: #ef4444; color: white;">
                     <i class="fas fa-trash mr-2"></i>Delete
                   </button>
                 </div>
@@ -753,10 +753,10 @@
       
       <div class="modal-action">
         <form method="dialog" class="flex gap-2">
-          <button type="button" class="btn btn-primary" onclick="document.getElementById('deleteConfirmModal').close()">
+          <button type="button" class="btn btn-ghost" onclick="document.getElementById('deleteConfirmModal').close()">
             <i class="fas fa-times mr-2"></i>Cancel
           </button>
-          <button type="button" id="confirmDeleteBtn" class="btn btn-error" onclick="confirmDelete()">
+          <button type="button" id="confirmDeleteBtn" class="btn-global-danger" onclick="confirmDelete()">
             <i class="fas fa-trash mr-2"></i>Delete Assignment
           </button>
         </form>

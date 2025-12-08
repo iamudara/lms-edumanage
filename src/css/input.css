@@ -65,6 +65,14 @@
     @apply btn btn-xs sm:btn-sm;
   }
 
+  .btn-global-primary {
+    @apply btn btn-primary text-white hover:bg-blue-700 border-none;
+  }
+
+  .btn-global-danger {
+    @apply btn btn-error text-white hover:bg-red-700 border-none;
+  }
+
   /* Filter Tabs */
   .filter-tab {
     @apply btn btn-sm sm:btn-md flex-shrink-0 px-5;

@@ -390,12 +390,12 @@
                       <div class="flex gap-2">
                         <a
                           href="/teacher/assignments/<%= assignment.id %>/submissions"
-                          class="btn btn-xs btn-primary"
+                          class="btn-global-primary btn-xs sm:btn-sm"
                         >
                           <i class="fas fa-eye mr-1"></i>Submissions
                         </a>
                         <a
-                          href="/teacher/courses/<%= assignment.course.id %>/assignments/<%= assignment.id %>/edit"
+                          href="/teacher/assignments/<%= assignment.id %>/edit"
                           class="btn btn-xs btn-ghost"
                         >
                           <i class="fas fa-edit"></i>
@@ -460,12 +460,12 @@
                   <div class="grid grid-cols-2 gap-2 mt-3">
                     <a
                       href="/teacher/assignments/<%= assignment.id %>/submissions"
-                      class="btn btn-xs btn-primary"
+                      class="btn-global-primary btn-xs sm:btn-sm"
                     >
                       <i class="fas fa-eye mr-1"></i>Submissions
                     </a>
                     <a
-                      href="/teacher/courses/<%= assignment.course.id %>/assignments/<%= assignment.id %>/edit"
+                      href="/teacher/assignments/<%= assignment.id %>/edit"
                       class="btn btn-xs btn-outline"
                     >
                       <i class="fas fa-edit mr-1"></i>Edit
