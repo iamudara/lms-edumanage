@@ -6,8 +6,8 @@ node_modules/
 .env.local
 .env.production
 
-# Build output
-public/css/output.css
+# Build output (CSS is built and committed for Railway deployment)
+# public/css/output.css
 
 # Logs
 logs
