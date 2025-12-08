@@ -251,7 +251,8 @@
             <span>No submissions yet for this assignment.</span>
           </div>
         <% } else { %>
-          <div class="overflow-x-auto lg:overflow-x-visible -mx-2 sm:mx-0">
+          <!-- Desktop Table View -->
+          <div class="overflow-x-auto lg:overflow-x-visible -mx-2 sm:mx-0 hidden lg:block">
             <table id="submissionsTable" class="table table-zebra w-full">
               <thead>
                 <tr>
@@ -332,6 +333,98 @@
                 <% }); %>
               </tbody>
             </table>
+          </div>
+
+          <!-- Mobile Collapsible Cards -->
+          <div class="lg:hidden space-y-3">
+            <% submissions.forEach(submission => { %>
+              <% 
+                const submittedDate = new Date(submission.submitted_at || submission.submittedAt);
+                const deadlineDate = new Date(assignment.deadline);
+                const isLate = submittedDate > deadlineDate;
+              %>
+              <div class="collapse collapse-arrow bg-base-200 rounded-lg">
+                <input type="checkbox" class="peer" />
+                <div class="collapse-title">
+                  <div class="flex items-center gap-3">
+                    <div class="avatar placeholder flex-shrink-0">
+                      <div class="rounded-full w-10 h-10 flex items-center justify-center" style="background: linear-gradient(135deg, #4b6bfb 0%, #3b5bdb 100%); color: white;">
+                        <span class="text-xs font-semibold"><%= submission.student.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() %></span>
+                      </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="font-bold truncate"><%= submission.student.full_name %></div>
+                      <div class="text-xs text-base-content/70 truncate"><%= submission.student.email %></div>
+                      <div class="flex items-center gap-2 mt-1">
+                        <% if (submission.marks !== null && submission.marks !== undefined) { %>
+                          <span class="badge badge-success badge-xs">Graded</span>
+                          <span class="text-xs font-semibold text-success"><%= submission.marks %>%</span>
+                        <% } else { %>
+                          <span class="badge badge-warning badge-xs">Pending</span>
+                        <% } %>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="collapse-content">
+                  <div class="space-y-3 pt-2">
+                    <!-- Submitted Date -->
+                    <div class="flex justify-between items-start">
+                      <span class="text-sm font-semibold">Submitted:</span>
+                      <div class="text-right">
+                        <div class="text-sm">
+                          <%= new Date(submission.submitted_at || submission.submittedAt).toLocaleString('en-US', { 
+                            year: 'numeric', month: 'short', day: 'numeric', 
+                            hour: '2-digit', minute: '2-digit' 
+                          }) %>
+                        </div>
+                        <% if (isLate) { %>
+                          <span class="badge badge-error badge-xs mt-1">Late</span>
+                        <% } %>
+                      </div>
+                    </div>
+
+                    <!-- Batch -->
+                    <% if (submission.student.batch) { %>
+                      <div class="flex justify-between items-center">
+                        <span class="text-sm font-semibold">Batch:</span>
+                        <span class="badge badge-ghost"><%= submission.student.batch.code %></span>
+                      </div>
+                    <% } %>
+
+                    <!-- Score -->
+                    <div class="flex justify-between items-center">
+                      <span class="text-sm font-semibold">Score:</span>
+                      <% if (submission.marks !== null && submission.marks !== undefined) { %>
+                        <span class="font-bold text-lg text-success"><%= submission.marks %>%</span>
+                      <% } else { %>
+                        <span class="text-base-content/50">Not graded yet</span>
+                      <% } %>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="divider my-2"></div>
+                    <div class="flex flex-col gap-2">
+                      <% if (submission.file_url) { %>
+                        <a href="<%= submission.file_url %>" target="_blank" class="btn btn-ghost btn-sm btn-block justify-start">
+                          <i class="fas fa-eye text-sm"></i>
+                          View Submission File
+                        </a>
+                      <% } %>
+                      <a href="/teacher/submissions/<%= submission.id %>/grade" class="btn btn-primary btn-sm btn-block">
+                        <% if (submission.marks !== null && submission.marks !== undefined) { %>
+                          <i class="fas fa-edit text-sm"></i>
+                          Edit Grade
+                        <% } else { %>
+                          <i class="fas fa-pen text-sm"></i>
+                          Grade Submission
+                        <% } %>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
           </div>
         <% } %>
       </div>
