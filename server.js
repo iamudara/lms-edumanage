@@ -617,6 +617,34 @@ async function startServer() {
     await syncDatabase();
     console.log('✅ Database synced successfully');
     
+    // Check if we need to run full seed (only in production/Railway)
+    if (process.env.NODE_ENV === 'production') {
+      console.log('\n' + '='.repeat(60));
+      console.log('🔍 Checking if full seed is needed...');
+      
+      try {
+        const userCount = await User.count();
+        console.log(`📊 Current user count: ${userCount}`);
+        
+        if (userCount <= 3) {
+          console.log('⚠️  Only basic seed detected - running full seed...');
+          console.log('='.repeat(60) + '\n');
+          
+          // Dynamically import and run seed-full
+          const { default: seedFull } = await import('./utils/seed-full.js');
+          console.log('\n' + '='.repeat(60));
+          console.log('✅ Full seed completed!');
+          console.log('='.repeat(60) + '\n');
+        } else {
+          console.log('✅ Full seed already completed (found ' + userCount + ' users)');
+          console.log('='.repeat(60) + '\n');
+        }
+      } catch (seedError) {
+        console.error('⚠️  Seed check/execution failed:', seedError.message);
+        console.log('Continuing with server startup...\n');
+      }
+    }
+    
     app.listen(PORT, () => {
       console.log('\n🚀 Server started successfully!');
       console.log(`📍 Server running on: http://localhost:${PORT}`);
