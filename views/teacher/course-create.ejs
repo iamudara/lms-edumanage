@@ -202,6 +202,7 @@
       const title = document.querySelector('input[name="title"]').value.trim();
       const code = document.querySelector('input[name="code"]').value.trim();
       const description = document.querySelector('textarea[name="description"]').value.trim();
+      const submitBtn = this.querySelector('button[type="submit"]');
 
       if (!title || !code || !description) {
         e.preventDefault();
@@ -214,6 +215,10 @@
         alert('Course code must be at least 2 characters long');
         return false;
       }
+
+      // Show loading spinner
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="loading loading-spinner"></span> Creating...';
     });
   </script>
 </body>

@@ -142,7 +142,7 @@
               </div>
 
               <div class="flex gap-3">
-                <button type="submit" class="btn btn-primary" id="submitBtn">
+                <button type="submit" class="btn btn-primary" id="submitBtn" onclick="this.disabled=true; this.innerHTML='<span class=\'loading loading-spinner\'></span> Saving...'; this.form.submit();">
                   <i class="fas fa-save mr-2"></i>Save Changes
                 </button>
                 <a href="/teacher/courses/<%= course.id %>" class="btn btn-error btn-outline">

@@ -87,7 +87,7 @@
                     </div>
 
                     <!-- Submit Button -->
-                    <button type="submit" class="btn btn-primary w-full">
+                    <button type="submit" class="btn btn-primary w-full" onclick="this.disabled=true; this.innerHTML='<span class=\'loading loading-spinner\'></span> Signing In...'; this.form.submit();">
                         <i class="fas fa-sign-in-alt"></i>
                         Sign In
                     </button>

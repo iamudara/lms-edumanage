@@ -458,7 +458,7 @@
                   </label>
                 </div>
                 
-                <button type="submit" class="btn btn-primary w-full sm:w-auto mt-4" style="padding: 10px; display: inline-flex; align-items: center; gap: 0.5rem;">
+                <button type="submit" class="btn btn-primary w-full sm:w-auto mt-4" style="padding: 10px; display: inline-flex; align-items: center; gap: 0.5rem;" onclick="this.disabled=true; this.innerHTML='<span class=\'loading loading-spinner\'></span> Uploading...'; this.form.submit();">
                   <i class="fas fa-upload"></i>
                   <span>Upload & Grade</span>
                 </button>

@@ -340,7 +340,7 @@
         </div>
         <div class="modal-action">
           <button type="button" class="btn btn-sm" onclick="createModal.close()">Cancel</button>
-          <button type="submit" class="btn btn-warning btn-sm">Create</button>
+          <button type="submit" class="btn btn-warning btn-sm" onclick="this.disabled=true; this.innerHTML='<span class=\'loading loading-spinner loading-xs\'></span> Creating...'; this.form.submit();">Create</button>
         </div>
       </form>
     </div>
