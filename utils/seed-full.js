@@ -263,33 +263,33 @@ async function seedFullDatabase() {
       Course.findOrCreate({
         where: { code: 'MATH101' },
         defaults: {
-          name: 'Mathematics',
+          title: 'Mathematics',
           description: 'Basic mathematics course',
-          credits: 3
+          semester: 'Semester 1'
         }
       }),
       Course.findOrCreate({
         where: { code: 'ENG101' },
         defaults: {
-          name: 'English',
+          title: 'English',
           description: 'Basic English course',
-          credits: 3
+          semester: 'Semester 1'
         }
       }),
       Course.findOrCreate({
         where: { code: 'SCI101' },
         defaults: {
-          name: 'Science',
+          title: 'Science',
           description: 'Basic science course',
-          credits: 4
+          semester: 'Semester 1'
         }
       }),
       Course.findOrCreate({
         where: { code: 'HIST101' },
         defaults: {
-          name: 'History',
+          title: 'History',
           description: 'Basic history course',
-          credits: 2
+          semester: 'Semester 1'
         }
       })
     ]);
