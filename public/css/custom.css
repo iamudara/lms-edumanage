@@ -7,13 +7,30 @@
 }
 
 /* Global modal button colors */
-/* Cancel buttons - Red */
+/* Cancel buttons - Red (only in modals) */
 .modal-action .btn:not(.btn-primary, .btn-success, .btn-info):not([type="submit"]),
 .modal-action button[type="button"]:not(.btn-primary, .btn-success, .btn-info),
 button:is([onclick*="close()"], [onclick*="Close()"]):not(.btn-primary, .btn-success, .btn-info) {
     background-color: #ef4444 !important;
     border-color: #ef4444 !important;
     color: white !important;
+}
+
+.modal-action .btn:not(.btn-primary, .btn-success, .btn-info):not([type="submit"]):hover {
+    background-color: #dc2626 !important;
+    border-color: #dc2626 !important;
+}
+
+/* Cancel buttons in forms - Red solid */
+.btn-error.btn-outline {
+    background-color: #ef4444 !important;
+    border-color: #ef4444 !important;
+    color: white !important;
+}
+
+.btn-error.btn-outline:hover {
+    background-color: #dc2626 !important;
+    border-color: #dc2626 !important;
 }
 
 /* Action buttons - Blue (Primary) */
@@ -61,6 +78,97 @@ button[type="submit"]:not(.btn-outline, .btn-ghost) {
 /* Breadcrumb icon spacing */
 .breadcrumbs i {
     margin-right: 0.25rem;
+}
+
+/* =========================
+   Form Input Visibility
+   ========================= */
+
+/* Form control layout - ensure proper stacking */
+.form-control {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+}
+
+/* Labels should be full width and display block */
+.form-control .label {
+    display: flex !important;
+    width: 100% !important;
+    padding: 0.5rem 0 !important;
+}
+
+/* Ensure all form inputs take full width */
+.form-control .input,
+.form-control .textarea,
+.form-control .select,
+.form-control .file-input {
+    width: 100% !important;
+    display: block !important;
+}
+
+/* Enhanced border visibility for all input fields */
+input[type="text"].input,
+input[type="email"].input,
+input[type="password"].input,
+input[type="datetime-local"].input,
+input[type="date"].input,
+input[type="time"].input,
+input[type="number"].input,
+input[type="url"].input,
+input[type="search"].input,
+.input,
+.textarea,
+.select,
+.file-input,
+input.input-bordered,
+textarea.textarea-bordered,
+select.select-bordered {
+    border-width: 1px !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Stronger focus state for better visibility */
+input[type="text"].input:focus,
+input[type="email"].input:focus,
+input[type="password"].input:focus,
+input[type="datetime-local"].input:focus,
+input[type="date"].input:focus,
+input[type="time"].input:focus,
+input[type="number"].input:focus,
+input[type="url"].input:focus,
+input[type="search"].input:focus,
+.input:focus,
+.textarea:focus,
+.select:focus,
+.file-input:focus,
+input.input-bordered:focus,
+textarea.textarea-bordered:focus,
+select.select-bordered:focus {
+    outline: none !important;
+    border-width: 1px !important;
+    border-color: rgba(75, 107, 251, 0.4) !important;
+    box-shadow: 0 0 0 2px rgba(75, 107, 251, 0.1) !important;
+}
+
+/* Hover state for better interactivity feedback */
+input[type="text"].input:hover:not(:focus),
+input[type="email"].input:hover:not(:focus),
+input[type="password"].input:hover:not(:focus),
+input[type="datetime-local"].input:hover:not(:focus),
+input[type="date"].input:hover:not(:focus),
+input[type="time"].input:hover:not(:focus),
+input[type="number"].input:hover:not(:focus),
+input[type="url"].input:hover:not(:focus),
+input[type="search"].input:hover:not(:focus),
+.input:hover:not(:focus),
+.textarea:hover:not(:focus),
+.select:hover:not(:focus),
+.file-input:hover:not(:focus),
+input.input-bordered:hover:not(:focus),
+textarea.textarea-bordered:hover:not(:focus),
+select.select-bordered:hover:not(:focus) {
+    border-color: rgba(0, 0, 0, 0.2) !important;
 }
 
 /* Smooth transitions for theme switching */
