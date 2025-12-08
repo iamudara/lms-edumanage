@@ -112,7 +112,8 @@
             <span>No assignments created for this course yet. <a href="/teacher/courses/<%= course.id %>/assignments/create" class="link link-primary">Create one now</a></span>
           </div>
         <% } else { %>
-          <div class="overflow-x-auto">
+          <!-- Desktop Table View -->
+          <div class="overflow-x-auto hidden lg:block">
             <table class="table table-zebra w-full">
               <thead>
                 <tr>
@@ -212,6 +213,93 @@
                 <% }); %>
               </tbody>
             </table>
+          </div>
+
+          <!-- Mobile Collapsible Cards -->
+          <div class="lg:hidden space-y-3">
+            <% assignments.forEach(assignment => { %>
+              <% 
+                const progressPercent = assignment.submissionCount > 0 
+                  ? Math.round((assignment.gradedCount / assignment.submissionCount) * 100)
+                  : 0;
+                const isPastDeadline = new Date(assignment.deadline) < new Date();
+                const pendingCount = assignment.submissionCount - assignment.gradedCount;
+              %>
+              <div class="collapse collapse-arrow bg-base-200 rounded-lg">
+                <input type="checkbox" class="peer" />
+                <div class="collapse-title">
+                  <div class="flex items-start justify-between gap-2">
+                    <div class="flex-1 min-w-0">
+                      <div class="font-bold truncate"><%= assignment.title %></div>
+                      <div class="text-xs text-base-content/60 mt-1">
+                        <%= new Date(assignment.deadline).toLocaleDateString('en-US', { 
+                          month: 'short', day: 'numeric', year: 'numeric' 
+                        }) %>
+                      </div>
+                      <div class="flex items-center gap-2 mt-1">
+                        <% if (isPastDeadline) { %>
+                          <span class="badge badge-error badge-xs">Closed</span>
+                        <% } else { %>
+                          <span class="badge badge-success badge-xs">Open</span>
+                        <% } %>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="collapse-content">
+                  <div class="space-y-3 pt-2">
+                    <!-- Submissions -->
+                    <div class="flex justify-between items-center">
+                      <span class="text-sm font-semibold">Submissions:</span>
+                      <span class="text-lg font-semibold"><%= assignment.submissionCount %></span>
+                    </div>
+
+                    <!-- Grading Progress -->
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-semibold">Grading Progress:</span>
+                        <span class="text-sm font-semibold <%= progressPercent === 100 ? 'text-success' : 'text-warning' %>">
+                          <%= assignment.gradedCount %>/<%= assignment.submissionCount %>
+                        </span>
+                      </div>
+                      <progress 
+                        class="progress w-full <%= progressPercent === 100 ? 'progress-success' : progressPercent > 0 ? 'progress-warning' : 'progress-error' %>" 
+                        value="<%= progressPercent %>" 
+                        max="100"
+                      ></progress>
+                      <% if (pendingCount > 0) { %>
+                        <div class="text-xs text-warning mt-1">
+                          <%= pendingCount %> pending
+                        </div>
+                      <% } %>
+                    </div>
+
+                    <!-- Average Score -->
+                    <div class="flex justify-between items-center">
+                      <span class="text-sm font-semibold">Average Score:</span>
+                      <% if (assignment.gradedCount > 0) { %>
+                        <span class="text-lg font-semibold text-info">
+                          <%= assignment.averageScore.toFixed(1) %>%
+                        </span>
+                      <% } else { %>
+                        <span class="text-base-content/50">—</span>
+                      <% } %>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="divider my-2"></div>
+                    <a href="/teacher/assignments/<%= assignment.id %>/submissions" 
+                       class="btn btn-primary btn-sm btn-block"
+                       title="View Submissions & Grade">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0118 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3l1.5 1.5 3-3.75" />
+                      </svg>
+                      Grade Submissions
+                    </a>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
           </div>
         <% } %>
       </div>
