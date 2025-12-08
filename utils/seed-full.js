@@ -45,26 +45,26 @@ async function seedFullDatabase() {
     
     const batches = await Promise.all([
       Batch.findOrCreate({
-        where: { name: 'Batch 2024' },
+        where: { code: 'B2024' },
         defaults: {
+          name: 'Batch 2024',
           year: 2024,
-          semester: 1,
           description: 'Academic year 2024 - Semester 1'
         }
       }),
       Batch.findOrCreate({
-        where: { name: 'Batch 2025' },
+        where: { code: 'B2025' },
         defaults: {
+          name: 'Batch 2025',
           year: 2025,
-          semester: 1,
           description: 'Academic year 2025 - Semester 1'
         }
       }),
       Batch.findOrCreate({
-        where: { name: 'Batch 2026' },
+        where: { code: 'B2026' },
         defaults: {
+          name: 'Batch 2026',
           year: 2026,
-          semester: 1,
           description: 'Academic year 2026 - Semester 1'
         }
       })
