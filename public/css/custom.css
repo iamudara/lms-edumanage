@@ -45,6 +45,45 @@ button[type="submit"]:not(.btn-outline, .btn-ghost) {
 }
 
 /* =========================
+   Navbar Dropdown Buttons
+   (Must be AFTER submit button rules)
+   ========================= */
+
+/* Change Password - Blue */
+.navbar-change-password {
+    background-color: #4b6bfb !important;
+    color: white !important;
+    border-radius: 9999px !important;
+}
+
+.navbar-change-password:hover {
+    background-color: #3b5bdb !important;
+    color: white !important;
+}
+
+.navbar-change-password i {
+    color: white !important;
+}
+
+/* Logout - Red (override submit button rule) */
+button.navbar-logout[type="submit"] {
+    background-color: #ef4444 !important;
+    border-color: #ef4444 !important;
+    color: white !important;
+    border-radius: 9999px !important;
+}
+
+button.navbar-logout[type="submit"]:hover {
+    background-color: #dc2626 !important;
+    border-color: #dc2626 !important;
+    color: white !important;
+}
+
+button.navbar-logout i {
+    color: white !important;
+}
+
+/* =========================
    Breadcrumbs Mobile Limit
    ========================= */
 
