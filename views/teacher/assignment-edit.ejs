@@ -145,7 +145,7 @@
                 <button type="submit" class="btn btn-primary" id="submitBtn" onclick="this.disabled=true; this.innerHTML='<span class=\'loading loading-spinner\'></span> Saving...'; this.form.submit();">
                   <i class="fas fa-save mr-2"></i>Save Changes
                 </button>
-                <a href="/teacher/courses/<%= course.id %>" class="btn btn-error btn-outline">
+                <a href="/teacher/courses/<%= course.id %>" class="btn btn-outline" style="background-color: #ef4444; color: white; border-color: #ef4444;">
                   <i class="fas fa-times mr-2"></i>Cancel
                 </a>
               </div>
