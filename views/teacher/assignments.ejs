@@ -156,50 +156,50 @@
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
       <!-- Total Assignments -->
-      <div class="stats shadow bg-primary">
+      <div class="stats-card stats-card-primary">
         <div class="stat">
-          <div class="stat-figure">
+          <div class="stat-figure text-primary-content/50">
             <i class="fas fa-clipboard-list text-3xl sm:text-4xl"></i>
           </div>
-          <div class="stat-title">Total Assignments</div>
-          <div class="stat-value text-2xl sm:text-3xl"><%= stats.total %></div>
-          <div class="stat-desc">Across all courses</div>
+          <div class="stat-title text-primary-content/80">Total Assignments</div>
+          <div class="stat-value"><%= stats.total %></div>
+          <div class="stat-desc text-primary-content/60">Across all courses</div>
         </div>
       </div>
 
       <!-- Active Assignments -->
-      <div class="stats shadow" style="background: linear-gradient(135deg, #36d399 0%, #2ab880 100%); color: white;">
+      <div class="stats-card stat-card-gradient-success">
         <div class="stat">
-          <div class="stat-figure">
+          <div class="stat-figure text-white/50">
             <i class="fas fa-clock text-3xl sm:text-4xl"></i>
           </div>
-          <div class="stat-title" style="color: rgba(255,255,255,0.9);">Active</div>
-          <div class="stat-value text-2xl sm:text-3xl"><%= stats.active %></div>
-          <div class="stat-desc" style="color: rgba(255,255,255,0.7);">Deadline not passed</div>
+          <div class="stat-title text-white/80">Active</div>
+          <div class="stat-value"><%= stats.active %></div>
+          <div class="stat-desc text-white/60">Deadline not passed</div>
         </div>
       </div>
 
       <!-- Overdue Assignments -->
-      <div class="stats shadow" style="background: linear-gradient(135deg, #f87272 0%, #e85858 100%); color: white;">
+      <div class="stats-card stat-card-gradient-error">
         <div class="stat">
-          <div class="stat-figure">
+          <div class="stat-figure text-white/50">
             <i class="fas fa-hourglass-end text-3xl sm:text-4xl"></i>
           </div>
-          <div class="stat-title" style="color: rgba(255,255,255,0.9);">Overdue</div>
-          <div class="stat-value text-2xl sm:text-3xl"><%= stats.overdue %></div>
-          <div class="stat-desc" style="color: rgba(255,255,255,0.7);">Deadline passed</div>
+          <div class="stat-title text-white/80">Overdue</div>
+          <div class="stat-value"><%= stats.overdue %></div>
+          <div class="stat-desc text-white/60">Deadline passed</div>
         </div>
       </div>
 
       <!-- Pending Grading -->
-      <div class="stats shadow" style="background: linear-gradient(135deg, #fbbd23 0%, #e0a720 100%); color: #1f2937;">
+      <div class="stats-card stat-card-gradient-warning">
         <div class="stat">
-          <div class="stat-figure">
+          <div class="stat-figure text-gray-800/50">
             <i class="fas fa-pen text-3xl sm:text-4xl"></i>
           </div>
-          <div class="stat-title" style="color: rgba(31,41,55,0.8);">Pending Grading</div>
-          <div class="stat-value text-2xl sm:text-3xl"><%= stats.pendingGrading %></div>
-          <div class="stat-desc" style="color: rgba(31,41,55,0.6);">Submissions to grade</div>
+          <div class="stat-title text-gray-800/80">Pending Grading</div>
+          <div class="stat-value"><%= stats.pendingGrading %></div>
+          <div class="stat-desc text-gray-800/60">Submissions to grade</div>
         </div>
       </div>
     </div>
@@ -304,6 +304,7 @@
                   const gradedCount = assignment.Submissions.filter(s => s.marks !== null).length;
                   const pendingCount = submissionCount - gradedCount;
                   const materialCount = assignment.materials ? assignment.materials.length : 0;
+                  const safeTitle = assignment.title.replace(/'/g, "\\'");
                 %>
                   <tr data-course-id="<%= assignment.course.id %>" 
                       data-status="<%= isOverdue ? 'overdue' : 'active' %>"
@@ -312,7 +313,7 @@
                     <td>
                       <div class="flex items-start gap-3">
                         <div class="avatar placeholder flex-shrink-0">
-                          <div class="rounded-lg w-12 h-12 flex items-center justify-center" style="background: <%= isOverdue ? 'linear-gradient(135deg, #f87272 0%, #e85858 100%)' : 'linear-gradient(135deg, #36d399 0%, #2ab880 100%)' %>; color: white;">
+                          <div class="<%= isOverdue ? 'stat-card-gradient-error' : 'stat-card-gradient-success' %> rounded-lg w-12 h-12 flex items-center justify-center text-white">
                             <i class="fas fa-clipboard-list text-xl"></i>
                           </div>
                         </div>
@@ -408,7 +409,7 @@
                            class="btn btn-xs sm:btn-sm btn-ghost" title="Edit Assignment">
                           <i class="fas fa-edit text-xs"></i>
                         </a>
-                        <button onclick="deleteAssignment('<%= assignment.id %>', '<%= assignment.title.replace(/'/g, "\\'") %>')" 
+                        <button onclick="deleteAssignment('<%= assignment.id %>', '<%= safeTitle %>')" 
                                 class="btn btn-xs sm:btn-sm btn-error" title="Delete Assignment">
                           <i class="fas fa-trash text-xs"></i>
                         </button>
@@ -430,6 +431,7 @@
           const gradedCount = assignment.Submissions.filter(s => s.marks !== null).length;
           const pendingCount = submissionCount - gradedCount;
           const materialCount = assignment.materials ? assignment.materials.length : 0;
+          const safeTitle = assignment.title.replace(/'/g, "\\'");
         %>
           <div class="collapse collapse-arrow bg-base-100 shadow-lg" data-course-id="<%= assignment.course.id %>" 
                data-status="<%= isOverdue ? 'overdue' : 'active' %>"
@@ -438,7 +440,7 @@
             <div class="collapse-title p-4">
               <div class="flex items-start gap-3">
                 <div class="avatar placeholder flex-shrink-0">
-                  <div class="rounded-lg w-12 h-12 flex items-center justify-center" style="background: <%= isOverdue ? 'linear-gradient(135deg, #f87272 0%, #e85858 100%)' : 'linear-gradient(135deg, #36d399 0%, #2ab880 100%)' %>; color: white;">
+                  <div class="<%= isOverdue ? 'stat-card-gradient-error' : 'stat-card-gradient-success' %> rounded-lg w-12 h-12 flex items-center justify-center text-white">
                     <i class="fas fa-clipboard-list text-lg"></i>
                   </div>
                 </div>
@@ -522,7 +524,7 @@
                      class="btn btn-primary btn-sm flex-1" style="border-radius: 9999px;">
                     <i class="fas fa-edit mr-2"></i>Edit
                   </a>
-                  <button onclick="deleteAssignment('<%= assignment.id %>', '<%= assignment.title.replace(/'/g, "\\'") %>')" 
+                  <button onclick="deleteAssignment('<%= assignment.id %>', '<%= safeTitle %>')" 
                           class="btn btn-sm flex-1" style="border-radius: 9999px; background-color: #ef4444; border-color: #ef4444; color: white;">
                     <i class="fas fa-trash mr-2"></i>Delete
                   </button>

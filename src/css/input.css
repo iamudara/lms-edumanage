@@ -1,3 +1,126 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  /* Dashboard Stats Card */
+  .stats-card {
+    @apply stats shadow text-primary-content hover:shadow-lg transition-shadow duration-200;
+  }
+
+  .stats-card-primary {
+    @apply bg-primary text-primary-content;
+  }
+
+  .stats-card-secondary {
+    @apply bg-secondary text-secondary-content;
+  }
+
+  .stats-card-accent {
+    @apply bg-accent text-accent-content;
+  }
+
+  .stats-card-info {
+    @apply bg-info text-info-content;
+  }
+
+  /* Course Card */
+  .course-card {
+    @apply card bg-base-200 hover:shadow-lg transition-all duration-200 cursor-pointer border border-transparent;
+  }
+  
+  .course-card:hover {
+    @apply border-primary;
+    border-color: oklch(var(--p) / 0.2);
+  }
+
+  .course-card-body {
+    @apply card-body p-4 sm:p-6;
+  }
+
+  .course-badge {
+    @apply badge badge-primary badge-sm sm:badge-md font-semibold;
+  }
+
+  .course-stat-badge {
+    @apply badge badge-outline badge-sm flex items-center gap-1;
+  }
+
+  /* Badges */
+  .badge-status-success {
+    @apply badge badge-success badge-sm;
+  }
+
+  .badge-status-warning {
+    @apply badge badge-warning badge-sm;
+  }
+
+  .badge-status-error {
+    @apply badge badge-error badge-sm;
+  }
+
+  /* Buttons */
+  /* Buttons */
+  .btn-action-sm {
+    @apply btn btn-xs sm:btn-sm;
+  }
+
+  /* Filter Tabs */
+  .filter-tab {
+    @apply btn btn-sm sm:btn-md flex-shrink-0 px-5;
+  }
+  
+  .filter-tab-active {
+    @apply btn-active;
+  }
+
+  /* Course Stats Box */
+  .course-stat-box {
+    @apply text-center p-2 bg-base-200 rounded;
+  }
+  
+  .course-stat-value {
+    @apply text-2xl font-bold;
+  }
+  
+  .course-stat-label {
+    @apply text-xs;
+    color: oklch(var(--bc) / 0.7);
+  }
+  
+  /* Gradients for Stats */
+  .stat-card-gradient-primary {
+    background: linear-gradient(135deg, #570df8 0%, #4506cb 100%);
+    @apply text-white;
+  }
+
+  .stat-card-gradient-secondary {
+    background: linear-gradient(135deg, #f000b8 0%, #bd0091 100%);
+    @apply text-white;
+  }
+
+  .stat-card-gradient-accent {
+    background: linear-gradient(135deg, #37cdbe 0%, #2aa79b 100%);
+    @apply text-white;
+  }
+
+  .stat-card-gradient-info {
+    background: linear-gradient(135deg, #3abff8 0%, #29a0d6 100%);
+    @apply text-white;
+  }
+
+  .stat-card-gradient-success {
+    background: linear-gradient(135deg, #36d399 0%, #2ab880 100%);
+    @apply text-white;
+  }
+  
+  .stat-card-gradient-error {
+    background: linear-gradient(135deg, #f87272 0%, #e85858 100%);
+    @apply text-white;
+  }
+  
+  .stat-card-gradient-warning {
+    background: linear-gradient(135deg, #fbbd23 0%, #e0a720 100%);
+    @apply text-gray-800;
+  }
+}

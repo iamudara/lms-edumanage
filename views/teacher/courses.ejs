@@ -29,11 +29,11 @@
     <!-- Batch Filter Tabs -->
     <% if (batches && batches.length > 0) { %>
       <div class="flex gap-2 sm:gap-3 mb-6 mt-6 sm:mt-8 overflow-x-auto pb-2 scrollbar-hide">
-        <button class="btn btn-sm sm:btn-md batch-filter-btn active-batch flex-shrink-0" style="padding-left: 1.25rem; padding-right: 1.25rem;" data-batch="all">
+        <button class="filter-tab batch-filter-btn active-batch" data-batch="all">
           <i class="fas fa-th-large text-sm sm:text-base mr-2"></i><span>All Batches</span>
         </button>
         <% batches.forEach(batch => { %>
-          <button class="btn btn-ghost btn-sm sm:btn-md batch-filter-btn flex-shrink-0" style="padding-left: 1.25rem; padding-right: 1.25rem;" data-batch="<%= batch.id %>">
+          <button class="filter-tab btn-ghost batch-filter-btn" data-batch="<%= batch.id %>">
             <i class="fas fa-users text-sm sm:text-base mr-2"></i><%= batch.name %>
           </button>
         <% }); %>
@@ -74,10 +74,10 @@
           const primaryTeacher = course.courseTeachers?.find(ct => ct.is_primary);
           const isOwner = primaryTeacher?.teacher_id === user.id;
         %>
-          <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow cursor-pointer course-card border border-base-300" 
+          <div class="course-card" 
                onclick="window.location.href='/teacher/courses/<%= course.id %>'"
                data-batch-ids="<%= courseBatchIds.join(',') %>">
-            <div class="card-body">
+            <div class="course-card-body">
               <!-- Course Code Badge and Ownership -->
               <div class="flex justify-between items-start mb-2">
                 <div class="badge badge-primary badge-lg">
@@ -111,17 +111,17 @@
 
               <!-- Statistics -->
               <div class="grid grid-cols-3 gap-2 mb-4">
-                <div class="text-center p-2 bg-base-200 rounded">
-                  <div class="text-2xl font-bold text-primary"><%= batchCount %></div>
-                  <div class="text-xs text-base-content/70">Batches</div>
+                <div class="course-stat-box">
+                  <div class="course-stat-value text-primary"><%= batchCount %></div>
+                  <div class="course-stat-label">Batches</div>
                 </div>
-                <div class="text-center p-2 bg-base-200 rounded">
-                  <div class="text-2xl font-bold text-secondary"><%= enrolledStudents %></div>
-                  <div class="text-xs text-base-content/70">Students</div>
+                <div class="course-stat-box">
+                  <div class="course-stat-value text-secondary"><%= enrolledStudents %></div>
+                  <div class="course-stat-label">Students</div>
                 </div>
-                <div class="text-center p-2 bg-base-200 rounded">
-                  <div class="text-2xl font-bold text-accent"><%= assignmentCount %></div>
-                  <div class="text-xs text-base-content/70">Assignments</div>
+                <div class="course-stat-box">
+                  <div class="course-stat-value text-accent"><%= assignmentCount %></div>
+                  <div class="course-stat-label">Assignments</div>
                 </div>
               </div>
 
@@ -157,60 +157,67 @@
       </div>
 
       <!-- Summary Stats -->
-      <div class="stats shadow mt-8 w-full">
-        <div class="stat">
-          <div class="stat-figure text-primary">
-            <i class="fas fa-book text-3xl"></i>
-          </div>
-          <div class="stat-title">Total Courses</div>
-          <div class="stat-value text-primary"><%= courses.length %></div>
-          <div class="stat-desc">
-            <% 
-              const ownedCount = courses.filter(c => c.isOwner !== false).length;
-              const assignedCount = courses.length - ownedCount;
-            %>
-            <%= ownedCount %> owned, <%= assignedCount %> assigned
+      <!-- Summary Stats -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 w-full">
+        <div class="stats-card stats-card-primary">
+          <div class="stat">
+            <div class="stat-figure text-primary-content/50">
+              <i class="fas fa-book text-3xl"></i>
+            </div>
+            <div class="stat-title text-primary-content/80">Total Courses</div>
+            <div class="stat-value"><%= courses.length %></div>
+            <div class="stat-desc text-primary-content/60">
+              <% 
+                const ownedCount = courses.filter(c => c.isOwner !== false).length;
+                const assignedCount = courses.length - ownedCount;
+              %>
+              <%= ownedCount %> owned, <%= assignedCount %> assigned
+            </div>
           </div>
         </div>
         
-        <div class="stat">
-          <div class="stat-figure text-secondary">
-            <i class="fas fa-users text-3xl"></i>
+        <div class="stats-card stats-card-secondary">
+          <div class="stat">
+            <div class="stat-figure text-secondary-content/50">
+              <i class="fas fa-users text-3xl"></i>
+            </div>
+            <div class="stat-title text-secondary-content/80">Total Students</div>
+            <div class="stat-value">
+              <% 
+                let totalStudents = 0;
+                courses.forEach(course => {
+                  if (course.BatchEnrollments) {
+                    course.BatchEnrollments.forEach(enrollment => {
+                      totalStudents += enrollment.batch.students.length;
+                    });
+                  }
+                });
+              %>
+              <%= totalStudents %>
+            </div>
+            <div class="stat-desc text-secondary-content/60">Across all courses</div>
           </div>
-          <div class="stat-title">Total Students</div>
-          <div class="stat-value text-secondary">
-            <% 
-              let totalStudents = 0;
-              courses.forEach(course => {
-                if (course.BatchEnrollments) {
-                  course.BatchEnrollments.forEach(enrollment => {
-                    totalStudents += enrollment.batch.students.length;
-                  });
-                }
-              });
-            %>
-            <%= totalStudents %>
-          </div>
-          <div class="stat-desc">Across all courses</div>
         </div>
         
-        <div class="stat">
-          <div class="stat-figure text-accent">
-            <i class="fas fa-tasks text-3xl"></i>
+        <div class="stats-card stats-card-accent">
+          <div class="stat">
+            <div class="stat-figure text-accent-content/50">
+              <i class="fas fa-tasks text-3xl"></i>
+            </div>
+            <div class="stat-title text-accent-content/80">Total Assignments</div>
+            <div class="stat-value">
+              <% 
+                let totalAssignments = 0;
+                courses.forEach(course => {
+                  if (course.Assignments) {
+                    totalAssignments += course.Assignments.length;
+                  }
+                });
+              %>
+              <%= totalAssignments %>
+            </div>
+            <div class="stat-desc text-accent-content/60">Active assignments</div>
           </div>
-          <div class="stat-title">Total Assignments</div>
-          <div class="stat-value text-accent">
-            <% 
-              let totalAssignments = 0;
-              courses.forEach(course => {
-                if (course.Assignments) {
-                  totalAssignments += course.Assignments.length;
-                }
-              });
-            %>
-            <%= totalAssignments %>
-          </div>
-          <div class="stat-desc">Active assignments</div>
         </div>
       </div>
     <% } %>

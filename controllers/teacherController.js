@@ -21,80 +21,9 @@ import {
 } from '../models/index.js';
 import { Op, QueryTypes } from 'sequelize';
 import cloudinary, { generateSignedUrl, signUrlsInArray, deleteCloudinaryFile } from '../config/cloudinary.js';
+import { teacherService } from '../services/teacherService.js';
 
-/**
- * Helper function to check if a teacher has access to a course
- * Returns the course if teacher has access, null otherwise
- * 
- * @param {number} courseId - The course ID to check
- * @param {number} teacherId - The teacher's user ID
- * @param {Object} options - Additional options
- * @param {boolean} options.requireEdit - Require edit permission
- * @param {boolean} options.requireGrade - Require grade permission
- * @returns {Object|null} Course object if teacher has access, null otherwise
- */
-async function checkTeacherCourseAccess(courseId, teacherId, options = {}) {
-  const { requireEdit = false, requireGrade = false } = options;
-  
-  // First check if course exists
-  const course = await Course.findOne({
-    where: { id: courseId }
-  });
-  
-  if (!course) return null;
-  
-  // Check CourseTeacher table for access
-  const accessQuery = {
-    course_id: courseId,
-    teacher_id: teacherId
-  };
-  
-  if (requireEdit) accessQuery.can_edit = true;
-  if (requireGrade) accessQuery.can_grade = true;
-  
-  const courseTeacher = await CourseTeacher.findOne({
-    where: accessQuery
-  });
-  
-  // Primary teacher (is_primary=true) has full access to all features
-  if (courseTeacher) {
-    return course;
-  }
-  
-  return null;
-}
 
-/**
- * Helper function to check if a teacher is the primary teacher for a course
- * @param {number} courseId - The course ID
- * @param {number} teacherId - The teacher's user ID
- * @returns {boolean} True if teacher is primary, false otherwise
- */
-async function isTeacherPrimary(courseId, teacherId) {
-  const courseTeacher = await CourseTeacher.findOne({
-    where: { 
-      course_id: courseId, 
-      teacher_id: teacherId,
-      is_primary: true
-    }
-  });
-  return !!courseTeacher;
-}
-
-/**
- * Helper function to get all courses a teacher has access to
- * @param {number} teacherId - The teacher's user ID
- * @returns {Array} Array of course IDs
- */
-async function getTeacherCourseIds(teacherId) {
-  // Get all courses where teacher has access via CourseTeacher
-  const assignedCourses = await CourseTeacher.findAll({
-    where: { teacher_id: teacherId },
-    attributes: ['course_id']
-  });
-  
-  return assignedCourses.map(ct => ct.course_id);
-}
 
 /**
  * Show Teacher Dashboard
@@ -109,242 +38,13 @@ async function getTeacherCourseIds(teacherId) {
 export const showDashboard = async (req, res) => {
   try {
     const teacherId = req.user.id;
+    const dashboardData = await teacherService.getDashboardData(teacherId);
 
-    // 1. Get all course IDs teacher has access to
-    const courseIds = await getTeacherCourseIds(teacherId);
-
-    // 2. Get teacher's courses with full details
-    const allCourses = await Course.findAll({
-      where: { id: { [Op.in]: courseIds } },
-      include: [{
-        model: BatchEnrollment,
-        include: [{
-          model: Batch,
-          as: 'batch',
-          include: [{
-            model: User,
-            as: 'students'
-          }]
-        }]
-      }, {
-        model: Assignment
-      }, {
-        model: CourseTeacher,
-        as: 'courseTeachers',
-        include: [{
-          model: User,
-          as: 'teacher',
-          attributes: ['id', 'full_name']
-        }]
-      }],
-      order: [['created_at', 'DESC']]
-    });
-
-    // Get latest material update for each course (including materials in folders)
-    const folderMaterialUpdates = await sequelize.query(`
-      SELECT 
-        fc.course_id,
-        MAX(m.updated_at) as latest_folder_material_update
-      FROM folder_courses fc
-      JOIN materials m ON m.folder_id = fc.folder_id
-      WHERE fc.course_id IN (:courseIds)
-      GROUP BY fc.course_id
-    `, {
-      replacements: { courseIds: courseIds.length > 0 ? courseIds : [0] },
-      type: QueryTypes.SELECT
-    });
-
-    // Create a map of course_id to latest update time
-    const latestUpdateMap = new Map();
-    
-    // Add folder material updates
-    folderMaterialUpdates.forEach(row => {
-      const folderDate = new Date(row.latest_folder_material_update);
-      const existing = latestUpdateMap.get(row.course_id);
-      if (!existing || folderDate > existing) {
-        latestUpdateMap.set(row.course_id, folderDate);
-      }
-    });
-
-    // Sort courses by most recently updated material and get top 3 for dashboard
-    const courses = [...allCourses]
-      .map(course => {
-        const latestMaterialUpdate = latestUpdateMap.get(course.id) || new Date(0);
-        return { course, latestMaterialUpdate };
-      })
-      .sort((a, b) => b.latestMaterialUpdate - a.latestMaterialUpdate)
-      .slice(0, 3)
-      .map(item => item.course);
-
-    // 3. Calculate statistics (use allCourses for accurate counts)
-    const totalCourses = allCourses.length;
-
-    // Get unique students across all teacher's courses
-    const studentIds = new Set();
-    allCourses.forEach(course => {
-      course.BatchEnrollments.forEach(enrollment => {
-        enrollment.batch.students.forEach(student => {
-          studentIds.add(student.id);
-        });
-      });
-    });
-    const totalStudents = studentIds.size;
-
-    // Get all assignments for teacher's courses
-    const assignmentIds = [];
-    allCourses.forEach(course => {
-      course.Assignments.forEach(assignment => {
-        assignmentIds.push(assignment.id);
-      });
-    });
-
-    // Count pending submissions (submitted but not graded)
-    let pendingSubmissions = 0;
-    if (assignmentIds.length > 0) {
-      pendingSubmissions = await Submission.count({
-        where: {
-          assignment_id: { [Op.in]: assignmentIds },
-          marks: null // Not graded yet
-        }
-      });
-    }
-
-    // Count active assignments (deadline not yet passed)
-    let activeAssignments = 0;
-    if (assignmentIds.length > 0) {
-      activeAssignments = await Assignment.count({
-        where: {
-          id: { [Op.in]: assignmentIds },
-          deadline: { [Op.gt]: new Date() }
-        }
-      });
-    }
-
-    // Count submissions received today
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
-    
-    let submissionsToday = 0;
-    if (assignmentIds.length > 0) {
-      submissionsToday = await Submission.count({
-        where: {
-          assignment_id: { [Op.in]: assignmentIds },
-          submitted_at: {
-            [Op.between]: [todayStart, todayEnd]
-          }
-        }
-      });
-    }
-
-    // Calculate average submission rate (% of students submitting on time)
-    let avgSubmissionRate = 0;
-    if (assignmentIds.length > 0) {
-      // Get all assignments with deadline passed
-      const closedAssignments = await Assignment.findAll({
-        where: {
-          id: { [Op.in]: assignmentIds },
-          deadline: { [Op.lt]: new Date() }
-        },
-        attributes: ['id', 'deadline']
-      });
-
-      if (closedAssignments.length > 0) {
-        const closedAssignmentIds = closedAssignments.map(a => a.id);
-        
-        // Count on-time submissions (submitted before deadline)
-        const onTimeSubmissions = await Submission.count({
-          where: {
-            assignment_id: { [Op.in]: closedAssignmentIds }
-          },
-          include: [{
-            model: Assignment,
-            as: 'assignment',
-            where: sequelize.where(
-              sequelize.col('Submission.submitted_at'),
-              { [Op.lte]: sequelize.col('assignment.deadline') }
-            ),
-            attributes: []
-          }]
-        });
-
-        // Get total submissions for closed assignments
-        const totalClosedSubmissions = await Submission.count({
-          where: {
-            assignment_id: { [Op.in]: closedAssignmentIds }
-          }
-        });
-
-        if (totalClosedSubmissions > 0) {
-          avgSubmissionRate = Math.round((onTimeSubmissions / totalClosedSubmissions) * 100);
-        }
-      }
-    }
-
-    // 4. Get recent activity (latest 5 submissions)
-    let recentSubmissions = [];
-    if (assignmentIds.length > 0) {
-      recentSubmissions = await Submission.findAll({
-        where: {
-          assignment_id: { [Op.in]: assignmentIds }
-        },
-        include: [{
-          model: User,
-          as: 'student',
-          attributes: ['id', 'full_name', 'email']
-        }, {
-          model: Assignment,
-          as: 'assignment',
-          attributes: ['id', 'title', 'course_id'],
-          include: [{
-            model: Course,
-            as: 'course',
-            attributes: ['id', 'title', 'code']
-          }]
-        }],
-        order: [['submitted_at', 'DESC']],
-        limit: 5
-      });
-    }
-
-    // 5. Calculate total assignments
-    const totalAssignments = assignmentIds.length;
-
-    // 6. Get ongoing assignments (deadline not yet passed)
-    let ongoingAssignments = [];
-    if (assignmentIds.length > 0) {
-      ongoingAssignments = await Assignment.findAll({
-        where: {
-          id: { [Op.in]: assignmentIds },
-          deadline: { [Op.gt]: new Date() }
-        },
-        include: [{
-          model: Course,
-          as: 'course',
-          attributes: ['id', 'title', 'code']
-        }],
-        order: [['deadline', 'ASC']],
-        limit: 5
-      });
-    }
-
-    // 7. Render dashboard
     res.render('teacher/dashboard', {
       user: req.user,
-      stats: {
-        totalCourses,
-        activeAssignments,
-        submissionsToday,
-        avgSubmissionRate
-      },
-      courses,
-      totalAllCourses: allCourses.length,
-      recentSubmissions,
-      ongoingAssignments,
+      ...dashboardData,
       pageTitle: 'Teacher Dashboard'
     });
-
   } catch (error) {
     console.error('Teacher Dashboard Error:', error);
     res.status(500).send('Error loading dashboard: ' + error.message);
@@ -362,7 +62,7 @@ export const getCourses = async (req, res) => {
     const teacherId = req.user.id;
 
     // Get all course IDs teacher has access to
-    const courseIds = await getTeacherCourseIds(teacherId);
+    const courseIds = await teacherService.getCourseIds(teacherId);
 
     const courses = await Course.findAll({
       where: { id: { [Op.in]: courseIds } },
@@ -444,7 +144,7 @@ export const getAssignments = async (req, res) => {
     const teacherId = req.user.id;
 
     // Get all course IDs teacher has access to
-    const courseIds = await getTeacherCourseIds(teacherId);
+    const courseIds = await teacherService.getCourseIds(teacherId);
 
     if (courseIds.length === 0) {
       return res.render('teacher/assignments', {
@@ -643,7 +343,7 @@ export const getCourseDetail = async (req, res) => {
     const teacherId = req.user.id;
 
     // Check if teacher has access to this course
-    const hasAccess = await checkTeacherCourseAccess(courseId, teacherId);
+    const hasAccess = await teacherService.checkCourseAccess(courseId, teacherId);
     if (!hasAccess) {
       return res.status(404).send('Course not found or you do not have permission to view it');
     }
@@ -698,7 +398,7 @@ export const getCourseDetail = async (req, res) => {
     });
 
     // Check if current teacher is the primary teacher
-    const isOwner = await isTeacherPrimary(courseId, teacherId);
+    const isOwner = await teacherService.isPrimary(courseId, teacherId);
 
     // Get teacher's permissions
     let permissions = { can_edit: true, can_grade: true };
@@ -751,14 +451,14 @@ export const getMaterials = async (req, res) => {
     const teacherId = req.user.id;
 
     // Verify teacher has access to the course (with edit permission for uploads)
-    const course = await checkTeacherCourseAccess(courseId, teacherId);
+    const course = await teacherService.checkCourseAccess(courseId, teacherId);
 
     if (!course) {
       return res.status(404).send('Course not found or you do not have permission to access it');
     }
 
     // Check edit permission
-    const isOwner = await isTeacherPrimary(courseId, teacherId);
+    const isOwner = await teacherService.isPrimary(courseId, teacherId);
     let canEdit = isOwner;
     if (!isOwner) {
       const courseTeacher = await CourseTeacher.findOne({
@@ -807,7 +507,7 @@ export const uploadMaterial = async (req, res) => {
     const { title, description, material_url, folder_id } = req.body;
 
     // Verify teacher has access and edit permission
-    const course = await checkTeacherCourseAccess(courseId, teacherId, { requireEdit: true });
+    const course = await teacherService.checkCourseAccess(courseId, teacherId, { requireEdit: true });
 
     if (!course) {
       return res.redirect(`/teacher/courses/${courseId}/materials?error=Course not found or you do not have edit permission`);
@@ -944,7 +644,7 @@ export const deleteMaterial = async (req, res) => {
 
     if (material.course_id) {
       // Direct course material - check course edit access
-      const course = await checkTeacherCourseAccess(material.course_id, teacherId, { requireEdit: true });
+      const course = await teacherService.checkCourseAccess(material.course_id, teacherId, { requireEdit: true });
       hasPermission = !!course;
     } else if (material.folder_id) {
       // Folder-based material - check if teacher has access via any shared course
@@ -1031,7 +731,7 @@ export const showCreateAssignment = async (req, res) => {
     const teacherId = req.user.id;
 
     // Verify teacher has access with edit permission
-    const course = await checkTeacherCourseAccess(courseId, teacherId, { requireEdit: true });
+    const course = await teacherService.checkCourseAccess(courseId, teacherId, { requireEdit: true });
 
     if (!course) {
       return res.status(404).send('Course not found or you do not have permission to create assignments');
@@ -1065,7 +765,7 @@ export const createAssignment = async (req, res) => {
     const uploadedFiles = req.files || [];
 
     // Verify teacher has access with edit permission
-    const course = await checkTeacherCourseAccess(courseId, teacherId, { requireEdit: true });
+    const course = await teacherService.checkCourseAccess(courseId, teacherId, { requireEdit: true });
 
     if (!course) {
       return res.redirect(`/teacher/courses?error=Course not found or you do not have permission to create assignments`);
@@ -1168,7 +868,7 @@ export const showEditAssignment = async (req, res) => {
     }
 
     // Check if teacher has access with edit permission
-    const course = await checkTeacherCourseAccess(assignment.course_id, teacherId, { requireEdit: true });
+    const course = await teacherService.checkCourseAccess(assignment.course_id, teacherId, { requireEdit: true });
     if (!course) {
       return res.status(403).send('You do not have permission to edit this assignment');
     }
@@ -1231,7 +931,7 @@ export const editAssignment = async (req, res) => {
     }
 
     // Check if teacher has edit permission
-    const course = await checkTeacherCourseAccess(assignment.course_id, teacherId, { requireEdit: true });
+    const course = await teacherService.checkCourseAccess(assignment.course_id, teacherId, { requireEdit: true });
     if (!course) {
       return res.status(403).send('You do not have permission to edit this assignment');
     }
@@ -1313,13 +1013,13 @@ export const getSubmissions = async (req, res) => {
     }
 
     // Check if teacher has access (view submissions doesn't require grade permission, just access)
-    const course = await checkTeacherCourseAccess(assignment.course_id, teacherId);
+    const course = await teacherService.checkCourseAccess(assignment.course_id, teacherId);
     if (!course) {
       return res.status(403).send('You do not have permission to view submissions for this assignment');
     }
 
     // Check if teacher can grade
-    const isOwner = await isTeacherPrimary(assignment.course_id, teacherId);
+    const isOwner = await teacherService.isPrimary(assignment.course_id, teacherId);
     let canGrade = isOwner;
     if (!isOwner) {
       const courseTeacher = await CourseTeacher.findOne({
@@ -1398,7 +1098,7 @@ export const showGradeForm = async (req, res) => {
     }
 
     // Check if teacher has grade permission
-    const course = await checkTeacherCourseAccess(submission.assignment.course_id, teacherId, { requireGrade: true });
+    const course = await teacherService.checkCourseAccess(submission.assignment.course_id, teacherId, { requireGrade: true });
     if (!course) {
       return res.status(403).send('You do not have permission to grade this submission');
     }
@@ -1455,7 +1155,7 @@ export const gradeSubmission = async (req, res) => {
     }
 
     // Check if teacher has grade permission
-    const course = await checkTeacherCourseAccess(submission.assignment.course_id, teacherId, { requireGrade: true });
+    const course = await teacherService.checkCourseAccess(submission.assignment.course_id, teacherId, { requireGrade: true });
     if (!course) {
       return res.status(403).send('You do not have permission to grade this submission');
     }
@@ -1497,7 +1197,7 @@ export const getGrades = async (req, res) => {
     const courseId = req.params.id;
 
     // 1. Check if teacher has access to the course
-    const course = await checkTeacherCourseAccess(courseId, teacherId);
+    const course = await teacherService.checkCourseAccess(courseId, teacherId);
 
     if (!course) {
       return res.status(404).send('Course not found or you do not have permission to access it');
@@ -1572,7 +1272,7 @@ export const saveGrade = async (req, res) => {
     const { studentId, grade, remarks } = req.body;
 
     // 1. Verify teacher has grade permission
-    const course = await checkTeacherCourseAccess(courseId, teacherId, { requireGrade: true });
+    const course = await teacherService.checkCourseAccess(courseId, teacherId, { requireGrade: true });
 
     if (!course) {
       return res.redirect(`/teacher/courses/${courseId}/grades?error=Course not found or you do not have grade permission`);
@@ -1650,7 +1350,7 @@ export const bulkUploadGrades = async (req, res) => {
     const courseId = req.params.id;
 
     // 1. Verify teacher has grade permission
-    const course = await checkTeacherCourseAccess(courseId, teacherId, { requireGrade: true });
+    const course = await teacherService.checkCourseAccess(courseId, teacherId, { requireGrade: true });
 
     if (!course) {
       return res.redirect(`/teacher/courses/${courseId}/grades?error=Course not found or you do not have grade permission`);
@@ -1866,7 +1566,7 @@ export const bulkUploadAssignmentGrades = async (req, res) => {
     }
 
     // 2. Verify teacher has grade permission
-    const course = await checkTeacherCourseAccess(assignment.course_id, teacherId, { requireGrade: true });
+    const course = await teacherService.checkCourseAccess(assignment.course_id, teacherId, { requireGrade: true });
 
     if (!course) {
       return res.redirect(`/teacher/assignments/${assignmentId}/submissions?error=You do not have grade permission`);
@@ -2034,7 +1734,7 @@ export const downloadAssignmentGradeTemplate = async (req, res) => {
     }
 
     // 2. Verify teacher has access
-    const course = await checkTeacherCourseAccess(assignment.course_id, teacherId);
+    const course = await teacherService.checkCourseAccess(assignment.course_id, teacherId);
     if (!course) {
       return res.status(403).send('Access denied');
     }
@@ -2105,7 +1805,7 @@ export const deleteAssignment = async (req, res) => {
     }
 
     // 2. Verify teacher has edit permission
-    const course = await checkTeacherCourseAccess(assignment.course_id, teacherId, { requireEdit: true });
+    const course = await teacherService.checkCourseAccess(assignment.course_id, teacherId, { requireEdit: true });
     if (!course) {
       return res.status(403).json({ 
         success: false, 
@@ -2224,7 +1924,7 @@ export const getTeacherFolders = async (req, res) => {
     const teacherId = req.user.id;
 
     // Get all course IDs teacher has access to
-    const courseIds = await getTeacherCourseIds(teacherId);
+    const courseIds = await teacherService.getCourseIds(teacherId);
     
     // Get all folder IDs shared with these courses
     const folderCourses = await FolderCourse.findAll({
@@ -2347,7 +2047,7 @@ export const createFolder = async (req, res) => {
       }
       
       // Verify teacher has access to this folder via a shared course
-      const teacherCourseIds = await getTeacherCourseIds(teacherId);
+      const teacherCourseIds = await teacherService.getCourseIds(teacherId);
       const folderCourse = await FolderCourse.findOne({
         where: { 
           folder_id: parent_id,
@@ -2414,7 +2114,7 @@ export const createFolder = async (req, res) => {
       
       if (courseIdsToLink.length > 0) {
         // Verify teacher has access to these courses
-        const teacherCourseIds = await getTeacherCourseIds(teacherId);
+        const teacherCourseIds = await teacherService.getCourseIds(teacherId);
         const validCourseIds = courseIdsToLink.filter(id => teacherCourseIds.includes(id));
 
         // Create folder-course associations
@@ -2474,7 +2174,7 @@ export const renameFolder = async (req, res) => {
     }
     
     // Verify teacher has access via a shared course
-    const teacherCourseIds = await getTeacherCourseIds(teacherId);
+    const teacherCourseIds = await teacherService.getCourseIds(teacherId);
     const folderCourse = await FolderCourse.findOne({
       where: { 
         folder_id: folderId,
@@ -2560,7 +2260,7 @@ export const deleteFolder = async (req, res) => {
     }
     
     // Verify teacher has access via a shared course
-    const teacherCourseIds = await getTeacherCourseIds(teacherId);
+    const teacherCourseIds = await teacherService.getCourseIds(teacherId);
     const folderCourse = await FolderCourse.findOne({
       where: { 
         folder_id: folderId,
@@ -2705,7 +2405,7 @@ export const shareFolderWithCourses = async (req, res) => {
 
     // Verify teacher has access to all selected courses (if any)
     if (courseIdsArray.length > 0) {
-      const teacherCourseIds = await getTeacherCourseIds(teacherId);
+      const teacherCourseIds = await teacherService.getCourseIds(teacherId);
       const invalidCourses = courseIdsArray.filter(id => !teacherCourseIds.includes(parseInt(id)));
 
       if (invalidCourses.length > 0) {
@@ -2811,7 +2511,7 @@ export const unshareFolder = async (req, res) => {
     }
 
     // Verify teacher has access to this course
-    const course = await checkTeacherCourseAccess(courseId, teacherId);
+    const course = await teacherService.checkCourseAccess(courseId, teacherId);
     if (!course) {
       return res.status(403).json({
         success: false,
@@ -2870,7 +2570,7 @@ export const moveMaterialToFolder = async (req, res) => {
 
     // Check teacher has access to the material's course (if course-based)
     if (material.course_id) {
-      const course = await checkTeacherCourseAccess(material.course_id, teacherId, { requireEdit: true });
+      const course = await teacherService.checkCourseAccess(material.course_id, teacherId, { requireEdit: true });
       if (!course) {
         return res.status(403).json({
           success: false,
@@ -2963,14 +2663,14 @@ export const getMaterialsWithFolders = async (req, res) => {
     const teacherId = req.user.id;
 
     // Verify teacher has access to the course
-    const course = await checkTeacherCourseAccess(courseId, teacherId);
+    const course = await teacherService.checkCourseAccess(courseId, teacherId);
 
     if (!course) {
       return res.status(404).send('Course not found or you do not have permission to access it');
     }
 
     // Check edit permission
-    const isOwner = await isTeacherPrimary(courseId, teacherId);
+    const isOwner = await teacherService.isPrimary(courseId, teacherId);
     let canEdit = isOwner;
     if (!isOwner) {
       const courseTeacher = await CourseTeacher.findOne({
@@ -3048,7 +2748,7 @@ export const getMaterialsWithFolders = async (req, res) => {
     const folderTree = buildFolderTreeWithMaterials(sharedFoldersForTree, signedFolderMaterials);
 
     // Get all teacher's courses for sharing folders
-    const teacherCourseIds = await getTeacherCourseIds(teacherId);
+    const teacherCourseIds = await teacherService.getCourseIds(teacherId);
     const allCourses = await Course.findAll({
       where: { id: { [Op.in]: teacherCourseIds } },
       attributes: ['id', 'code', 'title'],
