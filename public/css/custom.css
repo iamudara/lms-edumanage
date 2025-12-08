@@ -477,3 +477,35 @@ textarea.success {
     display: block;
     white-space: normal;
 }
+
+/* =========================
+   Toast Notifications
+   ========================= */
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.animate-slide-in {
+    animation: slideInRight 0.3s ease-out;
+}
+
+/* Toast positioning and z-index */
+.alert.fixed {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 9999;
+}
+
+/* Ensure toasts are above modals */
+.modal {
+    z-index: 999;
+}

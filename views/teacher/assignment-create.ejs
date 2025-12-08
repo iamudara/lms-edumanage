@@ -375,13 +375,34 @@
       });
     });
 
+    /**
+     * Show toast notification
+     */
+    function showToast(message, type = 'error') {
+      const toast = document.createElement('div');
+      const icon = type === 'error' ? 'exclamation-circle' : type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+      
+      toast.className = `alert alert-${type} fixed top-4 right-4 w-auto max-w-md shadow-lg z-50 animate-slide-in`;
+      toast.innerHTML = `
+        <i class="fas fa-${icon}"></i>
+        <span class="text-sm sm:text-base">${message}</span>
+      `;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
     // Form validation and upload progress
     document.getElementById('assignmentForm').addEventListener('submit', function(e) {
       const deadlineInput = document.getElementById('deadlineInput');
       const deadline = new Date(deadlineInput.value);
       const now = new Date();
       
-      if (deadline <= now) {
+      if (!deadlineInput.value || deadline <= now) {
         e.preventDefault();
         
         // Format the current date/time for user-friendly message
@@ -394,7 +415,8 @@
           hour12: true
         });
         
-        alert(`Deadline must be in the future!\nCurrent time: ${currentDateTime}\nPlease select a date and time after now.`);
+        showToast(`Deadline must be in the future!<br><small>Current time: ${currentDateTime}</small>`, 'error');
+        deadlineInput.focus();
         return false;
       }
 
@@ -457,7 +479,7 @@
           progressDiv.classList.add('hidden');
           submitBtn.disabled = false;
           submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Create Assignment';
-          alert('Error uploading files. Please try again.');
+          showToast('Error uploading files. Please try again.', 'error');
         }
       });
       
@@ -465,7 +487,7 @@
         progressDiv.classList.add('hidden');
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Create Assignment';
-        alert('Network error. Please check your connection and try again.');
+        showToast('Network error. Please check your connection and try again.', 'error');
       });
       
       xhr.open('POST', this.action);

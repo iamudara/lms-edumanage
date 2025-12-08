@@ -240,9 +240,25 @@
      * Delete assignment with confirmation
      */
     async function deleteAssignment(assignmentId, assignmentTitle) {
-      if (!confirm(`Are you sure you want to delete "${assignmentTitle}"?\n\nThis will permanently delete:\n- The assignment\n- All assignment materials\n- All student submissions\n- All grades for this assignment\n\nThis action cannot be undone.`)) {
-        return;
-      }
+      // Set modal content
+      document.getElementById('deleteModalTitle').textContent = `"${assignmentTitle}"`;
+      document.getElementById('deleteAssignmentId').value = assignmentId;
+      
+      // Show modal
+      document.getElementById('deleteConfirmModal').showModal();
+    }
+
+    /**
+     * Confirm delete action
+     */
+    async function confirmDelete() {
+      const assignmentId = document.getElementById('deleteAssignmentId').value;
+      const modal = document.getElementById('deleteConfirmModal');
+      const deleteBtn = document.getElementById('confirmDeleteBtn');
+      
+      // Show loading state
+      deleteBtn.disabled = true;
+      deleteBtn.innerHTML = '<span class="loading loading-spinner"></span> Deleting...';
 
       try {
         const response = await fetch(`/teacher/assignments/${assignmentId}`, {
@@ -255,19 +271,87 @@
         const result = await response.json();
 
         if (result.success) {
-          // Show success message
-          alert(result.message);
-          // Redirect to course detail page
+          // Close modal and redirect
+          modal.close();
           window.location.href = result.redirectUrl;
         } else {
-          alert('Error: ' + result.message);
+          // Show error toast
+          showToast('Error: ' + result.message, 'error');
+          deleteBtn.disabled = false;
+          deleteBtn.innerHTML = '<i class="fas fa-trash mr-2"></i>Delete Assignment';
         }
       } catch (error) {
         console.error('Delete error:', error);
-        alert('Error deleting assignment. Please try again.');
+        showToast('Error deleting assignment. Please try again.', 'error');
+        deleteBtn.disabled = false;
+        deleteBtn.innerHTML = '<i class="fas fa-trash mr-2"></i>Delete Assignment';
       }
     }
+
+    /**
+     * Show toast notification
+     */
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `alert alert-${type} fixed top-4 right-4 w-auto max-w-md shadow-lg z-50`;
+      toast.innerHTML = `
+        <i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+        <span>${message}</span>
+      `;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
   </script>
+
+  <!-- Delete Confirmation Modal -->
+  <dialog id="deleteConfirmModal" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box">
+      <h3 class="font-bold text-lg mb-4">
+        <i class="fas fa-exclamation-triangle text-error mr-2"></i>
+        Delete Assignment
+      </h3>
+      
+      <p class="mb-4">
+        Are you sure you want to delete <strong id="deleteModalTitle"></strong>?
+      </p>
+      
+      <div class="bg-error/10 border border-error/20 rounded-lg p-4 mb-6">
+        <p class="font-semibold text-error mb-2">
+          <i class="fas fa-warning mr-2"></i>This will permanently delete:
+        </p>
+        <ul class="list-disc list-inside text-sm space-y-1 text-base-content/80">
+          <li>The assignment</li>
+          <li>All assignment materials</li>
+          <li>All student submissions</li>
+          <li>All grades for this assignment</li>
+        </ul>
+        <p class="text-sm font-semibold text-error mt-3">
+          <i class="fas fa-ban mr-2"></i>This action cannot be undone.
+        </p>
+      </div>
+      
+      <input type="hidden" id="deleteAssignmentId">
+      
+      <div class="modal-action">
+        <form method="dialog" class="flex gap-2">
+          <button type="button" class="btn btn-primary" onclick="document.getElementById('deleteConfirmModal').close()">
+            <i class="fas fa-times mr-2"></i>Cancel
+          </button>
+          <button type="button" id="confirmDeleteBtn" class="btn btn-error" onclick="confirmDelete()">
+            <i class="fas fa-trash mr-2"></i>Delete Assignment
+          </button>
+        </form>
+      </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
 
   <%- include('../shared/footer') %>
 </body>
