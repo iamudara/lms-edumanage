@@ -45,6 +45,37 @@ button[type="submit"]:not(.btn-outline, .btn-ghost) {
 }
 
 /* =========================
+   Button Hover Effects with Shadow
+   ========================= */
+
+/* Primary button hover - Blue with shadow */
+.btn-primary:hover,
+button[type="submit"].btn-primary:hover {
+    background-color: #3b5bdb !important;
+    border-color: #3b5bdb !important;
+    box-shadow: 0 4px 12px rgba(75, 107, 251, 0.4);
+    transform: translateY(-2px);
+    transition: all 0.2s ease;
+}
+
+/* Error/Cancel button hover - Red with shadow */
+.btn-error:hover,
+.btn-outline[style*="#ef4444"]:hover,
+button[style*="background-color: #ef4444"]:hover,
+a[style*="background-color: #ef4444"]:hover {
+    background-color: #dc2626 !important;
+    border-color: #dc2626 !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    transform: translateY(-2px);
+    transition: all 0.2s ease;
+}
+
+/* General button transition */
+.btn {
+    transition: all 0.2s ease;
+}
+
+/* =========================
    Navbar Dropdown Buttons
    (Must be AFTER submit button rules)
    ========================= */
@@ -393,12 +424,33 @@ select.select-bordered:hover:not(:focus) {
 
 /* Focus styles for accessibility */
 a:focus,
-button:focus,
 input:focus,
 select:focus,
 textarea:focus {
     outline: 2px solid #3b82f6;
     outline-offset: 2px;
+}
+
+/* Error/danger button focus - highest priority */
+.btn-error:focus,
+button[style*="background-color: #ef4444"]:focus,
+button[style*="#ef4444"]:focus {
+    outline: 2px solid #ef4444 !important;
+    outline-offset: 2px !important;
+}
+
+/* Primary button focus */
+.btn-primary:focus {
+    outline: 2px solid #4b6bfb !important;
+    outline-offset: 2px !important;
+}
+
+/* Button focus - use their own color with transparency */
+button:focus,
+.btn:focus {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+    opacity: 0.9;
 }
 
 /* Error input styling */
