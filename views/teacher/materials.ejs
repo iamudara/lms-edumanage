@@ -304,9 +304,22 @@
           <label class="label py-1"><span class="label-text">Material URL</span></label>
           <input type="url" name="material_url" class="input input-bordered input-sm" placeholder="https://...">
         </div>
+        
+        <!-- Upload Progress Bar -->
+        <div id="materialUploadProgress" class="hidden mb-4">
+          <div class="flex justify-between text-sm mb-1">
+            <span class="font-medium">Uploading...</span>
+            <span id="materialUploadPercentage">0%</span>
+          </div>
+          <progress id="materialUploadProgressBar" class="progress progress-primary w-full" value="0" max="100"></progress>
+          <div class="text-xs text-base-content opacity-60 mt-1">
+            <span id="materialUploadedSize">0 MB</span> / <span id="materialTotalSize">0 MB</span>
+          </div>
+        </div>
+        
         <div class="modal-action">
           <button type="button" class="btn btn-sm" onclick="uploadModal.close()">Cancel</button>
-          <button type="submit" class="btn btn-primary btn-sm">Upload</button>
+          <button type="submit" class="btn btn-primary btn-sm" id="materialUploadBtn">Upload</button>
         </div>
       </form>
     </div>
@@ -430,6 +443,74 @@
         if (folderEl) {
           folderEl.click();
         }
+      }
+      
+      // Add upload progress tracking to material upload form
+      const uploadForm = document.querySelector('#uploadModal form');
+      const uploadBtn = document.getElementById('materialUploadBtn');
+      const progressDiv = document.getElementById('materialUploadProgress');
+      const progressBar = document.getElementById('materialUploadProgressBar');
+      const progressPercentage = document.getElementById('materialUploadPercentage');
+      const uploadedSizeSpan = document.getElementById('materialUploadedSize');
+      const totalSizeSpan = document.getElementById('materialTotalSize');
+      
+      if (uploadForm) {
+        uploadForm.addEventListener('submit', function(e) {
+          const fileInput = this.querySelector('input[type="file"]');
+          const file = fileInput && fileInput.files && fileInput.files[0];
+          
+          // Only show progress for file uploads (not URL materials)
+          if (!file) {
+            return; // Let form submit normally for URL materials
+          }
+          
+          e.preventDefault();
+          
+          // Show progress and disable button
+          progressDiv.classList.remove('hidden');
+          uploadBtn.disabled = true;
+          uploadBtn.textContent = 'Uploading...';
+          
+          const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+          totalSizeSpan.textContent = fileSizeMB + ' MB';
+          
+          // Create FormData from form
+          const formData = new FormData(uploadForm);
+          
+          // Use XMLHttpRequest for progress tracking
+          const xhr = new XMLHttpRequest();
+          
+          xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+              const percentComplete = Math.round((e.loaded / e.total) * 100);
+              progressBar.value = percentComplete;
+              progressPercentage.textContent = percentComplete + '%';
+              uploadedSizeSpan.textContent = (e.loaded / (1024 * 1024)).toFixed(2) + ' MB';
+            }
+          });
+          
+          xhr.addEventListener('load', () => {
+            if (xhr.status === 200 || xhr.status === 302) {
+              // Success - reload page
+              window.location.reload();
+            } else {
+              progressDiv.classList.add('hidden');
+              uploadBtn.disabled = false;
+              uploadBtn.textContent = 'Upload';
+              alert('Upload failed. Please try again.');
+            }
+          });
+          
+          xhr.addEventListener('error', () => {
+            progressDiv.classList.add('hidden');
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'Upload';
+            alert('Network error. Please try again.');
+          });
+          
+          xhr.open('POST', uploadForm.action);
+          xhr.send(formData);
+        });
       }
     });
 

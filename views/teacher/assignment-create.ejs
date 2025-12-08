@@ -192,9 +192,21 @@
 
               <div class="divider"></div>
 
+              <!-- Upload Progress -->
+              <div id="assignmentUploadProgress" class="hidden mb-4">
+                <div class="flex justify-between text-sm mb-1">
+                  <span class="font-medium">Uploading files...</span>
+                  <span id="assignmentUploadPercentage">0%</span>
+                </div>
+                <progress id="assignmentUploadProgressBar" class="progress progress-primary w-full" value="0" max="100"></progress>
+                <div class="text-xs text-base-content opacity-60 mt-1">
+                  <span id="assignmentUploadedSize">0 MB</span> / <span id="assignmentTotalSize">0 MB</span>
+                </div>
+              </div>
+
               <!-- Submit Buttons -->
               <div class="flex gap-3">
-                <button type="submit" class="btn btn-primary" style="padding-left: 1.5rem; padding-right: 1.5rem;">
+                <button type="submit" id="createAssignmentBtn" class="btn btn-primary" style="padding-left: 1.5rem; padding-right: 1.5rem;">
                   <i class="fas fa-save mr-2"></i>Create Assignment
                 </button>
                 <a href="/teacher/courses/<%= course.id %>" class="btn btn-outline" style="background-color: #ef4444; color: white; border-color: #ef4444; padding-left: 1.5rem; padding-right: 1.5rem;">
@@ -358,7 +370,7 @@
       deadlineInput.value = `${defaultYear}-${defaultMonth}-${defaultDay}T${defaultHours}:${defaultMinutes}`;
     });
 
-    // Form validation
+    // Form validation and upload progress
     document.getElementById('assignmentForm').addEventListener('submit', function(e) {
       const deadlineInput = document.getElementById('deadlineInput');
       const deadline = new Date(deadlineInput.value);
@@ -380,6 +392,79 @@
         alert(`Deadline must be in the future!\nCurrent time: ${currentDateTime}\nPlease select a date and time after now.`);
         return false;
       }
+
+      // Check if any files are selected
+      const fileInputs = this.querySelectorAll('input[type="file"]');
+      let hasFiles = false;
+      let totalSize = 0;
+      
+      fileInputs.forEach(input => {
+        if (input.files && input.files.length > 0) {
+          hasFiles = true;
+          totalSize += input.files[0].size;
+        }
+      });
+      
+      if (!hasFiles) return; // No files, submit normally
+      
+      e.preventDefault();
+      
+      const progressDiv = document.getElementById('assignmentUploadProgress');
+      const progressBar = document.getElementById('assignmentUploadProgressBar');
+      const progressPercentage = document.getElementById('assignmentUploadPercentage');
+      const uploadedSizeSpan = document.getElementById('assignmentUploadedSize');
+      const totalSizeSpan = document.getElementById('assignmentTotalSize');
+      const submitBtn = document.getElementById('createAssignmentBtn');
+      
+      // Show progress
+      progressDiv.classList.remove('hidden');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="loading loading-spinner"></span> Uploading...';
+      
+      const fileSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+      totalSizeSpan.textContent = fileSizeMB + ' MB';
+      
+      // Create FormData
+      const formData = new FormData(this);
+      
+      // Use XMLHttpRequest for progress tracking
+      const xhr = new XMLHttpRequest();
+      
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const percentComplete = Math.round((e.loaded / e.total) * 100);
+          progressBar.value = percentComplete;
+          progressPercentage.textContent = percentComplete + '%';
+          uploadedSizeSpan.textContent = (e.loaded / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+      });
+      
+      xhr.addEventListener('load', () => {
+        if (xhr.status === 200 || xhr.status === 302) {
+          // Success - follow redirect or reload
+          const response = xhr.responseText;
+          if (response.includes('Redirecting') || xhr.status === 302) {
+            window.location.href = '/teacher/courses/<%= course.id %>';
+          } else {
+            window.location.reload();
+          }
+        } else {
+          progressDiv.classList.add('hidden');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Create Assignment';
+          alert('Error uploading files. Please try again.');
+        }
+      });
+      
+      xhr.addEventListener('error', () => {
+        progressDiv.classList.add('hidden');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Create Assignment';
+        alert('Network error. Please check your connection and try again.');
+      });
+      
+      xhr.open('POST', this.action);
+      xhr.send(formData);
     });
   </script>
 </body>

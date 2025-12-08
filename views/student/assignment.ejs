@@ -371,6 +371,18 @@
               </div>
             </label>
             <div id="fileError" class="text-error text-sm mt-2 hidden"></div>
+            
+            <!-- Upload Progress Bar -->
+            <div id="uploadProgress" class="hidden mt-4">
+              <div class="flex justify-between text-sm mb-1">
+                <span class="font-medium">Uploading...</span>
+                <span id="uploadPercentage">0%</span>
+              </div>
+              <progress id="uploadProgressBar" class="progress progress-primary w-full" value="0" max="100"></progress>
+              <div class="text-xs text-base-content opacity-60 mt-1">
+                <span id="uploadedSize">0 MB</span> / <span id="totalSize">0 MB</span>
+              </div>
+            </div>
           </div>
 
           <!-- Text Submission Section -->
@@ -413,7 +425,7 @@
           </div>
 
           <div class="modal-action flex gap-2">
-            <button type="button" onclick="submitAssignment()" class="btn btn-primary flex-1" style="border-radius: 9999px; padding-left: 1rem; padding-right: 1rem;">
+            <button type="button" onclick="submitAssignment()" id="submitBtn" class="btn btn-primary flex-1" style="border-radius: 9999px; padding-left: 1rem; padding-right: 1rem;">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -460,6 +472,18 @@
               </div>
             </label>
             <div id="resubmitFileError" class="text-error text-sm mt-2 hidden"></div>
+            
+            <!-- Resubmit Upload Progress Bar -->
+            <div id="resubmitUploadProgress" class="hidden mt-4">
+              <div class="flex justify-between text-sm mb-1">
+                <span class="font-medium">Uploading...</span>
+                <span id="resubmitUploadPercentage">0%</span>
+              </div>
+              <progress id="resubmitUploadProgressBar" class="progress progress-warning w-full" value="0" max="100"></progress>
+              <div class="text-xs text-base-content opacity-60 mt-1">
+                <span id="resubmitUploadedSize">0 MB</span> / <span id="resubmitTotalSize">0 MB</span>
+              </div>
+            </div>
           </div>
 
           <!-- Text Submission Section -->
@@ -607,25 +631,72 @@
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<span class="loading loading-spinner"></span> Submitting...';
       
+      // Show progress bar for file uploads
+      const progressDiv = document.getElementById('uploadProgress');
+      const progressBar = document.getElementById('uploadProgressBar');
+      const progressPercentage = document.getElementById('uploadPercentage');
+      const uploadedSizeSpan = document.getElementById('uploadedSize');
+      const totalSizeSpan = document.getElementById('totalSize');
+      
+      if (isFileUpload && fileInput.files[0]) {
+        progressDiv.classList.remove('hidden');
+        const fileSizeMB = (fileInput.files[0].size / (1024 * 1024)).toFixed(2);
+        totalSizeSpan.textContent = fileSizeMB + ' MB';
+      }
+      
       try {
-        const response = await fetch('/student/assignments/<%= assignment.id %>/submit', {
-          method: 'POST',
-          body: formData
+        // Use XMLHttpRequest for upload progress tracking
+        const xhr = new XMLHttpRequest();
+        
+        // Track upload progress
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            progressBar.value = percentComplete;
+            progressPercentage.textContent = percentComplete + '%';
+            uploadedSizeSpan.textContent = (e.loaded / (1024 * 1024)).toFixed(2) + ' MB';
+          }
         });
         
-        const data = await response.json();
+        // Handle completion
+        xhr.addEventListener('load', () => {
+          progressDiv.classList.add('hidden');
+          
+          if (xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
+            if (data.success) {
+              // Success - reload page to show submission
+              window.location.reload();
+            } else {
+              // Show error
+              errorMsg.textContent = data.message || 'Failed to submit assignment';
+              errorDiv.classList.remove('hidden');
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Submit Assignment';
+            }
+          } else {
+            errorMsg.textContent = 'Server error. Please try again.';
+            errorDiv.classList.remove('hidden');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Submit Assignment';
+          }
+        });
         
-        if (data.success) {
-          // Success - reload page to show submission
-          window.location.reload();
-        } else {
-          // Show error
-          errorMsg.textContent = data.message || 'Failed to submit assignment';
+        // Handle errors
+        xhr.addEventListener('error', () => {
+          progressDiv.classList.add('hidden');
+          errorMsg.textContent = 'Network error. Please try again.';
           errorDiv.classList.remove('hidden');
           submitBtn.disabled = false;
           submitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Submit Assignment';
-        }
+        });
+        
+        // Send the request
+        xhr.open('POST', '/student/assignments/<%= assignment.id %>/submit');
+        xhr.send(formData);
+        
       } catch (error) {
+        progressDiv.classList.add('hidden');
         errorMsg.textContent = 'Network error. Please try again.';
         errorDiv.classList.remove('hidden');
         submitBtn.disabled = false;
@@ -687,24 +758,71 @@
       resubmitBtn.disabled = true;
       resubmitBtn.innerHTML = '<span class="loading loading-spinner"></span> Resubmitting...';
       
+      // Show progress bar for file uploads
+      const progressDiv = document.getElementById('resubmitUploadProgress');
+      const progressBar = document.getElementById('resubmitUploadProgressBar');
+      const progressPercentage = document.getElementById('resubmitUploadPercentage');
+      const uploadedSizeSpan = document.getElementById('resubmitUploadedSize');
+      const totalSizeSpan = document.getElementById('resubmitTotalSize');
+      
+      if (isFileUpload && fileInput.files[0]) {
+        progressDiv.classList.remove('hidden');
+        const fileSizeMB = (fileInput.files[0].size / (1024 * 1024)).toFixed(2);
+        totalSizeSpan.textContent = fileSizeMB + ' MB';
+      }
+      
       try {
-        const response = await fetch('/student/assignments/<%= assignment.id %>/submit', {
-          method: 'POST',
-          body: formData
+        // Use XMLHttpRequest for upload progress tracking
+        const xhr = new XMLHttpRequest();
+        
+        // Track upload progress
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            progressBar.value = percentComplete;
+            progressPercentage.textContent = percentComplete + '%';
+            uploadedSizeSpan.textContent = (e.loaded / (1024 * 1024)).toFixed(2) + ' MB';
+          }
         });
         
-        const data = await response.json();
+        // Handle completion
+        xhr.addEventListener('load', () => {
+          progressDiv.classList.add('hidden');
+          
+          if (xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
+            if (data.success) {
+              // Success - reload page
+              window.location.reload();
+            } else {
+              errorMsg.textContent = data.message || 'Failed to resubmit assignment';
+              errorDiv.classList.remove('hidden');
+              resubmitBtn.disabled = false;
+              resubmitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg> Resubmit Assignment';
+            }
+          } else {
+            errorMsg.textContent = 'Server error. Please try again.';
+            errorDiv.classList.remove('hidden');
+            resubmitBtn.disabled = false;
+            resubmitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg> Resubmit Assignment';
+          }
+        });
         
-        if (data.success) {
-          // Success - reload page
-          window.location.reload();
-        } else {
-          errorMsg.textContent = data.message || 'Failed to resubmit assignment';
+        // Handle errors
+        xhr.addEventListener('error', () => {
+          progressDiv.classList.add('hidden');
+          errorMsg.textContent = 'Network error. Please try again.';
           errorDiv.classList.remove('hidden');
           resubmitBtn.disabled = false;
           resubmitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg> Resubmit Assignment';
-        }
+        });
+        
+        // Send the request
+        xhr.open('POST', '/student/assignments/<%= assignment.id %>/submit');
+        xhr.send(formData);
+        
       } catch (error) {
+        progressDiv.classList.add('hidden');
         errorMsg.textContent = 'Network error. Please try again.';
         errorDiv.classList.remove('hidden');
         resubmitBtn.disabled = false;
