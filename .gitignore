@@ -32,6 +32,9 @@ Thumbs.db
 *.tmp
 *.temp
 
+# Seed marker file
+.seed-completed
+
 # Markdown files (documentation)
 *.md
 

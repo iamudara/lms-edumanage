@@ -1,40 +1,42 @@
 /**
  * One-time seed script for Railway deployment
- * This creates a marker file to prevent re-running
+ * Checks if full seed data exists before running
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
+import { sequelize, User } from './models/index.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+console.log('🔍 Checking if full seed is needed...\n');
 
-const markerFile = path.join(__dirname, '.seed-completed');
-
-// Check if already seeded
-if (fs.existsSync(markerFile)) {
-  console.log('✓ Full seed already completed, skipping...');
-  process.exit(0);
-}
-
-console.log('🌱 Running full database seed for the first time...\n');
-
-// Run the seed script
-const seedProcess = spawn('node', ['utils/seed-full.js'], {
-  stdio: 'inherit',
-  cwd: __dirname
-});
-
-seedProcess.on('close', (code) => {
-  if (code === 0) {
-    // Create marker file
-    fs.writeFileSync(markerFile, new Date().toISOString());
-    console.log('\n✓ Marker file created - seed will not run again');
+try {
+  // Check if we have more than 3 users (which means full seed already ran)
+  const userCount = await User.count();
+  
+  if (userCount > 3) {
+    console.log(`✓ Found ${userCount} users - full seed already completed, skipping...\n`);
+    await sequelize.close();
     process.exit(0);
-  } else {
-    console.error('\n❌ Seed failed with code:', code);
-    process.exit(1);
   }
-});
+
+  console.log(`📊 Found only ${userCount} users - running full seed...\n`);
+  await sequelize.close();
+
+  // Run the seed script
+  const seedProcess = spawn('node', ['utils/seed-full.js'], {
+    stdio: 'inherit'
+  });
+
+  seedProcess.on('close', (code) => {
+    if (code === 0) {
+      console.log('\n✅ Full seed completed successfully!');
+      process.exit(0);
+    } else {
+      console.error('\n❌ Seed failed with code:', code);
+      process.exit(1);
+    }
+  });
+
+} catch (error) {
+  console.error('❌ Error checking database:', error);
+  process.exit(1);
+}
