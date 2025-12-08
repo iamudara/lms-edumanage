@@ -8,6 +8,9 @@
   <link rel="stylesheet" href="/css/custom.css">
   <link rel="stylesheet" href="/css/teacher-theme.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Flatpickr for beautiful datetime picker -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
 </head>
 <body>
   <%- include('../shared/navbar') %>
@@ -95,11 +98,13 @@
                   </span>
                 </label>
                 <input 
-                  type="datetime-local" 
+                  type="text" 
                   name="deadline" 
                   class="input input-bordered w-full"
                   required
                   id="deadlineInput"
+                  placeholder="Select date and time"
+                  readonly
                 >
                 <label class="label">
                   <span class="label-text-alt text-base-content/60">
@@ -338,36 +343,36 @@
       container.appendChild(newRow);
     }
   
-    // Set minimum datetime to current time
+    // Initialize Flatpickr for beautiful datetime picker
     document.addEventListener('DOMContentLoaded', function() {
       const deadlineInput = document.getElementById('deadlineInput');
-      const now = new Date();
       
-      // Add 10 minutes to current time as minimum
+      // Calculate minimum date (current time + 10 minutes)
+      const now = new Date();
       now.setMinutes(now.getMinutes() + 10);
       
-      // Format to YYYY-MM-DDTHH:MM
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      
-      const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
-      deadlineInput.min = minDateTime;
-      
-      // Set default value to 1 week from now
+      // Calculate default date (1 week from now at 11:59 PM)
       const oneWeekLater = new Date();
       oneWeekLater.setDate(oneWeekLater.getDate() + 7);
-      oneWeekLater.setHours(23, 59);
+      oneWeekLater.setHours(23, 59, 0, 0);
       
-      const defaultYear = oneWeekLater.getFullYear();
-      const defaultMonth = String(oneWeekLater.getMonth() + 1).padStart(2, '0');
-      const defaultDay = String(oneWeekLater.getDate()).padStart(2, '0');
-      const defaultHours = String(oneWeekLater.getHours()).padStart(2, '0');
-      const defaultMinutes = String(oneWeekLater.getMinutes()).padStart(2, '0');
-      
-      deadlineInput.value = `${defaultYear}-${defaultMonth}-${defaultDay}T${defaultHours}:${defaultMinutes}`;
+      // Initialize Flatpickr
+      flatpickr(deadlineInput, {
+        enableTime: true,
+        dateFormat: "Y-m-d H:i",
+        altInput: true,
+        altFormat: "F j, Y at h:i K",
+        minDate: now,
+        defaultDate: oneWeekLater,
+        time_24hr: false,
+        theme: "material_blue",
+        disableMobile: true,
+        minuteIncrement: 1,
+        onChange: function(selectedDates, dateStr, instance) {
+          // Update the actual input value for form submission
+          deadlineInput.value = dateStr;
+        }
+      });
     });
 
     // Form validation and upload progress
@@ -467,5 +472,8 @@
       xhr.send(formData);
     });
   </script>
+  
+  <!-- Flatpickr Library -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </body>
 </html>
