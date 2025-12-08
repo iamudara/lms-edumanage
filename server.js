@@ -617,45 +617,6 @@ async function startServer() {
     await syncDatabase();
     console.log('✅ Database synced successfully');
     
-    // Check if we need to run full seed (only in production/Railway)
-    if (process.env.NODE_ENV === 'production') {
-      console.log('\n' + '='.repeat(60));
-      console.log('🔍 Checking if full seed is needed...');
-      
-      try {
-        const userCount = await User.count();
-        const courseCount = await Course.count();
-        console.log(`📊 Current user count: ${userCount}`);
-        console.log(`📚 Current course count: ${courseCount}`);
-        
-        if (userCount > 3 && courseCount === 0) {
-          console.log('⚠️  Users exist but no courses - running full seed...');
-          console.log('='.repeat(60) + '\n');
-          
-          // Dynamically import and run seed-full
-          const { default: seedFull } = await import('./utils/seed-full.js');
-          console.log('\n' + '='.repeat(60));
-          console.log('✅ Full seed completed!');
-          console.log('='.repeat(60) + '\n');
-        } else if (courseCount === 0) {
-          console.log('⚠️  No courses found - running full seed...');
-          console.log('='.repeat(60) + '\n');
-          
-          // Dynamically import and run seed-full
-          const { default: seedFull } = await import('./utils/seed-full.js');
-          console.log('\n' + '='.repeat(60));
-          console.log('✅ Full seed completed!');
-          console.log('='.repeat(60) + '\n');
-        } else {
-          console.log('✅ Full seed already completed (' + userCount + ' users, ' + courseCount + ' courses)');
-          console.log('='.repeat(60) + '\n');
-        }
-      } catch (seedError) {
-        console.error('⚠️  Seed check/execution failed:', seedError.message);
-        console.log('Continuing with server startup...\n');
-      }
-    }
-    
     app.listen(PORT, () => {
       console.log('\n🚀 Server started successfully!');
       console.log(`📍 Server running on: http://localhost:${PORT}`);
