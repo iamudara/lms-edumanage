@@ -624,10 +624,21 @@ async function startServer() {
       
       try {
         const userCount = await User.count();
+        const courseCount = await Course.count();
         console.log(`📊 Current user count: ${userCount}`);
+        console.log(`📚 Current course count: ${courseCount}`);
         
-        if (userCount <= 3) {
-          console.log('⚠️  Only basic seed detected - running full seed...');
+        if (userCount > 3 && courseCount === 0) {
+          console.log('⚠️  Users exist but no courses - running full seed...');
+          console.log('='.repeat(60) + '\n');
+          
+          // Dynamically import and run seed-full
+          const { default: seedFull } = await import('./utils/seed-full.js');
+          console.log('\n' + '='.repeat(60));
+          console.log('✅ Full seed completed!');
+          console.log('='.repeat(60) + '\n');
+        } else if (courseCount === 0) {
+          console.log('⚠️  No courses found - running full seed...');
           console.log('='.repeat(60) + '\n');
           
           // Dynamically import and run seed-full
@@ -636,7 +647,7 @@ async function startServer() {
           console.log('✅ Full seed completed!');
           console.log('='.repeat(60) + '\n');
         } else {
-          console.log('✅ Full seed already completed (found ' + userCount + ' users)');
+          console.log('✅ Full seed already completed (' + userCount + ' users, ' + courseCount + ' courses)');
           console.log('='.repeat(60) + '\n');
         }
       } catch (seedError) {
