@@ -295,6 +295,10 @@ async function seedFullDatabase() {
     ]);
 
     const courseList = courses.map(c => c[0]);
+    console.log(`  ✓ MATH101 - ${courseList[0].title} (ID: ${courseList[0].id})`);
+    console.log(`  ✓ ENG101 - ${courseList[1].title} (ID: ${courseList[1].id})`);
+    console.log(`  ✓ SCI101 - ${courseList[2].title} (ID: ${courseList[2].id})`);
+    console.log(`  ✓ HIST101 - ${courseList[3].title} (ID: ${courseList[3].id})`);
     console.log(`✓ Created ${courseList.length} courses\n`);
 
     // ========================================
@@ -318,18 +322,22 @@ async function seedFullDatabase() {
       { course: courseList[3], teacher: teacherUsers[1], isPrimary: true }
     ];
 
+    console.log(`  Creating ${courseTeacherAssignments.length} teacher-course assignments...`);
     for (const assignment of courseTeacherAssignments) {
-      await CourseTeacher.findOrCreate({
+      const [ct, created] = await CourseTeacher.findOrCreate({
         where: {
           course_id: assignment.course.id,
           teacher_id: assignment.teacher.id
         },
         defaults: {
-          is_primary: assignment.isPrimary
+          is_primary: assignment.isPrimary,
+          can_edit: true,
+          can_grade: true
         }
       });
+      console.log(`  ${created ? '✓ Created' : 'ℹ Exists'}: ${assignment.course.code} -> Teacher ID ${assignment.teacher.id} (${assignment.isPrimary ? 'Primary' : 'Secondary'})`);
     }
-    console.log(`✓ Assigned teachers to ${courseTeacherAssignments.length} course slots\n`);
+    console.log(`✓ Completed ${courseTeacherAssignments.length} teacher-course assignments\n`);
 
     // ========================================
     // 5. ENROLL BATCHES IN COURSES
@@ -352,15 +360,17 @@ async function seedFullDatabase() {
       { batch: batch2026, course: courseList[3] }  // HIST101
     ];
 
+    console.log(`  Creating ${batchEnrollments.length} batch enrollments...`);
     for (const enrollment of batchEnrollments) {
-      await BatchEnrollment.findOrCreate({
+      const [be, created] = await BatchEnrollment.findOrCreate({
         where: {
           batch_id: enrollment.batch.id,
           course_id: enrollment.course.id
         }
       });
+      console.log(`  ${created ? '✓ Created' : 'ℹ Exists'}: ${enrollment.batch.name} -> ${enrollment.course.code}`);
     }
-    console.log(`✓ Created ${batchEnrollments.length} batch enrollments\n`);
+    console.log(`✓ Completed ${batchEnrollments.length} batch enrollments\n`);
 
     // ========================================
     // SUMMARY
