@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="corporate">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,57 +14,47 @@
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gradient-to-br from-primary to-secondary min-h-screen flex items-center justify-center">
+<body class="bg-base-300 min-h-screen flex items-center justify-center">
     <div class="container mx-auto px-4 py-8">
         <!-- Login Card -->
-        <div class="card w-full max-w-md mx-auto bg-base-100 shadow-2xl">
+        <div class="card w-full max-w-md mx-auto bg-base-100 shadow-xl border border-base-300">
             <div class="card-body">
                 <!-- Logo/Header -->
                 <div class="text-center mb-6">
-                    <div class="avatar placeholder mb-4">
-                        <div class="bg-primary text-primary-content rounded-full w-20">
-                            <span class="text-3xl">
-                                <i class="fas fa-graduation-cap"></i>
-                            </span>
-                        </div>
+                    <div class="flex items-center justify-center gap-3 mb-2">
+                        <i class="fas fa-graduation-cap text-primary text-4xl"></i>
+                        <h1 class="text-3xl font-bold">LMS EduManage</h1>
                     </div>
-                    <h1 class="text-3xl font-bold text-primary">LMS EduManage</h1>
-                    <p class="text-base-content/70 mt-2">Sign in to your account</p>
+                    <p class="text-base-content opacity-70">Sign in to your account</p>
                 </div>
 
                 <!-- Flash Messages -->
                 <% if (error) { %>
-                <div class="alert alert-error shadow-lg mb-4">
-                    <div>
-                        <i class="fas fa-exclamation-circle"></i>
-                        <span><%= error %></span>
-                    </div>
+                <div class="alert alert-error mb-4">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span><%= error %></span>
                 </div>
                 <% } %>
 
                 <% if (info) { %>
-                <div class="alert alert-info shadow-lg mb-4">
-                    <div>
-                        <i class="fas fa-info-circle"></i>
-                        <span><%= info %></span>
-                    </div>
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle"></i>
+                    <span><%= info %></span>
                 </div>
                 <% } %>
 
                 <!-- Login Form -->
-                <form action="/auth/login" method="POST" class="space-y-4">
+                <form action="/auth/login" method="POST">
                     <!-- Username/Email Field -->
-                    <div class="form-control">
+                    <div class="form-control mb-4">
                         <label class="label" for="username">
-                            <span class="label-text">
-                                <i class="fas fa-user mr-2"></i>Username or Email
-                            </span>
+                            <span class="label-text font-medium">Username or Email</span>
                         </label>
                         <input 
                             type="text" 
                             id="username"
                             name="username" 
-                            placeholder="Enter your username or email" 
+                            placeholder="Enter username or email" 
                             class="input input-bordered w-full" 
                             required
                             autocomplete="username"
@@ -73,127 +63,62 @@
                     </div>
 
                     <!-- Password Field -->
-                    <div class="form-control">
+                    <div class="form-control mb-4">
                         <label class="label" for="password">
-                            <span class="label-text">
-                                <i class="fas fa-lock mr-2"></i>Password
-                            </span>
+                            <span class="label-text font-medium">Password</span>
                         </label>
                         <input 
                             type="password" 
                             id="password"
                             name="password" 
-                            placeholder="Enter your password" 
+                            placeholder="Enter password" 
                             class="input input-bordered w-full" 
                             required
                             autocomplete="current-password"
                         />
                     </div>
 
-                    <!-- Remember Me (Optional) -->
-                    <div class="form-control">
+                    <!-- Remember Me -->
+                    <div class="form-control mb-6">
                         <label class="label cursor-pointer justify-start gap-2">
-                            <input type="checkbox" class="checkbox checkbox-primary" name="remember" />
+                            <input type="checkbox" class="checkbox checkbox-primary checkbox-sm" name="remember" style="border-width: 1px; border-color: rgba(0, 0, 0, 0.2);" />
                             <span class="label-text">Remember me</span>
                         </label>
                     </div>
 
                     <!-- Submit Button -->
-                    <div class="form-control mt-6">
-                        <button type="submit" class="btn btn-primary w-full">
-                            <i class="fas fa-sign-in-alt mr-2"></i>
-                            Sign In
-                        </button>
-                    </div>
+                    <button type="submit" class="btn btn-primary w-full">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Sign In
+                    </button>
                 </form>
 
-                <!-- Additional Info -->
-                <div class="divider my-6">Welcome</div>
+                <!-- Test Credentials (Development Only) -->
+                <% if (process.env.NODE_ENV === 'development') { %>
+                <div class="divider text-xs opacity-50 my-6">Test Accounts</div>
                 
-                <div class="text-center space-y-2">
-                    <p class="text-sm text-base-content/70">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        Use your credentials to access the system
-                    </p>
-                    
-                    <!-- Test Credentials Info (Remove in production) -->
-                    <% if (process.env.NODE_ENV === 'development') { %>
-                    <div class="collapse collapse-arrow bg-base-200 mt-4">
-                        <input type="checkbox" /> 
-                        <div class="collapse-title text-sm font-medium">
-                            <i class="fas fa-code mr-2"></i>Test Credentials (Development Only)
-                        </div>
-                        <div class="collapse-content text-xs text-left space-y-2"> 
-                            <div class="bg-base-300 p-3 rounded-lg">
-                                <p class="font-semibold mb-1">Admin:</p>
-                                <p class="font-mono">admin@lms.com / admin123</p>
-                            </div>
-                            <div class="bg-base-300 p-3 rounded-lg">
-                                <p class="font-semibold mb-1">Teacher:</p>
-                                <p class="font-mono">teacher@lms.com / teacher123</p>
-                            </div>
-                            <div class="bg-base-300 p-3 rounded-lg">
-                                <p class="font-semibold mb-1">Student:</p>
-                                <p class="font-mono">student@lms.com / student123</p>
-                            </div>
-                        </div>
+                <div class="bg-base-200 rounded-lg p-4 space-y-2 text-xs">
+                    <div class="flex justify-between items-center">
+                        <span class="font-semibold opacity-70">Admin:</span>
+                        <code class="bg-base-300 px-2 py-1 rounded">admin@lms.com / admin123</code>
                     </div>
-                    <% } %>
+                    <div class="flex justify-between items-center">
+                        <span class="font-semibold opacity-70">Teacher:</span>
+                        <code class="bg-base-300 px-2 py-1 rounded">teacher@lms.com / teacher123</code>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="font-semibold opacity-70">Student:</span>
+                        <code class="bg-base-300 px-2 py-1 rounded">student@lms.com / student123</code>
+                    </div>
                 </div>
+                <% } %>
             </div>
         </div>
 
-        <!-- Footer Info -->
-        <div class="text-center mt-8 text-base-100">
-            <p class="text-sm opacity-80">
-                &copy; <%= new Date().getFullYear() %> LMS EduManage. All rights reserved.
-            </p>
-            <p class="text-xs opacity-60 mt-1">
-                Built with Node.js, Express, and DaisyUI
-            </p>
+        <!-- Footer -->
+        <div class="text-center mt-6 text-sm opacity-60">
+            <p>&copy; <%= new Date().getFullYear() %> LMS EduManage. All rights reserved.</p>
         </div>
     </div>
-
-    <!-- Client-side validation (optional enhancement) -->
-    <script>
-        // Form validation
-        document.querySelector('form').addEventListener('submit', function(e) {
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value;
-
-            if (!username) {
-                e.preventDefault();
-                alert('Please enter your username or email');
-                document.getElementById('username').focus();
-                return false;
-            }
-
-            if (!password) {
-                e.preventDefault();
-                alert('Please enter your password');
-                document.getElementById('password').focus();
-                return false;
-            }
-
-            if (password.length < 6) {
-                e.preventDefault();
-                alert('Password must be at least 6 characters long');
-                document.getElementById('password').focus();
-                return false;
-            }
-        });
-
-        // Auto-hide alerts after 5 seconds
-        setTimeout(function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(function(alert) {
-                alert.style.transition = 'opacity 0.5s';
-                alert.style.opacity = '0';
-                setTimeout(function() {
-                    alert.remove();
-                }, 500);
-            });
-        }, 5000);
-    </script>
 </body>
 </html>
