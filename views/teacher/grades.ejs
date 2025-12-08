@@ -18,10 +18,10 @@
     <!-- Breadcrumb -->
     <div class="text-sm breadcrumbs mb-4 sm:mb-6">
       <ul>
-        <li class="hidden sm:inline"><a href="/teacher/dashboard"><i class="fas fa-home mr-1"></i>Dashboard</a></li>
-        <li><a href="/teacher/courses"><i class="fas fa-book mr-1"></i>Courses</a></li>
-        <li><a href="/teacher/courses/<%= course.id %>"><%= course.title %></a></li>
-        <li>All Grades</li>
+        <li><a href="/teacher/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
+        <li><a href="/teacher/courses"><i class="fas fa-book"></i> Courses</a></li>
+        <li><a href="/teacher/courses/<%= course.id %>"><i class="fas fa-graduation-cap"></i> <%= course.title %></a></li>
+        <li><i class="fas fa-chart-bar"></i> All Grades</li>
       </ul>
     </div>
 
