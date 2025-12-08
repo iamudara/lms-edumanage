@@ -15,9 +15,9 @@
 <body>
   <%- include('../shared/navbar') %>
 
-  <div class="container mx-auto px-4 py-4 sm:py-8">
+  <div class="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-7xl">
     <!-- Breadcrumb -->
-    <div class="text-sm breadcrumbs mb-4 sm:mb-6">
+    <div class="text-sm breadcrumbs mb-4 sm:mb-6 overflow-x-auto">
       <ul>
         <li><a href="/teacher/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
         <li><a href="/teacher/courses"><i class="fas fa-book"></i> Courses</a></li>
@@ -86,7 +86,7 @@
                   class="textarea textarea-bordered w-full"
                 ></textarea>
                 <label class="label">
-                  <span class="label-text-alt text-base-content/60">Optional - Provide instructions, requirements, or guidelines</span>
+                  <span class="label-text-alt text-base-content/60 break-words">Optional - Provide instructions, requirements, or guidelines</span>
                 </label>
               </div>
 
@@ -154,7 +154,7 @@
                   <i class="fas fa-plus mr-2"></i>Add Another File
                 </button>
                 <label class="label">
-                  <span class="label-text-alt text-base-content/60">Supported: PDF, DOC, DOCX, PPT, PPTX, TXT, ZIP (Max 10MB each)</span>
+                  <span class="label-text-alt text-base-content/60 break-words text-xs sm:text-sm">Supported: PDF, DOC, DOCX, PPT, PPTX, TXT, ZIP (Max 10MB each)</span>
                 </label>
               </div>
 

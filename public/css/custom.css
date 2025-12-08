@@ -420,3 +420,60 @@ select.success,
 textarea.success {
     border-color: #10b981;
 }
+
+/* =========================
+   Mobile Responsiveness Fixes
+   ========================= */
+
+/* Ensure all text wraps properly on mobile */
+.label-text-alt,
+.text-sm,
+.breadcrumbs {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Prevent form inputs from overflowing */
+.input,
+.textarea,
+.select {
+    max-width: 100%;
+    word-wrap: break-word;
+}
+
+/* Ensure cards don't overflow on mobile */
+.card {
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.card-body {
+    padding: 1rem;
+}
+
+@media (min-width: 640px) {
+    .card-body {
+        padding: 2rem;
+    }
+}
+
+/* Breadcrumb overflow handling */
+.breadcrumbs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+}
+
+.breadcrumbs::-webkit-scrollbar {
+    height: 4px;
+}
+
+.breadcrumbs::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+}
+
+/* Ensure helper text wraps properly */
+.label-text-alt {
+    display: block;
+    white-space: normal;
+}
