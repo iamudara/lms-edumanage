@@ -89,7 +89,7 @@
   }
 
   .course-card {
-    @apply card bg-base-200 dark:bg-base-300 hover:shadow-xl hover:scale-[1.02] transition-all duration-200 cursor-pointer border border-base-200 dark:border-none h-full;
+    @apply card bg-base-100 dark:bg-base-300 hover:shadow-xl hover:scale-[1.02] transition-all duration-200 cursor-pointer border border-base-200 dark:border-none h-full;
   }
   
   .activity-card {
