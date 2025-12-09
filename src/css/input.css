@@ -167,50 +167,51 @@
     @apply btn btn-error text-white hover:bg-red-700 border-none px-6;
   }
 
-  /* Liquid Glass Button */
+  /* Liquid Glass Button (Darker/Smokey) */
   .btn-glass-custom {
     @apply btn btn-ghost normal-case text-base font-medium transition-all duration-300 relative overflow-hidden;
     border-radius: 16px;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     
-    /* Light Mode Adaptation (Darker tints for visibility on white) */
-    background-color: rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    /* Light Mode: Darker tint for better definition */
+    background-color: rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.4);
     color: currentColor;
   }
 
   .btn-glass-custom:hover {
-    background-color: rgba(0, 0, 0, 0.08);
+    background-color: rgba(0, 0, 0, 0.18);
     transform: translateY(-1px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
   }
 
   /* Active State */
   .active-glass {
     @apply font-bold shadow-md;
-    background-color: rgba(0, 0, 0, 0.1) !important;
-    border-color: rgba(0, 0, 0, 0.2) !important;
+    background-color: rgba(0, 0, 0, 0.25) !important;
+    border-color: rgba(0, 0, 0, 0.3) !important;
+    color: #000000 !important;
   }
 
-  /* Dark Mode - Matching the requested snippet exactly */
+  /* Dark Mode: Smoky Glass */
   .dark .btn-glass-custom {
-    background-color: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    color: #e0e0e0;
+    background-color: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
   }
 
   .dark .btn-glass-custom:hover {
-    background-color: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
+    background-color: rgba(0, 0, 0, 0.6);
+    border-color: rgba(255, 255, 255, 0.25);
   }
 
   .dark .active-glass {
-    background-color: rgba(255, 255, 255, 0.2) !important;
+    background-color: rgba(255, 255, 255, 0.15) !important;
     color: #ffffff !important;
-    border-color: rgba(255, 255, 255, 0.4) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
   }
 
   /* Filter Tabs */
@@ -237,7 +238,7 @@
   }
 
   .table-custom {
-    @apply table table-zebra w-full;
+    @apply table w-full;
   }
 
   /* Helper Utils */
