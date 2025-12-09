@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Test</title>
+    <link href="./css/output.css" rel="stylesheet">
+</head>
+<body class="p-10 bg-base-200 min-h-screen">
+    <h1 class="text-3xl font-bold mb-4">Theme Debug Test</h1>
+    
+    <div class="card w-96 bg-base-100 shadow-xl border-2 border-primary">
+        <div class="card-body">
+            <h2 class="card-title text-primary">Card Title</h2>
+            <p>If the theme is working:</p>
+            <ul class="list-disc pl-5">
+                <li>Background should be white (or light theme base)</li>
+                <li>Corners should be VERY rounded (2rem)</li>
+                <li>Border should be primary color</li>
+            </ul>
+            <div class="card-actions justify-end mt-4">
+                <button class="btn btn-primary">Primary Button</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-8 space-x-4">
+        <button class="btn btn-primary">Primary</button>
+        <button class="btn btn-secondary">Secondary</button>
+        <button class="btn btn-accent">Accent</button>
+        <button class="btn btn-ghost">Ghost</button>
+    </div>
+
+    <!-- Debug Info -->
+    <div class="mt-8 p-4 bg-gray-200 rounded text-black font-mono text-sm">
+        <p>Current Theme: <span id="current-theme">-</span></p>
+        <p>Body Background: <span id="body-bg">-</span></p>
+        <p>--rounded-box: <span id="var-rounded">-</span></p>
+        <p>--p (Primary): <span id="var-primary">-</span></p>
+    </div>
+
+    <script>
+        function updateDebug() {
+            const html = document.documentElement;
+            const body = document.body;
+            const card = document.querySelector('.card');
+            
+            document.getElementById('current-theme').textContent = html.getAttribute('data-theme');
+            
+            const bodyStyle = window.getComputedStyle(body);
+            document.getElementById('body-bg').textContent = bodyStyle.backgroundColor;
+            
+            if (card) {
+                const cardStyle = window.getComputedStyle(card);
+                document.getElementById('var-rounded').textContent = cardStyle.borderRadius;
+            }
+            
+            const primary = getComputedStyle(document.documentElement).getPropertyValue('--p');
+            document.getElementById('var-primary').textContent = primary || 'Not set';
+        }
+
+        updateDebug();
+    </script>
+</body>
+</html>

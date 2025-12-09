@@ -2,48 +2,132 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  body {
+    @apply bg-base-200 min-h-screen;
+  }
+}
+
+
 @layer components {
-  /* Dashboard Stats Card */
+  /* Layout & Containers */
+  .page-container {
+    @apply container mx-auto px-4 py-4 sm:py-8;
+  }
+
+  .section-container {
+    @apply mb-6 sm:mb-8;
+  }
+
+  .card-section {
+    @apply card bg-base-100 shadow-xl;
+  }
+
+  /* Headers & Typography */
+  .page-header {
+    @apply mb-6 sm:mb-8;
+  }
+
+  .page-title {
+    @apply text-2xl sm:text-3xl font-bold text-base-content mb-2 flex items-center;
+  }
+
+  .page-subtitle {
+    @apply text-sm sm:text-base text-base-content opacity-70;
+  }
+
+  .section-title {
+    @apply card-title text-xl sm:text-2xl flex items-center gap-2;
+  }
+
+  /* Stats Cards */
+  .stats-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8;
+  }
+
   .stats-card {
-    @apply stats shadow text-primary-content hover:shadow-lg transition-shadow duration-200;
+    @apply stats shadow text-primary-content hover:shadow-lg transition-shadow duration-200 border border-transparent;
   }
 
-  .stats-card-primary {
-    @apply bg-primary text-primary-content;
+  /* Gradients for Stats */
+  .stat-card-gradient-primary {
+    @apply bg-gradient-to-br from-primary to-primary text-primary-content border-primary;
   }
 
-  .stats-card-secondary {
-    @apply bg-secondary text-secondary-content;
+  .stat-card-gradient-secondary {
+    @apply bg-gradient-to-br from-secondary to-secondary text-secondary-content border-secondary;
   }
 
-  .stats-card-accent {
-    @apply bg-accent text-accent-content;
+  .stat-card-gradient-accent {
+    @apply bg-gradient-to-br from-accent to-accent text-accent-content border-accent;
   }
 
-  .stats-card-info {
-    @apply bg-info text-info-content;
+  .stat-card-gradient-info {
+    @apply bg-gradient-to-br from-info to-info text-info-content border-info;
+  }
+
+  /* Stat Content */
+  .stat-figure-icon {
+    @apply text-4xl opacity-50;
+  }
+
+  .stat-text-title {
+    @apply stat-title opacity-80;
+  }
+
+  .stat-text-value {
+    @apply stat-value;
+  }
+
+  .stat-text-desc {
+    @apply stat-desc opacity-70;
   }
 
   /* Course Card */
+  .course-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+  }
+
   .course-card {
-    @apply card bg-base-200 hover:shadow-lg transition-all duration-200 cursor-pointer border border-transparent;
+    @apply card bg-base-100 hover:shadow-lg transition-all duration-200 cursor-pointer border border-transparent h-full;
   }
   
   .course-card:hover {
     @apply border-primary;
-    border-color: oklch(var(--p) / 0.2);
+    border-color: oklch(var(--p) / 0.5);
   }
 
   .course-card-body {
-    @apply card-body p-4 sm:p-6;
+    @apply card-body p-4 sm:p-6 flex flex-col h-full;
   }
 
   .course-badge {
-    @apply badge badge-primary badge-sm sm:badge-md font-semibold;
+    @apply badge badge-primary badge-lg font-semibold;
   }
 
   .course-stat-badge {
     @apply badge badge-outline badge-sm flex items-center gap-1;
+  }
+
+  .course-stats-container {
+    @apply grid grid-cols-3 gap-2 mt-4 mb-4;
+  }
+
+  .course-stat-box {
+    @apply text-center p-2 bg-base-200 rounded border border-base-300;
+  }
+  
+  .course-stat-value {
+    @apply text-lg font-bold;
+  }
+  
+  .course-stat-label {
+    @apply text-xs opacity-70;
+  }
+
+  /* Actions */
+  .action-buttons-grid {
+    @apply grid grid-cols-3 gap-2 mt-auto;
   }
 
   /* Badges */
@@ -60,13 +144,24 @@
   }
 
   /* Buttons */
-  /* Buttons */
   .btn-action-sm {
     @apply btn btn-xs sm:btn-sm;
   }
 
   .btn-global-primary {
-    @apply btn btn-primary text-white hover:bg-blue-700 border-none;
+    @apply btn btn-primary text-white hover:brightness-90 border-none;
+  }
+
+  .btn-global-secondary {
+    @apply btn btn-secondary text-white hover:brightness-90 border-none;
+  }
+
+  .btn-global-accent {
+    @apply btn btn-accent text-white hover:brightness-90 border-none;
+  }
+
+  .btn-global-success {
+    @apply btn btn-success text-white hover:brightness-90 border-none;
   }
 
   .btn-global-danger {
@@ -74,61 +169,38 @@
   }
 
   /* Filter Tabs */
+  .filter-tabs-container {
+    @apply flex gap-2 sm:gap-3 mb-6 mt-6 sm:mt-8 overflow-x-auto pb-2;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .filter-tabs-container::-webkit-scrollbar {
+    display: none;
+  }
+
   .filter-tab {
     @apply btn btn-sm sm:btn-md flex-shrink-0 px-5;
   }
   
   .filter-tab-active {
-    @apply btn-active;
+    @apply btn-active !btn-primary !text-primary-content;
   }
 
-  /* Course Stats Box */
-  .course-stat-box {
-    @apply text-center p-2 bg-base-200 rounded;
-  }
-  
-  .course-stat-value {
-    @apply text-2xl font-bold;
-  }
-  
-  .course-stat-label {
-    @apply text-xs;
-    color: oklch(var(--bc) / 0.7);
-  }
-  
-  /* Gradients for Stats */
-  .stat-card-gradient-primary {
-    background: linear-gradient(135deg, #570df8 0%, #4506cb 100%);
-    @apply text-white;
+  /* Tables */
+  .table-responsive-container {
+    @apply overflow-x-auto;
   }
 
-  .stat-card-gradient-secondary {
-    background: linear-gradient(135deg, #f000b8 0%, #bd0091 100%);
-    @apply text-white;
+  .table-custom {
+    @apply table table-zebra w-full;
   }
 
-  .stat-card-gradient-accent {
-    background: linear-gradient(135deg, #37cdbe 0%, #2aa79b 100%);
-    @apply text-white;
-  }
-
-  .stat-card-gradient-info {
-    background: linear-gradient(135deg, #3abff8 0%, #29a0d6 100%);
-    @apply text-white;
-  }
-
-  .stat-card-gradient-success {
-    background: linear-gradient(135deg, #36d399 0%, #2ab880 100%);
-    @apply text-white;
+  /* Helper Utils */
+  .icon-text {
+    @apply flex items-center gap-2;
   }
   
-  .stat-card-gradient-error {
-    background: linear-gradient(135deg, #f87272 0%, #e85858 100%);
-    @apply text-white;
-  }
-  
-  .stat-card-gradient-warning {
-    background: linear-gradient(135deg, #fbbd23 0%, #e0a720 100%);
-    @apply text-gray-800;
+  .meta-text {
+    @apply text-xs text-base-content opacity-60;
   }
 }

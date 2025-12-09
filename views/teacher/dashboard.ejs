@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><%= pageTitle %> - LMS EduManage</title>
     <link href="/css/output.css" rel="stylesheet" />
-    <link href="/css/custom.css" rel="stylesheet" />
-    <link href="/css/teacher-theme.css" rel="stylesheet" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -15,22 +13,20 @@
   <body>
     <%- include('../shared/navbar') %>
 
-    <div class="container mx-auto px-4 py-4 sm:py-8">
+    <div class="page-container">
       <!-- Page Header -->
-      <div class="mb-6 sm:mb-8">
-        <h1 class="text-2xl sm:text-3xl font-bold text-base-content mb-2">
-          <i class="fas fa-chalkboard-teacher mr-2"></i
-          ><span class="hidden xs:inline">Teacher </span>Dashboard
+      <div class="page-header">
+        <h1 class="page-title">
+          <i class="fas fa-chalkboard-teacher mr-2"></i>
+          <span class="hidden xs:inline">Teacher </span>Dashboard
         </h1>
-        <p class="text-sm sm:text-base text-base-content/70">
+        <p class="page-subtitle">
           Welcome back, <%= user.full_name %>!
         </p>
       </div>
 
       <!-- Statistics Cards -->
-      <div
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8"
-      >
+      <div class="stats-grid">
         <!-- My Courses -->
         <div class="stats-card stat-card-gradient-primary">
           <div class="stat">
@@ -97,20 +93,16 @@
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
         <!-- My Courses Section (2/3 width) -->
         <div class="lg:col-span-2">
-          <div class="card bg-base-100 shadow-xl">
+          <div class="card-section">
             <div class="card-body">
-              <div
-                class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4"
-              >
-                <h2 class="card-title text-xl sm:text-2xl">
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                <h2 class="section-title">
                   <i class="fas fa-book-open mr-2"></i>My Courses
-                  <span class="badge badge-secondary badge-sm sm:badge-md"
-                    >Recently Updated</span
-                  >
+                  <span class="badge badge-secondary badge-sm sm:badge-md">Recently Updated</span>
                 </h2>
                 <a
                   href="/teacher/courses/create"
-                  class="btn btn-primary btn-sm w-full sm:w-auto"
+                  class="btn-global-primary btn-sm w-full sm:w-auto"
                 >
                   <i class="fas fa-plus mr-2"></i>Create Course
                 </a>
@@ -118,46 +110,32 @@
               <% if (totalAllCourses > courses.length) { %>
               <p class="text-sm text-base-content/70 mb-4">
                 Showing <%= courses.length %> of <%= totalAllCourses %> courses
-                <a href="/teacher/courses" class="link link-primary ml-1"
-                  >View all →</a
-                >
+                <a href="/teacher/courses" class="link link-primary ml-1">View all →</a>
               </p>
               <% } %> <% if (courses.length === 0) { %>
               <div class="alert alert-info">
                 <i class="fas fa-info-circle"></i>
-                <span
-                  >You haven't created any courses yet. Click "Create Course" to
-                  get started!</span
-                >
+                <span>You haven't created any courses yet. Click "Create Course" to get started!</span>
               </div>
               <% } else { %>
               <div class="space-y-4">
                 <% courses.forEach(course => {
-  // Calculate enrolled students for this course
-  let enrolledStudents = 0;
-  course.BatchEnrollments.forEach(enrollment => {
-    enrolledStudents += enrollment.batch.students.length;
-  });
-  const assignmentCount = course.Assignments.length;
-%>
-                <div
-                  class="course-card"
-                  onclick="window.location.href='/teacher/courses/<%= course.id %>'"
-                >
+                  let enrolledStudents = 0;
+                  course.BatchEnrollments.forEach(enrollment => {
+                    enrolledStudents += enrollment.batch.students.length;
+                  });
+                  const assignmentCount = course.Assignments.length;
+                %>
+                <div class="course-card" onclick="window.location.href='/teacher/courses/<%= course.id %>'">
                   <div class="course-card-body">
                     <div class="flex flex-col gap-4">
                       <div class="flex-1 min-w-0 w-full">
-                        <h3
-                          class="card-title text-base sm:text-lg flex-wrap gap-2"
-                        >
+                        <h3 class="card-title text-base sm:text-lg flex-wrap gap-2">
                           <span class="course-badge"><%= course.code %></span>
                           <span class="truncate"><%= course.title %></span>
                         </h3>
-                        <p
-                          class="text-sm sm:text-base text-base-content/70 mt-2 line-clamp-2"
-                        >
-                          <%= course.description || 'No description available'
-                          %>
+                        <p class="text-sm sm:text-base text-base-content/70 mt-2 line-clamp-2">
+                          <%= course.description || 'No description available' %>
                         </p>
 
                         <div class="flex flex-wrap gap-2 mt-3">
@@ -169,9 +147,7 @@
                           <div class="badge badge-outline badge-sm">
                             <i class="fas fa-clipboard-list mr-1"></i>
                             <span><%= assignmentCount %></span>
-                            <span class="hidden sm:inline ml-1"
-                              >Assignments</span
-                            >
+                            <span class="hidden sm:inline ml-1">Assignments</span>
                           </div>
                           <div class="badge badge-outline badge-sm">
                             <i class="fas fa-layer-group mr-1"></i>
@@ -181,10 +157,10 @@
                         </div>
                       </div>
 
-                      <div class="grid grid-cols-3 gap-2 w-full">
+                      <div class="action-buttons-grid">
                         <a
                           href="/teacher/courses/<%= course.id %>/assignments/create"
-                          class="btn btn-xs sm:btn-sm btn-primary"
+                          class="btn-global-primary btn-xs sm:btn-sm"
                           onclick="event.stopPropagation();"
                           title="New Assignment"
                         >
@@ -193,7 +169,7 @@
                         </a>
                         <a
                           href="/teacher/courses/<%= course.id %>/materials"
-                          class="btn btn-xs sm:btn-sm btn-secondary"
+                          class="btn-global-secondary btn-xs sm:btn-sm"
                           onclick="event.stopPropagation();"
                           title="Materials"
                         >
@@ -202,7 +178,7 @@
                         </a>
                         <a
                           href="/teacher/courses/<%= course.id %>/grades"
-                          class="btn btn-xs sm:btn-sm btn-accent"
+                          class="btn-global-accent btn-xs sm:btn-sm"
                           onclick="event.stopPropagation();"
                           title="Grades"
                         >
@@ -222,9 +198,9 @@
 
         <!-- Recent Activity Section (1/3 width) -->
         <div class="lg:col-span-1">
-          <div class="card bg-base-100 shadow-xl">
-            <div class="course-card-body">
-              <h2 class="card-title text-xl sm:text-2xl mb-4">
+          <div class="card-section">
+            <div class="card-body">
+              <h2 class="section-title mb-4">
                 <i class="fas fa-clock mr-2"></i>Recent Activity
               </h2>
 
@@ -236,19 +212,14 @@
               <% } else { %>
               <div class="space-y-3">
                 <% recentSubmissions.forEach(submission => { %>
-                <div
-                  class="card bg-base-200 hover:bg-base-300 transition-colors"
-                >
+                <div class="card bg-base-200 hover:bg-base-300 transition-colors">
                   <div class="card-body p-4">
                     <div class="flex items-start gap-3">
                       <div class="avatar">
-                        <div
-                          class="w-10 h-10 rounded-full bg-primary flex items-center justify-center"
-                        >
-                          <span
-                            class="text-primary-content text-sm font-semibold"
-                            ><%= submission.student.full_name.charAt(0) %></span
-                          >
+                        <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+                          <span class="text-primary-content text-sm font-semibold">
+                            <%= submission.student.full_name.charAt(0) %>
+                          </span>
                         </div>
                       </div>
 
@@ -257,23 +228,19 @@
                           <%= submission.student.full_name %>
                         </p>
                         <p class="text-xs text-base-content/70 truncate">
-                          <%= submission.assignment.course.code %> - <%=
-                          submission.assignment.title %>
+                          <%= submission.assignment.course.code %> - <%= submission.assignment.title %>
                         </p>
                         <p class="text-xs text-base-content/50 mt-1">
                           <i class="far fa-clock mr-1"></i>
-                          <%= new
-                          Date(submission.submitted_at).toLocaleDateString('en-US',
-                          { month: 'short', day: 'numeric', hour: '2-digit',
-                          minute: '2-digit' }) %>
+                          <%= new Date(submission.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
                         </p>
 
                         <% if (submission.marks !== null) { %>
-                        <div class="badge badge-success badge-sm mt-2">
+                        <div class="badge-status-success mt-2">
                           <i class="fas fa-check mr-1"></i>Graded
                         </div>
                         <% } else { %>
-                        <div class="badge badge-warning badge-sm mt-2">
+                        <div class="badge-status-warning mt-2">
                           <i class="fas fa-hourglass-half mr-1"></i>Pending
                         </div>
                         <% } %>
@@ -296,10 +263,7 @@
               </div>
               <% } %> <% if (stats.pendingSubmissions > 5) { %>
               <div class="divider"></div>
-              <a
-                href="/teacher/submissions"
-                class="btn btn-sm btn-outline btn-block"
-              >
+              <a href="/teacher/submissions" class="btn btn-sm btn-outline btn-block">
                 View All Submissions (<%= stats.pendingSubmissions %> pending)
               </a>
               <% } %>
@@ -310,29 +274,24 @@
 
       <!-- Ongoing Assignments Section -->
       <div class="mt-6 sm:mt-8">
-        <div class="card bg-base-100 shadow-xl">
+        <div class="card-section">
           <div class="card-body p-4 sm:p-6">
             <div class="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
-              <h2 class="card-title text-xl sm:text-2xl">
+              <h2 class="section-title">
                 <i class="fas fa-tasks mr-2"></i>Ongoing Assignments
               </h2>
-              <span class="badge badge-info badge-md"
-                ><%= ongoingAssignments.length %> Active</span
-              >
+              <span class="badge badge-info badge-md"><%= ongoingAssignments.length %> Active</span>
             </div>
 
             <% if (ongoingAssignments.length === 0) { %>
             <div class="alert alert-info">
               <i class="fas fa-info-circle"></i>
-              <span
-                >No ongoing assignments. All deadlines have passed or no
-                assignments created yet.</span
-              >
+              <span>No ongoing assignments. All deadlines have passed or no assignments created yet.</span>
             </div>
             <% } else { %>
             <!-- Desktop Table View -->
             <div class="hidden md:block overflow-x-auto">
-              <table class="table table-zebra">
+              <table class="table-custom">
                 <thead>
                   <tr>
                     <th>Assignment</th>
@@ -343,48 +302,45 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <% ongoingAssignments.forEach(assignment => { const deadline =
-                  new Date(assignment.deadline); const now = new Date(); const
-                  diffMs = deadline - now; const diffDays = Math.floor(diffMs /
-                  (1000 * 60 * 60 * 24)); const diffHours = Math.floor((diffMs %
-                  (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)); const diffMinutes
-                  = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60)); let
-                  timeRemaining = ''; let badgeClass = 'badge-success'; if
-                  (diffDays > 0) { timeRemaining = diffDays + ' day' + (diffDays
-                  > 1 ? 's' : '') + ' ' + diffHours + 'h'; if (diffDays <= 1)
-                  badgeClass = 'badge-warning'; } else if (diffHours > 0) {
-                  timeRemaining = diffHours + 'h ' + diffMinutes + 'm';
-                  badgeClass = 'badge-warning'; } else { timeRemaining =
-                  diffMinutes + ' min'; badgeClass = 'badge-error'; } %>
+                  <% ongoingAssignments.forEach(assignment => { 
+                    const deadline = new Date(assignment.deadline); 
+                    const now = new Date(); 
+                    const diffMs = deadline - now; 
+                    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)); 
+                    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)); 
+                    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60)); 
+                    let timeRemaining = ''; 
+                    let badgeClass = 'badge-success'; 
+                    if (diffDays > 0) { 
+                      timeRemaining = diffDays + ' day' + (diffDays > 1 ? 's' : '') + ' ' + diffHours + 'h'; 
+                      if (diffDays <= 1) badgeClass = 'badge-warning'; 
+                    } else if (diffHours > 0) { 
+                      timeRemaining = diffHours + 'h ' + diffMinutes + 'm'; 
+                      badgeClass = 'badge-warning'; 
+                    } else { 
+                      timeRemaining = diffMinutes + ' min'; 
+                      badgeClass = 'badge-error'; 
+                    } 
+                  %>
                   <tr>
                     <td>
                       <div class="font-bold"><%= assignment.title %></div>
-                      <div class="text-xs text-base-content/60">
-                        Max: <%= assignment.max_marks %> marks
-                      </div>
+                      <div class="text-xs text-base-content/60">Max: <%= assignment.max_marks %> marks</div>
                     </td>
                     <td>
-                      <span class="badge badge-primary badge-sm"
-                        ><%= assignment.course.code %></span
-                      >
-                      <div class="text-xs text-base-content/70 mt-1">
-                        <%= assignment.course.title %>
-                      </div>
+                      <span class="badge badge-primary badge-sm"><%= assignment.course.code %></span>
+                      <div class="text-xs text-base-content/70 mt-1"><%= assignment.course.title %></div>
                     </td>
                     <td>
                       <div class="text-sm">
-                        <%= deadline.toLocaleDateString('en-US', { month:
-                        'short', day: 'numeric', year: 'numeric' }) %>
+                        <%= deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
                       </div>
                       <div class="text-xs text-base-content/60">
-                        <%= deadline.toLocaleTimeString('en-US', { hour:
-                        '2-digit', minute: '2-digit' }) %>
+                        <%= deadline.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) %>
                       </div>
                     </td>
                     <td>
-                      <span class="badge <%= badgeClass %>"
-                        ><%= timeRemaining %></span
-                      >
+                      <span class="badge <%= badgeClass %>"><%= timeRemaining %></span>
                     </td>
                     <td>
                       <div class="flex gap-2">
@@ -410,45 +366,44 @@
 
             <!-- Mobile Card View -->
             <div class="md:hidden space-y-3">
-              <% ongoingAssignments.forEach(assignment => { const deadline = new
-              Date(assignment.deadline); const now = new Date(); const diffMs =
-              deadline - now; const diffDays = Math.floor(diffMs / (1000 * 60 *
-              60 * 24)); const diffHours = Math.floor((diffMs % (1000 * 60 * 60
-              * 24)) / (1000 * 60 * 60)); const diffMinutes = Math.floor((diffMs
-              % (1000 * 60 * 60)) / (1000 * 60)); let timeRemaining = ''; let
-              badgeClass = 'badge-success'; if (diffDays > 0) { timeRemaining =
-              diffDays + ' day' + (diffDays > 1 ? 's' : '') + ' ' + diffHours +
-              'h'; if (diffDays <= 1) badgeClass = 'badge-warning'; } else if
-              (diffHours > 0) { timeRemaining = diffHours + 'h ' + diffMinutes +
-              'm'; badgeClass = 'badge-warning'; } else { timeRemaining =
-              diffMinutes + ' min'; badgeClass = 'badge-error'; } %>
+              <% ongoingAssignments.forEach(assignment => { 
+                const deadline = new Date(assignment.deadline); 
+                const now = new Date(); 
+                const diffMs = deadline - now; 
+                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)); 
+                const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)); 
+                const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60)); 
+                let timeRemaining = ''; 
+                let badgeClass = 'badge-success'; 
+                if (diffDays > 0) { 
+                  timeRemaining = diffDays + ' day' + (diffDays > 1 ? 's' : '') + ' ' + diffHours + 'h'; 
+                  if (diffDays <= 1) badgeClass = 'badge-warning'; 
+                } else if (diffHours > 0) { 
+                  timeRemaining = diffHours + 'h ' + diffMinutes + 'm'; 
+                  badgeClass = 'badge-warning'; 
+                } else { 
+                  timeRemaining = diffMinutes + ' min'; 
+                  badgeClass = 'badge-error'; 
+                } 
+              %>
               <div class="card bg-base-200 border border-base-300">
                 <div class="card-body p-4">
                   <div class="flex justify-between items-start mb-2">
                     <h3 class="font-bold text-base"><%= assignment.title %></h3>
-                    <span class="badge <%= badgeClass %> badge-sm"
-                      ><%= timeRemaining %></span
-                    >
+                    <span class="badge <%= badgeClass %> badge-sm"><%= timeRemaining %></span>
                   </div>
 
                   <div class="space-y-2 text-sm">
                     <div class="flex items-center gap-2">
-                      <span class="badge badge-primary badge-sm"
-                        ><%= assignment.course.code %></span
-                      >
-                      <span class="text-base-content/70 truncate"
-                        ><%= assignment.course.title %></span
-                      >
+                      <span class="badge badge-primary badge-sm"><%= assignment.course.code %></span>
+                      <span class="text-base-content/70 truncate"><%= assignment.course.title %></span>
                     </div>
 
                     <div class="flex items-center gap-2 text-base-content/60">
                       <i class="fas fa-calendar-alt"></i>
-                      <span
-                        ><%= deadline.toLocaleDateString('en-US', { month:
-                        'short', day: 'numeric' }) %> at <%=
-                        deadline.toLocaleTimeString('en-US', { hour: '2-digit',
-                        minute: '2-digit' }) %></span
-                      >
+                      <span>
+                        <%= deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %> at <%= deadline.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) %>
+                      </span>
                     </div>
 
                     <div class="flex items-center gap-2 text-base-content/60">

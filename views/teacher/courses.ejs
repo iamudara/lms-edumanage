@@ -5,21 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= pageTitle %> - LMS EduManage</title>
   <link href="/css/output.css" rel="stylesheet">
-  <link href="/css/custom.css" rel="stylesheet">
-  <link href="/css/teacher-theme.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="min-h-screen">
   <%- include('../shared/navbar') %>
 
-  <div class="container mx-auto px-4 py-6 sm:py-8">
+  <div class="page-container">
     <!-- Page Header -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+    <div class="page-header flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
-        <h1 class="text-2xl sm:text-3xl font-bold text-base-content mb-2">
+        <h1 class="page-title">
           <i class="fas fa-book mr-2"></i>My Courses
         </h1>
-        <p class="text-base-content/70">Manage all your courses</p>
+        <p class="page-subtitle">Manage all your courses</p>
       </div>
       <a href="/teacher/courses/create" class="btn-global-primary px-4 py-2 rounded-lg w-full sm:w-auto text-center flex items-center justify-center gap-2">
         <i class="fas fa-plus"></i>Create New Course
@@ -28,8 +26,8 @@
 
     <!-- Batch Filter Tabs -->
     <% if (batches && batches.length > 0) { %>
-      <div class="flex gap-2 sm:gap-3 mb-6 mt-6 sm:mt-8 overflow-x-auto pb-2 scrollbar-hide">
-        <button class="filter-tab batch-filter-btn active-batch" data-batch="all">
+      <div class="filter-tabs-container">
+        <button class="filter-tab batch-filter-btn active-batch filter-tab-active" data-batch="all">
           <i class="fas fa-th-large text-sm sm:text-base mr-2"></i><span>All Batches</span>
         </button>
         <% batches.forEach(batch => { %>
@@ -42,7 +40,7 @@
 
     <!-- Courses Grid -->
     <% if (courses.length === 0) { %>
-      <div class="card bg-base-100 shadow-xl border border-base-300">
+      <div class="card-section border border-base-300">
         <div class="card-body text-center py-16">
           <i class="fas fa-book-open text-6xl text-base-content/20 mb-4"></i>
           <h2 class="text-2xl font-bold mb-2">No Courses Yet</h2>
@@ -55,7 +53,7 @@
         </div>
       </div>
     <% } else { %>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="courses-grid">
+      <div class="course-grid" id="courses-grid">
         <% courses.forEach(course => { 
           // Calculate enrolled students
           let enrolledStudents = 0;
@@ -110,7 +108,7 @@
               </p>
 
               <!-- Statistics -->
-              <div class="grid grid-cols-3 gap-2 mb-4">
+              <div class="course-stats-container">
                 <div class="course-stat-box">
                   <div class="course-stat-value text-primary"><%= batchCount %></div>
                   <div class="course-stat-label">Batches</div>
@@ -126,14 +124,14 @@
               </div>
 
               <!-- Action Buttons -->
-              <div class="grid grid-cols-3 gap-2 mt-auto">
+              <div class="action-buttons-grid">
                 <a href="/teacher/courses/<%= course.id %>/assignments/create" class="btn-global-primary btn-sm" onclick="event.stopPropagation();">
                   <i class="fas fa-plus sm:mr-1"></i><span class="hidden sm:inline text-xs">Assignment</span>
                 </a>
-                <a href="/teacher/courses/<%= course.id %>/materials" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();">
+                <a href="/teacher/courses/<%= course.id %>/materials" class="btn-global-secondary btn-sm" onclick="event.stopPropagation();">
                   <i class="fas fa-file-alt sm:mr-1"></i><span class="hidden sm:inline text-xs">Materials</span>
                 </a>
-                <a href="/teacher/courses/<%= course.id %>/grades" class="btn btn-accent btn-sm" onclick="event.stopPropagation();">
+                <a href="/teacher/courses/<%= course.id %>/grades" class="btn-global-accent btn-sm" onclick="event.stopPropagation();">
                   <i class="fas fa-chart-bar sm:mr-1"></i><span class="hidden sm:inline text-xs">Grades</span>
                 </a>
               </div>
@@ -157,8 +155,7 @@
       </div>
 
       <!-- Summary Stats -->
-      <!-- Summary Stats -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 w-full">
+      <div class="stats-grid mt-8 w-full">
         <div class="stats-card stats-card-primary">
           <div class="stat">
             <div class="stat-figure text-primary-content/50">
@@ -238,9 +235,11 @@
           // Update button styles
           filterButtons.forEach(btn => {
             btn.classList.remove('active-batch');
+            btn.classList.remove('filter-tab-active'); // Remove custom active class
             btn.classList.add('btn-ghost');
           });
           this.classList.remove('btn-ghost');
+          this.classList.add('filter-tab-active'); // Add global active class
           this.classList.add('active-batch');
 
           // Filter courses

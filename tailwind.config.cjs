@@ -1,8 +1,8 @@
-import daisyui from "daisyui";
-import scrollbarHide from "tailwind-scrollbar-hide";
+const daisyui = require("daisyui");
+const scrollbarHide = require("tailwind-scrollbar-hide");
 
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   content: [
     "./views/**/*.ejs", 
     "./public/**/*.js",
@@ -17,23 +17,23 @@ export default {
       {
         light: {
           "color-scheme": "light",
-          "primary": "oklch(48% 0.243 264.376)",
+          "primary": "oklch(54% 0.245 262.881)",
           "primary-content": "oklch(98% 0.018 155.826)",
-          "secondary": "oklch(55% 0.046 257.417)",
+          "secondary": "oklch(44% 0.03 256.802)",
           "secondary-content": "oklch(97% 0.014 254.604)",
-          "accent": "oklch(48% 0.243 264.376)",
+          "accent": "oklch(54% 0.245 262.881)",
           "accent-content": "oklch(97% 0.013 17.38)",
-          "neutral": "oklch(27% 0.006 286.033)",
+          "neutral": "oklch(27% 0.033 256.848)",
           "neutral-content": "oklch(98% 0 0)",
           "base-100": "oklch(98% 0 0)",
-          "base-200": "oklch(92% 0.013 255.508)",
-          "base-300": "oklch(86% 0.022 252.894)",
+          "base-200": "oklch(92% 0.006 264.531)",
+          "base-300": "oklch(70% 0.022 261.325)",
           "base-content": "oklch(20% 0 0)",
-          "info": "oklch(54% 0.245 262.881)",
+          "info": "oklch(70% 0.165 254.624)",
           "info-content": "oklch(29% 0.066 243.157)",
           "success": "oklch(79% 0.209 151.711)",
           "success-content": "oklch(26% 0.065 152.934)",
-          "warning": "oklch(75% 0.183 55.934)",
+          "warning": "oklch(76% 0.188 70.08)",
           "warning-content": "oklch(26% 0.079 36.259)",
           "error": "oklch(63% 0.237 25.331)",
           "error-content": "oklch(25% 0.092 26.042)",
@@ -58,19 +58,19 @@ export default {
           "color-scheme": "dark",
           "primary": "oklch(48% 0.243 264.376)",
           "primary-content": "oklch(96% 0.018 272.314)",
-          "secondary": "oklch(55% 0.027 264.364)",
+          "secondary": "oklch(44% 0.03 256.802)",
           "secondary-content": "oklch(98% 0.003 247.858)",
-          "accent": "oklch(48% 0.243 264.376)",
+          "accent": "oklch(50% 0.134 242.749)",
           "accent-content": "oklch(98% 0.002 247.839)",
-          "neutral": "oklch(14% 0.005 285.823)",
-          "neutral-content": "oklch(92% 0.004 286.32)",
+          "neutral": "oklch(70% 0.015 286.067)",
+          "neutral-content": "oklch(20% 0.042 265.755)",
           "base-100": "oklch(27% 0.006 286.033)",
           "base-200": "oklch(14% 0.005 285.823)",
           "base-300": "oklch(55% 0.016 285.938)",
           "base-content": "oklch(97.807% 0.029 256.847)",
           "info": "oklch(62% 0.214 259.815)",
           "info-content": "oklch(29% 0.066 243.157)",
-          "success": "oklch(76% 0.177 163.223)",
+          "success": "oklch(79% 0.209 151.711)",
           "success-content": "oklch(37% 0.077 168.94)",
           "warning": "oklch(82% 0.189 84.429)",
           "warning-content": "oklch(41% 0.112 45.904)",

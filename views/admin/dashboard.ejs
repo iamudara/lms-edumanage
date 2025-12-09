@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="corporate">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -344,6 +344,22 @@
   <script>
     // @ts-nocheck - EJS template syntax causes false TypeScript errors
     
+    // Safely parse EJS data for charts to avoid linter errors
+    const chartData = {
+      activityTrends: {
+        labels: JSON.parse(`<%- JSON.stringify(charts.activityTrends.labels || []) %>`),
+        submissions: JSON.parse(`<%- JSON.stringify(charts.activityTrends.submissions || []) %>`),
+        grades: JSON.parse(`<%- JSON.stringify(charts.activityTrends.grades || []) %>`),
+        logins: JSON.parse(`<%- JSON.stringify(charts.activityTrends.logins || []) %>`)
+      },
+      teacherWorkload: {
+        labels: JSON.parse(`<%- JSON.stringify(charts.teacherWorkload.labels || []) %>`),
+        assignmentsCreated: JSON.parse(`<%- JSON.stringify(charts.teacherWorkload.assignmentsCreated || []) %>`),
+        coursesTeaching: JSON.parse(`<%- JSON.stringify(charts.teacherWorkload.coursesTeaching || []) %>`),
+        pendingGrades: JSON.parse(`<%- JSON.stringify(charts.teacherWorkload.pendingGrades || []) %>`)
+      }
+    };
+
     // ============================================
     // Activity Trends Line/Area Chart
     // ============================================
@@ -351,11 +367,11 @@
     new Chart(activityCtx, {
       type: 'line',
       data: {
-        labels: <%- JSON.stringify(charts.activityTrends.labels) %>,
+        labels: chartData.activityTrends.labels,
         datasets: [
           {
             label: 'Submissions',
-            data: <%- JSON.stringify(charts.activityTrends.submissions) %>,
+            data: chartData.activityTrends.submissions,
             backgroundColor: 'rgba(59, 130, 246, 0.2)',
             borderColor: 'rgba(59, 130, 246, 1)',
             borderWidth: 2,
@@ -364,7 +380,7 @@
           },
           {
             label: 'Grades Entered',
-            data: <%- JSON.stringify(charts.activityTrends.grades) %>,
+            data: chartData.activityTrends.grades,
             backgroundColor: 'rgba(16, 185, 129, 0.2)',
             borderColor: 'rgba(16, 185, 129, 1)',
             borderWidth: 2,
@@ -373,7 +389,7 @@
           },
           {
             label: 'User Logins',
-            data: <%- JSON.stringify(charts.activityTrends.logins) %>,
+            data: chartData.activityTrends.logins,
             backgroundColor: 'rgba(245, 158, 11, 0.2)',
             borderColor: 'rgba(245, 158, 11, 1)',
             borderWidth: 2,
@@ -422,25 +438,25 @@
     new Chart(workloadCtx, {
       type: 'bar',
       data: {
-        labels: <%- JSON.stringify(charts.teacherWorkload.labels) %>,
+        labels: chartData.teacherWorkload.labels,
         datasets: [
           {
             label: 'Assignments Created',
-            data: <%- JSON.stringify(charts.teacherWorkload.assignmentsCreated) %>,
+            data: chartData.teacherWorkload.assignmentsCreated,
             backgroundColor: 'rgba(59, 130, 246, 0.8)',
             borderColor: 'rgba(59, 130, 246, 1)',
             borderWidth: 1
           },
           {
             label: 'Courses Teaching',
-            data: <%- JSON.stringify(charts.teacherWorkload.coursesTeaching) %>,
+            data: chartData.teacherWorkload.coursesTeaching,
             backgroundColor: 'rgba(16, 185, 129, 0.8)',
             borderColor: 'rgba(16, 185, 129, 1)',
             borderWidth: 1
           },
           {
             label: 'Pending Grades',
-            data: <%- JSON.stringify(charts.teacherWorkload.pendingGrades) %>,
+            data: chartData.teacherWorkload.pendingGrades,
             backgroundColor: 'rgba(239, 68, 68, 0.8)',
             borderColor: 'rgba(239, 68, 68, 1)',
             borderWidth: 1
