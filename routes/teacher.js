@@ -155,7 +155,7 @@ router.get('/assignments/:id/edit', showEditAssignment);
  * POST /teacher/assignments/:id/edit
  * Updates assignment deadline only
  */
-router.post('/assignments/:id/edit', editAssignment);
+router.post('/assignments/:id/edit', uploadAssignmentMaterials, editAssignment);
 
 /**
  * Delete assignment
