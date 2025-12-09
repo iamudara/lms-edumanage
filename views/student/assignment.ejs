@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title %> - LMS EduManage</title>
+  <title><%= assignment.title %> - <%= assignment.course.code %> - LMS EduManage</title>
   <link href="/css/output.css" rel="stylesheet">
   <link href="/css/custom.css" rel="stylesheet">
   <link href="/css/teacher-theme.css" rel="stylesheet">
@@ -12,11 +12,11 @@
 <body class="bg-base-200 min-h-screen">
   <%- include('../shared/navbar') %>
 
-  <div class="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-7xl">
+  <div class="page-container">
     <!-- Back Button -->
-    <div class="mb-6">
-      <a href="/student/courses/<%= assignment.course.id %>" class="btn btn-ghost btn-sm">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div class="mb-4">
+      <a href="/student/courses/<%= assignment.course.id %>" class="btn-glass-custom px-4 inline-flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
         Back to Course
@@ -24,49 +24,38 @@
     </div>
 
     <!-- Assignment Header -->
-    <div class="card bg-base-100 shadow-lg mb-8">
-      <div class="card-body">
-        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-          <div class="flex-1">
-            <h1 class="text-4xl font-bold text-base-content mb-3">
-              📝 <%= assignment.title %>
-            </h1>
-            
-            <!-- Course Badge -->
-            <div class="flex flex-wrap gap-2 mb-4">
-              <span class="badge badge-primary badge-lg">
-                <%= assignment.course.code %> - <%= assignment.course.title %>
-              </span>
+    <div class="page-header">
+      <div class="flex flex-col gap-4">
+        <div>
+          <h1 class="page-title text-gradient-primary flex items-center gap-3 flex-wrap">
+            <span class="text-3xl sm:text-4xl">📝</span>
+            <%= assignment.title %>
+            <span class="course-badge text-lg align-middle"><%= assignment.course.code %></span>
+          </h1>
+          
+          <div class="flex items-center gap-2 text-base-content/60 mt-4">
+            <div class="avatar placeholder">
+              <div class="bg-neutral-focus text-neutral-content rounded-full w-8">
+                <span class="text-xs">
+                 <% const primaryTeacher = assignment.course.courseTeachers?.find(ct => ct.is_primary)?.teacher; %>
+                 <%= primaryTeacher ? primaryTeacher.full_name.charAt(0) : '?' %>
+                </span>
+              </div>
             </div>
-
-            <!-- Instructor Info -->
-            <div class="flex items-center gap-2 text-base-content/70 mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <span class="font-medium">Instructor:</span>
-              <% const primaryTeacher = assignment.course.courseTeachers?.find(ct => ct.is_primary)?.teacher; %>
-              <span><%= primaryTeacher ? primaryTeacher.full_name : 'Unknown' %></span>
-            </div>
+            <span class="font-medium">Instructor:</span>
+            <span><%= primaryTeacher ? primaryTeacher.full_name : 'Unknown' %></span>
           </div>
+        </div>
 
-          <!-- Deadline Info Card -->
-          <div class="stats shadow <%= deadline.isPastDeadline ? 'bg-error text-error-content' : deadline.isUrgent ? 'bg-warning text-warning-content' : 'bg-success text-success-content' %>">
-            <div class="stat place-items-center">
-              <div class="stat-title <%= deadline.isPastDeadline ? 'text-error-content/80' : deadline.isUrgent ? 'text-warning-content/80' : 'text-success-content/80' %>">
-                <%= deadline.isPastDeadline ? 'Overdue' : 'Due Date' %>
-              </div>
-              <div class="stat-value text-2xl">
-                <%= deadline.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>
-              </div>
-              <div class="stat-desc <%= deadline.isPastDeadline ? 'text-error-content/80' : deadline.isUrgent ? 'text-warning-content/80' : 'text-success-content/80' %>">
-                <%= deadline.date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) %>
-              </div>
-              <% if (!deadline.isPastDeadline) { %>
-                <div class="stat-desc mt-1 <%= deadline.isUrgent ? 'text-warning-content/80' : 'text-success-content/80' %>">
-                  <%= deadline.daysUntil %> day<%= deadline.daysUntil !== 1 ? 's' : '' %> left
-                </div>
-              <% } %>
+        <!-- Deadline Badge -->
+        <div class="stats-card mt-6 <%= deadline.isPastDeadline ? 'stat-card-gradient-warning' : 'stat-card-gradient-primary' %> max-w-md">
+          <div class="stat place-items-center">
+            <div class="stat-title text-primary-content/80">Deadline</div>
+            <div class="stat-value text-white text-2xl">
+              <%= deadline.date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+            </div>
+            <div class="stat-desc text-primary-content/70">
+              <%= deadline.isPastDeadline ? 'Deadline Passed' : deadline.daysUntil + ' days remaining' %>
             </div>
           </div>
         </div>
@@ -76,160 +65,162 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <!-- Main Content Column -->
       <div class="lg:col-span-2 space-y-8">
-        <!-- Assignment Description -->
-        <div class="card bg-base-100 shadow-lg">
+        
+        <!-- Description -->
+        <div class="card-section">
           <div class="card-body">
-            <h2 class="card-title text-2xl mb-4">📄 Assignment Description</h2>
+            <h2 class="section-title mb-4">📖 Assignment Description</h2>
             <div class="prose max-w-none">
-              <% if (assignment.description) { %>
-                <p class="text-base-content/80 whitespace-pre-wrap"><%= assignment.description %></p>
-              <% } else { %>
-                <p class="text-base-content/60 italic">No description provided.</p>
-              <% } %>
+              <p><%= assignment.description || 'No description provided.' %></p>
             </div>
           </div>
         </div>
 
         <!-- Assignment Materials -->
         <% if (assignment.materials && assignment.materials.length > 0) { %>
-          <div class="card bg-base-100 shadow-lg">
+          <div class="card-section">
             <div class="card-body">
-              <h2 class="card-title text-2xl mb-4">📎 Assignment Materials</h2>
-              <div class="space-y-3">
-                <% assignment.materials.forEach(material => { %>
-                  <div class="flex items-center justify-between p-4 bg-base-200 rounded-lg hover:bg-base-300 transition-colors">
-                    <div class="flex items-center gap-3">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                      </svg>
-                      <span class="font-medium"><%= material.title %></span>
-                    </div>
-                    <a href="<%= material.url %>" target="_blank" class="btn btn-primary btn-sm">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                      Download
-                    </a>
-                  </div>
-                <% }) %>
+              <h2 class="section-title mb-4">📎 Assignment Materials</h2>
+              <div class="overflow-x-auto">
+                <table class="table table-zebra table-custom">
+                  <thead>
+                    <tr>
+                      <th>Material</th>
+                      <th>Type</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% assignment.materials.forEach(material => { %>
+                      <tr>
+                        <td>
+                          <div class="flex items-center gap-3">
+                            <div class="text-2xl">
+                              <% if (material.type === 'file') { %>
+                                <% if (material.file_path && material.file_path.endsWith('.pdf')) { %>📄<% } 
+                                   else if (material.file_path && material.file_path.match(/\.(jpg|jpeg|png|gif)$/)) { %>🖼️<% }
+                                   else { %>📁<% } %>
+                              <% } else { %>🔗<% } %>
+                            </div>
+                            <div class="font-medium"><%= material.title %></div>
+                          </div>
+                        </td>
+                        <td>
+                          <span class="badge <%= material.type === 'file' ? 'badge-ghost' : 'badge-info' %> badge-sm">
+                            <%= material.type === 'file' ? 'File' : 'Link' %>
+                          </span>
+                        </td>
+                        <td>
+                          <a href="<%= material.file_path %>" target="_blank" class="btn btn-sm btn-ghost btn-glass-custom">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Download
+                          </a>
+                        </td>
+                      </tr>
+                    <% }) %>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
         <% } %>
 
-        <!-- Submission Section -->
+        <!-- Submission Status Area -->
         <% if (submission) { %>
-          <div class="card bg-base-100 shadow-lg">
+          <!-- Already Submitted -->
+          <div class="card-section">
             <div class="card-body">
-              <h2 class="card-title text-2xl mb-4">
-                ✅ Your Submission
-                <% if (submission.marks !== null) { %>
-                  <span class="badge badge-success badge-lg ml-2">Graded</span>
-                <% } else { %>
-                  <span class="badge badge-warning badge-lg ml-2">Pending Grade</span>
-                <% } %>
-              </h2>
-
-              <!-- Submission Info -->
-              <div class="bg-base-200 p-4 rounded-lg mb-4">
-                <div class="flex flex-wrap items-center gap-2 text-sm mb-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span class="font-medium">Submitted:</span>
-                  <span><%= new Date(submission.submitted_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></span>
-                </div>
-                <% 
-                  const submittedDate = new Date(submission.submitted_at);
-                  const deadlineDate = new Date(assignment.deadline);
-                  const isLate = submittedDate > deadlineDate;
-                %>
-                <% if (isLate) { %>
-                  <div class="mt-2">
-                    <span class="badge badge-error badge-sm">Late Submission</span>
+              <h2 class="section-title mb-4">✅ Your Submission</h2>
+              
+              <div class="alert <%= submission.marks !== null ? 'alert-success' : 'alert-info' %> mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <div class="font-bold">Submitted on:</div>
+                  <div class="text-sm">
+                    <%= new Date(submission.submitted_at).toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                    <% if (isLate) { %>
+                      <span class="badge badge-error ml-2">Late Submission</span>
+                    <% } %>
                   </div>
-                <% } else { %>
-                  <div class="mt-2">
-                    <span class="badge badge-success badge-sm">On Time</span>
+                </div>
+              </div>
+
+              <!-- Submission Content -->
+              <div class="bg-base-200 rounded-lg p-4 mb-6">
+                <% if (submission.file_url) { %>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div class="text-3xl">📄</div>
+                      <div>
+                        <div class="font-bold">Submitted File</div>
+                        <div class="text-sm opacity-70">Click to download</div>
+                      </div>
+                    </div>
+                    <a href="<%= submission.file_url %>" class="btn btn-primary btn-sm btn-glass-custom" download>Download</a>
+                  </div>
+                <% } %>
+
+                <% if (submission.submission_text) { %>
+                  <% if (submission.file_url) { %><div class="divider"></div><% } %>
+                  <div>
+                    <div class="font-bold mb-2">Text Submission:</div>
+                    <div class="bg-base-100 p-3 rounded border border-base-300 font-mono text-sm whitespace-pre-wrap"><%= submission.submission_text %></div>
                   </div>
                 <% } %>
               </div>
 
-              <!-- Submission Content -->
-              <% if (submission.file_url) { %>
-                <div class="mb-4">
-                  <p class="text-sm font-medium mb-2">Submitted File:</p>
-                  <a href="<%= submission.file_url %>" target="_blank" class="btn btn-primary btn-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    View Submitted File
-                  </a>
-                </div>
-              <% } %>
-
-              <% if (submission.submission_text) { %>
-                <div class="mb-4">
-                  <p class="text-sm font-medium mb-2">Submission Text:</p>
-                  <div class="bg-base-200 p-4 rounded-lg">
-                    <p class="whitespace-pre-wrap text-base-content/80"><%= submission.submission_text %></p>
-                  </div>
-                </div>
-              <% } %>
-
-              <!-- Grade Information -->
+              <!-- Grading Feedback -->
               <% if (submission.marks !== null) { %>
-                <div class="divider"></div>
-                <div class="bg-success/10 p-4 rounded-lg">
-                  <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-lg font-bold">Your Score</h3>
-                    <span class="text-4xl font-bold text-success"><%= submission.marks %>%</span>
-                  </div>
-                  <% if (submission.feedback) { %>
-                    <div>
-                      <p class="text-sm font-medium mb-2">Instructor Feedback:</p>
-                      <div class="bg-base-100 p-3 rounded-lg">
-                        <p class="whitespace-pre-wrap text-base-content/80"><%= submission.feedback %></p>
-                      </div>
-                      <% if (submission.grader) { %>
-                        <p class="text-sm text-base-content/60 mt-2">
-                          Graded by: <%= submission.grader.full_name %>
-                        </p>
-                      <% } %>
+                <div class="divider">Grading & Feedback</div>
+                <div class="flex flex-col md:flex-row gap-6">
+                  <div class="stats shadow stats-vertical md:stats-horizontal w-full">
+                    <div class="stat place-items-center">
+                      <div class="stat-title">Score</div>
+                      <div class="stat-value text-success"><%= submission.marks %>%</div>
                     </div>
-                  <% } %>
+                    <% if (submission.feedback) { %>
+                      <div class="stat">
+                        <div class="stat-title">Feedback</div>
+                        <div class="stat-desc whitespace-pre-wrap mt-1 text-base-content"><%= submission.feedback %></div>
+                        <% if (submission.grader) { %>
+                          <div class="stat-desc mt-2 text-xs">Graded by: <%= submission.grader.full_name %></div>
+                        <% } %>
+                      </div>
+                    <% } %>
+                  </div>
                 </div>
               <% } %>
 
               <!-- Resubmit Button -->
               <% if (canResubmit) { %>
-                <div class="mt-4">
-                  <div class="alert alert-info mb-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <div class="divider"></div>
+                <div class="flex items-center justify-between bg-warning/10 p-4 rounded-lg border border-warning/20">
+                  <div class="flex items-center gap-2 text-warning-content">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     <span>You can resubmit your work before the deadline. Your previous submission will be replaced.</span>
                   </div>
-                  <button onclick="resubmitModal.showModal()" class="btn btn-warning">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Resubmit Assignment
-                  </button>
+                  <button onclick="resubmitModal.showModal()" class="btn btn-warning btn-sm">Resubmit</button>
                 </div>
               <% } %>
             </div>
           </div>
+        
         <% } else if (canSubmit) { %>
           <!-- No Submission Yet -->
-          <div class="card bg-base-100 shadow-lg">
+          <div class="card-section">
             <div class="card-body text-center">
               <div class="text-6xl mb-4">📤</div>
-              <h2 class="card-title text-2xl justify-center mb-3">Ready to Submit?</h2>
+              <h2 class="section-title justify-center mb-3">Ready to Submit?</h2>
               <p class="text-base-content/70 mb-6">
                 You haven't submitted this assignment yet. Click the button below to submit your work.
               </p>
-              <button onclick="submitModal.showModal()" class="btn btn-primary btn-lg">
+              <button onclick="submitModal.showModal()" class="btn btn-primary btn-lg btn-glass-custom">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
@@ -238,11 +229,11 @@
             </div>
           </div>
         <% } else { %>
-          <!-- Cannot Submit -->
-          <div class="card bg-base-100 shadow-lg">
+          <!-- Deadline Passed -->
+          <div class="card-section">
             <div class="card-body text-center">
               <div class="text-6xl mb-4">⏰</div>
-              <h2 class="card-title text-2xl justify-center mb-3 text-error">Deadline Passed</h2>
+              <h2 class="section-title justify-center mb-3 text-error">Deadline Passed</h2>
               <p class="text-base-content/70">
                 The deadline for this assignment has passed. You can no longer submit your work.
               </p>
@@ -254,27 +245,27 @@
       <!-- Sidebar Column -->
       <div class="space-y-6">
         <!-- Status Summary -->
-        <div class="card bg-base-100 shadow-lg">
+        <div class="card-section">
           <div class="card-body">
-            <h3 class="card-title text-lg mb-4">Status Summary</h3>
+            <h3 class="section-title text-lg mb-4">Status Summary</h3>
             <div class="space-y-3">
               <div class="flex items-center justify-between">
-                <span class="text-base-content/70">Submission Status:</span>
+                <span class="text-base-content/70">Submission:</span>
                 <% if (submission) { %>
                   <span class="badge badge-success">Submitted</span>
                 <% } else if (deadline.isPastDeadline) { %>
-                  <span class="badge badge-error">Not Submitted</span>
+                  <span class="badge badge-error">Missing</span>
                 <% } else { %>
                   <span class="badge badge-warning">Pending</span>
                 <% } %>
               </div>
               
               <div class="flex items-center justify-between">
-                <span class="text-base-content/70">Grading Status:</span>
+                <span class="text-base-content/70">Grading:</span>
                 <% if (submission && submission.marks !== null) { %>
                   <span class="badge badge-success">Graded</span>
                 <% } else if (submission) { %>
-                  <span class="badge badge-warning">Pending</span>
+                  <span class="badge badge-info">Pending</span>
                 <% } else { %>
                   <span class="badge badge-ghost">N/A</span>
                 <% } %>
@@ -292,47 +283,20 @@
         </div>
 
         <!-- Important Dates -->
-        <div class="card bg-base-100 shadow-lg">
+        <div class="card-section">
           <div class="card-body">
-            <h3 class="card-title text-lg mb-4">Important Dates</h3>
+            <h3 class="section-title text-lg mb-4">Important Dates</h3>
             <div class="space-y-3">
               <div>
                 <p class="text-sm text-base-content/70">Assignment Created:</p>
-                <p class="font-medium"><%= new Date(assignment.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) %></p>
+                <p class="font-medium"><%= new Date(assignment.created_at).toLocaleDateString() %></p>
               </div>
               <div>
                 <p class="text-sm text-base-content/70">Due Date:</p>
                 <p class="font-medium <%= deadline.isPastDeadline ? 'text-error' : '' %>">
-                  <%= deadline.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                  <%= deadline.date.toLocaleString() %>
                 </p>
               </div>
-              <% if (submission) { %>
-                <div>
-                  <p class="text-sm text-base-content/70">Submitted On:</p>
-                  <p class="font-medium"><%= new Date(submission.submitted_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></p>
-                </div>
-              <% } %>
-            </div>
-          </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="card bg-base-100 shadow-lg">
-          <div class="card-body">
-            <h3 class="card-title text-lg mb-4">Quick Actions</h3>
-            <div class="space-y-2">
-              <a href="/student/courses/<%= assignment.course.id %>" class="btn btn-outline btn-block btn-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-                Back to Course
-              </a>
-              <a href="/student/dashboard" class="btn btn-outline btn-block btn-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                Dashboard
-              </a>
             </div>
           </div>
         </div>
@@ -345,10 +309,6 @@
     <dialog id="submitModal" class="modal">
       <div class="modal-box max-w-2xl">
         <h3 class="font-bold text-2xl mb-6">Submit Assignment</h3>
-        <p class="text-base-content/70 mb-6">
-          Submit your work for <strong><%= assignment.title %></strong>. You can upload a file or enter text.
-        </p>
-        
         <form id="submitForm" enctype="multipart/form-data">
           <!-- Submission Type Toggle -->
           <div class="tabs tabs-boxed mb-6">
@@ -356,82 +316,38 @@
             <a class="tab" onclick="switchSubmissionType('text')">Text Submission</a>
           </div>
 
-          <!-- File Upload Section -->
+          <!-- File Upload -->
           <div id="fileUploadSection" class="mb-6">
             <label class="form-control w-full">
               <div class="label">
                 <span class="label-text font-medium">Upload File</span>
-                <span class="label-text-alt text-base-content/60">Max 10MB</span>
               </div>
-              <input type="file" name="submission" id="submissionFile" 
-                     class="file-input file-input-bordered w-full" 
-                     accept=".pdf,.doc,.docx,.txt,.zip" />
-              <div class="label">
-                <span class="label-text-alt">Allowed formats: PDF, DOC, DOCX, TXT, ZIP</span>
-              </div>
+              <input type="file" name="submission" id="submissionFile" class="file-input file-input-bordered w-full" accept=".pdf,.doc,.docx,.txt,.zip" />
+              <div id="fileError" class="text-error text-sm mt-2 hidden"></div>
             </label>
-            <div id="fileError" class="text-error text-sm mt-2 hidden"></div>
-            
-            <!-- Upload Progress Bar -->
+            <!-- Progress -->
             <div id="uploadProgress" class="hidden mt-4">
-              <div class="flex justify-between text-sm mb-1">
-                <span class="font-medium">Uploading...</span>
-                <span id="uploadPercentage">0%</span>
-              </div>
               <progress id="uploadProgressBar" class="progress progress-primary w-full" value="0" max="100"></progress>
-              <div class="text-xs text-base-content opacity-60 mt-1">
-                <span id="uploadedSize">0 MB</span> / <span id="totalSize">0 MB</span>
+              <div class="flex justify-between text-xs opacity-60">
+                <span id="uploadPercentage">0%</span>
+                <span><span id="uploadedSize">0</span> / <span id="totalSize">0</span> MB</span>
               </div>
             </div>
           </div>
 
-          <!-- Text Submission Section -->
+          <!-- Text Upload -->
           <div id="textSubmissionSection" class="mb-6 hidden">
-            <label class="form-control">
-              <div class="label">
-                <span class="label-text font-medium">Enter Your Submission</span>
-                <span class="label-text-alt text-base-content/60">Plain text or code</span>
-              </div>
-              <textarea name="submission_text" id="submissionText" 
-                        class="textarea textarea-bordered h-48" 
-                        placeholder="Type your submission here..."></textarea>
-              <div class="label">
-                <span class="label-text-alt">Min 10 characters required</span>
-              </div>
-            </label>
+            <textarea name="submission_text" id="submissionText" class="textarea textarea-bordered w-full h-48" placeholder="Type your submission here..."></textarea>
             <div id="textError" class="text-error text-sm mt-2 hidden"></div>
           </div>
 
-          <!-- Important Notes -->
-          <div class="alert alert-info mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div>
-              <div class="font-bold">Important:</div>
-              <ul class="list-disc list-inside text-sm">
-                <li>You can resubmit before the deadline</li>
-                <li>Once graded, you cannot resubmit</li>
-                <li>Deadline: <%= deadline.date.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></li>
-              </ul>
-            </div>
-          </div>
-
           <div id="submitError" class="alert alert-error mb-4 hidden">
-            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span id="submitErrorMessage"></span>
+             <span id="submitErrorMessage"></span>
           </div>
 
-          <div class="modal-action flex gap-2">
-            <button type="button" onclick="submitAssignment()" id="submitBtn" class="btn btn-primary flex-1" style="border-radius: 9999px; padding-left: 1rem; padding-right: 1rem;">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Submit Assignment
-            </button>
-            <button type="button" class="btn flex-1" style="border-radius: 9999px; padding-left: 1rem; padding-right: 1rem; background-color: #ef4444; border-color: #ef4444; color: white;" onclick="closeSubmitModal()">Cancel</button>
+          <div class="modal-action">
+            <button type="button" onclick="submitAssignment()" id="submitBtn" class="btn btn-primary">Submit</button>
+            <button type="button" onclick="closeSubmitModal()" class="btn">Cancel</button>
           </div>
         </form>
       </div>
@@ -446,10 +362,9 @@
     <dialog id="resubmitModal" class="modal">
       <div class="modal-box max-w-2xl">
         <h3 class="font-bold text-2xl mb-6">Resubmit Assignment</h3>
-        <p class="text-base-content/70 mb-6">
-          You are about to resubmit your work for <strong><%= assignment.title %></strong>. Your previous submission will be replaced.
-        </p>
-        
+        <div class="alert alert-warning mb-4">
+          <span>Warning: This will replace your previous submission.</span>
+        </div>
         <form id="resubmitForm" enctype="multipart/form-data">
           <!-- Submission Type Toggle -->
           <div class="tabs tabs-boxed mb-6">
@@ -457,82 +372,38 @@
             <a class="tab" onclick="switchResubmissionType('text')">Text Submission</a>
           </div>
 
-          <!-- File Upload Section -->
+          <!-- File Upload -->
           <div id="resubmitFileSection" class="mb-6">
             <label class="form-control w-full">
               <div class="label">
                 <span class="label-text font-medium">Upload New File</span>
-                <span class="label-text-alt text-base-content/60">Max 10MB</span>
               </div>
-              <input type="file" name="submission" id="resubmissionFile" 
-                     class="file-input file-input-bordered w-full" 
-                     accept=".pdf,.doc,.docx,.txt,.zip" />
-              <div class="label">
-                <span class="label-text-alt">Allowed formats: PDF, DOC, DOCX, TXT, ZIP</span>
-              </div>
+              <input type="file" name="submission" id="resubmissionFile" class="file-input file-input-bordered w-full" accept=".pdf,.doc,.docx,.txt,.zip" />
+              <div id="resubmitFileError" class="text-error text-sm mt-2 hidden"></div>
             </label>
-            <div id="resubmitFileError" class="text-error text-sm mt-2 hidden"></div>
-            
-            <!-- Resubmit Upload Progress Bar -->
+            <!-- Progress -->
             <div id="resubmitUploadProgress" class="hidden mt-4">
-              <div class="flex justify-between text-sm mb-1">
-                <span class="font-medium">Uploading...</span>
+              <progress id="resubmitUploadProgressBar" class="progress progress-primary w-full" value="0" max="100"></progress>
+              <div class="flex justify-between text-xs opacity-60">
                 <span id="resubmitUploadPercentage">0%</span>
-              </div>
-              <progress id="resubmitUploadProgressBar" class="progress progress-warning w-full" value="0" max="100"></progress>
-              <div class="text-xs text-base-content opacity-60 mt-1">
-                <span id="resubmitUploadedSize">0 MB</span> / <span id="resubmitTotalSize">0 MB</span>
+                <span><span id="resubmitUploadedSize">0</span> / <span id="resubmitTotalSize">0</span> MB</span>
               </div>
             </div>
           </div>
 
-          <!-- Text Submission Section -->
+          <!-- Text Upload -->
           <div id="resubmitTextSection" class="mb-6 hidden">
-            <label class="form-control">
-              <div class="label">
-                <span class="label-text font-medium">Enter Your New Submission</span>
-                <span class="label-text-alt text-base-content/60">Plain text or code</span>
-              </div>
-              <textarea name="submission_text" id="resubmissionText" 
-                        class="textarea textarea-bordered h-48" 
-                        placeholder="Type your submission here..."></textarea>
-              <div class="label">
-                <span class="label-text-alt">Min 10 characters required</span>
-              </div>
-            </label>
+            <textarea name="submission_text" id="resubmissionText" class="textarea textarea-bordered w-full h-48" placeholder="Type your new submission here..."></textarea>
             <div id="resubmitTextError" class="text-error text-sm mt-2 hidden"></div>
           </div>
 
-          <!-- Warning -->
-          <div class="alert alert-warning mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <div>
-              <div class="font-bold">Warning:</div>
-              <ul class="list-disc list-inside text-sm">
-                <li>This will replace your previous submission</li>
-                <li>You can only resubmit before the deadline</li>
-                <li>Time remaining: <%= deadline.daysUntil %> days</li>
-              </ul>
-            </div>
-          </div>
-
           <div id="resubmitError" class="alert alert-error mb-4 hidden">
-            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span id="resubmitErrorMessage"></span>
+             <span id="resubmitErrorMessage"></span>
           </div>
 
-          <div class="modal-action flex gap-2">
-            <button type="button" onclick="resubmitAssignment()" class="btn btn-warning flex-1" id="resubmitBtn" style="border-radius: 9999px; padding-left: 1rem; padding-right: 1rem;">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Resubmit Assignment
-            </button>
-            <button type="button" class="btn flex-1" style="border-radius: 9999px; padding-left: 1rem; padding-right: 1rem; background-color: #ef4444; border-color: #ef4444; color: white;" onclick="closeResubmitModal()">Cancel</button>
+          <div class="modal-action">
+            <button type="button" onclick="resubmitAssignment()" id="resubmitBtn" class="btn btn-warning">Resubmit</button>
+            <button type="button" onclick="closeResubmitModal()" class="btn">Cancel</button>
           </div>
         </form>
       </div>
@@ -543,7 +414,6 @@
   <% } %>
 
   <script>
-    // Submit form type switching
     function switchSubmissionType(type) {
       const fileSection = document.getElementById('fileUploadSection');
       const textSection = document.getElementById('textSubmissionSection');
@@ -562,7 +432,6 @@
       }
     }
 
-    // Resubmit form type switching
     function switchResubmissionType(type) {
       const fileSection = document.getElementById('resubmitFileSection');
       const textSection = document.getElementById('resubmitTextSection');
@@ -581,281 +450,184 @@
       }
     }
 
-    // Submit assignment
     async function submitAssignment() {
-      const form = document.getElementById('submitForm');
       const fileInput = document.getElementById('submissionFile');
       const textInput = document.getElementById('submissionText');
       const submitBtn = document.getElementById('submitBtn');
       const errorDiv = document.getElementById('submitError');
       const errorMsg = document.getElementById('submitErrorMessage');
       
-      // Hide previous errors
       errorDiv.classList.add('hidden');
       document.getElementById('fileError').classList.add('hidden');
       document.getElementById('textError').classList.add('hidden');
       
-      // Validate input
       const isFileUpload = !document.getElementById('fileUploadSection').classList.contains('hidden');
       
       if (isFileUpload) {
         if (!fileInput.files || fileInput.files.length === 0) {
-          document.getElementById('fileError').textContent = 'Please select a file to upload';
-          document.getElementById('fileError').classList.remove('hidden');
-          return;
-        }
-        
-        // Validate file size (10MB)
-        if (fileInput.files[0].size > 10 * 1024 * 1024) {
-          document.getElementById('fileError').textContent = 'File size must be less than 10MB';
+          document.getElementById('fileError').textContent = 'Please select a file';
           document.getElementById('fileError').classList.remove('hidden');
           return;
         }
       } else {
         if (!textInput.value || textInput.value.trim().length < 10) {
-          document.getElementById('textError').textContent = 'Text submission must be at least 10 characters';
+          document.getElementById('textError').textContent = 'Min 10 chars required';
           document.getElementById('textError').classList.remove('hidden');
           return;
         }
       }
       
-      // Prepare form data
       const formData = new FormData();
-      if (isFileUpload && fileInput.files[0]) {
+      if (isFileUpload) {
         formData.append('submission', fileInput.files[0]);
-      } else if (textInput.value) {
+      } else {
         formData.append('submission_text', textInput.value.trim());
       }
       
-      // Disable button and show loading
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span class="loading loading-spinner"></span> Submitting...';
+      submitBtn.textContent = 'Submitting...';
       
-      // Show progress bar for file uploads
-      const progressDiv = document.getElementById('uploadProgress');
+      // Progress Setup (Simplified)
       const progressBar = document.getElementById('uploadProgressBar');
-      const progressPercentage = document.getElementById('uploadPercentage');
-      const uploadedSizeSpan = document.getElementById('uploadedSize');
-      const totalSizeSpan = document.getElementById('totalSize');
+      const progressDiv = document.getElementById('uploadProgress');
+      if (isFileUpload) progressDiv.classList.remove('hidden');
+
+      const xhr = new XMLHttpRequest();
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable && isFileUpload) {
+           const percent = Math.round((e.loaded / e.total) * 100);
+           progressBar.value = percent;
+           document.getElementById('uploadPercentage').textContent = percent + '%';
+        }
+      });
       
-      if (isFileUpload && fileInput.files[0]) {
-        progressDiv.classList.remove('hidden');
-        const fileSizeMB = (fileInput.files[0].size / (1024 * 1024)).toFixed(2);
-        totalSizeSpan.textContent = fileSizeMB + ' MB';
-      }
-      
-      try {
-        // Use XMLHttpRequest for upload progress tracking
-        const xhr = new XMLHttpRequest();
-        
-        // Track upload progress
-        xhr.upload.addEventListener('progress', (e) => {
-          if (e.lengthComputable) {
-            const percentComplete = Math.round((e.loaded / e.total) * 100);
-            progressBar.value = percentComplete;
-            progressPercentage.textContent = percentComplete + '%';
-            uploadedSizeSpan.textContent = (e.loaded / (1024 * 1024)).toFixed(2) + ' MB';
-          }
-        });
-        
-        // Handle completion
-        xhr.addEventListener('load', () => {
+      xhr.addEventListener('load', () => {
+         progressDiv.classList.add('hidden');
+         if (xhr.status === 200) {
+             try {
+                const data = JSON.parse(xhr.responseText);
+                if (data.success) window.location.reload();
+                else {
+                    errorMsg.textContent = data.message;
+                    errorDiv.classList.remove('hidden');
+                }
+             } catch(e) {
+                 errorMsg.textContent = 'Invalid response';
+                 errorDiv.classList.remove('hidden');
+             }
+         } else {
+             errorMsg.textContent = 'Server error';
+             errorDiv.classList.remove('hidden');
+         }
+         submitBtn.disabled = false;
+         submitBtn.textContent = 'Submit';
+      });
+
+      xhr.addEventListener('error', () => {
           progressDiv.classList.add('hidden');
-          
-          if (xhr.status === 200) {
-            const data = JSON.parse(xhr.responseText);
-            if (data.success) {
-              // Success - reload page to show submission
-              window.location.reload();
-            } else {
-              // Show error
-              errorMsg.textContent = data.message || 'Failed to submit assignment';
-              errorDiv.classList.remove('hidden');
-              submitBtn.disabled = false;
-              submitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Submit Assignment';
-            }
-          } else {
-            errorMsg.textContent = 'Server error. Please try again.';
-            errorDiv.classList.remove('hidden');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Submit Assignment';
-          }
-        });
-        
-        // Handle errors
-        xhr.addEventListener('error', () => {
-          progressDiv.classList.add('hidden');
-          errorMsg.textContent = 'Network error. Please try again.';
+          errorMsg.textContent = 'Network error';
           errorDiv.classList.remove('hidden');
           submitBtn.disabled = false;
-          submitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Submit Assignment';
-        });
-        
-        // Send the request
-        xhr.open('POST', '/student/assignments/<%= assignment.id %>/submit');
-        xhr.send(formData);
-        
-      } catch (error) {
-        progressDiv.classList.add('hidden');
-        errorMsg.textContent = 'Network error. Please try again.';
-        errorDiv.classList.remove('hidden');
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Submit Assignment';
-      }
+          submitBtn.textContent = 'Submit';
+      });
+      
+      xhr.open('POST', '/student/assignments/<%= assignment.id %>/submit');
+      xhr.send(formData);
     }
 
-    // Resubmit assignment
     async function resubmitAssignment() {
-      const form = document.getElementById('resubmitForm');
+        if (!confirm('Replace previous submission?')) return;
+
       const fileInput = document.getElementById('resubmissionFile');
       const textInput = document.getElementById('resubmissionText');
-      const resubmitBtn = document.getElementById('resubmitBtn');
+      const submitBtn = document.getElementById('resubmitBtn');
       const errorDiv = document.getElementById('resubmitError');
       const errorMsg = document.getElementById('resubmitErrorMessage');
       
-      // Hide previous errors
       errorDiv.classList.add('hidden');
       document.getElementById('resubmitFileError').classList.add('hidden');
       document.getElementById('resubmitTextError').classList.add('hidden');
       
-      // Validate input
       const isFileUpload = !document.getElementById('resubmitFileSection').classList.contains('hidden');
       
       if (isFileUpload) {
         if (!fileInput.files || fileInput.files.length === 0) {
-          document.getElementById('resubmitFileError').textContent = 'Please select a file to upload';
-          document.getElementById('resubmitFileError').classList.remove('hidden');
-          return;
-        }
-        
-        if (fileInput.files[0].size > 10 * 1024 * 1024) {
-          document.getElementById('resubmitFileError').textContent = 'File size must be less than 10MB';
+          document.getElementById('resubmitFileError').textContent = 'Please select a file';
           document.getElementById('resubmitFileError').classList.remove('hidden');
           return;
         }
       } else {
         if (!textInput.value || textInput.value.trim().length < 10) {
-          document.getElementById('resubmitTextError').textContent = 'Text submission must be at least 10 characters';
+          document.getElementById('resubmitTextError').textContent = 'Min 10 chars required';
           document.getElementById('resubmitTextError').classList.remove('hidden');
           return;
         }
       }
       
-      // Confirm resubmission
-      if (!confirm('Are you sure you want to resubmit? This will replace your previous submission.')) {
-        return;
-      }
-      
-      // Prepare form data
       const formData = new FormData();
-      if (isFileUpload && fileInput.files[0]) {
+      if (isFileUpload) {
         formData.append('submission', fileInput.files[0]);
-      } else if (textInput.value) {
+      } else {
         formData.append('submission_text', textInput.value.trim());
       }
       
-      // Disable button and show loading
-      resubmitBtn.disabled = true;
-      resubmitBtn.innerHTML = '<span class="loading loading-spinner"></span> Resubmitting...';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Resubmitting...';
       
-      // Show progress bar for file uploads
-      const progressDiv = document.getElementById('resubmitUploadProgress');
+      // Progress Setup (Simplified)
       const progressBar = document.getElementById('resubmitUploadProgressBar');
-      const progressPercentage = document.getElementById('resubmitUploadPercentage');
-      const uploadedSizeSpan = document.getElementById('resubmitUploadedSize');
-      const totalSizeSpan = document.getElementById('resubmitTotalSize');
+      const progressDiv = document.getElementById('resubmitUploadProgress');
+      if (isFileUpload) progressDiv.classList.remove('hidden');
+
+      const xhr = new XMLHttpRequest();
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable && isFileUpload) {
+           const percent = Math.round((e.loaded / e.total) * 100);
+           progressBar.value = percent;
+           document.getElementById('resubmitUploadPercentage').textContent = percent + '%';
+        }
+      });
+      console.log('Test');
       
-      if (isFileUpload && fileInput.files[0]) {
-        progressDiv.classList.remove('hidden');
-        const fileSizeMB = (fileInput.files[0].size / (1024 * 1024)).toFixed(2);
-        totalSizeSpan.textContent = fileSizeMB + ' MB';
-      }
-      
-      try {
-        // Use XMLHttpRequest for upload progress tracking
-        const xhr = new XMLHttpRequest();
-        
-        // Track upload progress
-        xhr.upload.addEventListener('progress', (e) => {
-          if (e.lengthComputable) {
-            const percentComplete = Math.round((e.loaded / e.total) * 100);
-            progressBar.value = percentComplete;
-            progressPercentage.textContent = percentComplete + '%';
-            uploadedSizeSpan.textContent = (e.loaded / (1024 * 1024)).toFixed(2) + ' MB';
-          }
-        });
-        
-        // Handle completion
-        xhr.addEventListener('load', () => {
+      xhr.addEventListener('load', () => {
+         progressDiv.classList.add('hidden');
+         if (xhr.status === 200) {
+             try {
+                const data = JSON.parse(xhr.responseText);
+                if (data.success) window.location.reload();
+                else {
+                    errorMsg.textContent = data.message;
+                    errorDiv.classList.remove('hidden');
+                }
+             } catch(e) {
+                 errorMsg.textContent = 'Invalid response';
+                 errorDiv.classList.remove('hidden');
+             }
+         } else {
+             errorMsg.textContent = 'Server error';
+             errorDiv.classList.remove('hidden');
+         }
+         submitBtn.disabled = false;
+         submitBtn.textContent = 'Resubmit';
+      });
+
+      xhr.addEventListener('error', () => {
           progressDiv.classList.add('hidden');
-          
-          if (xhr.status === 200) {
-            const data = JSON.parse(xhr.responseText);
-            if (data.success) {
-              // Success - reload page
-              window.location.reload();
-            } else {
-              errorMsg.textContent = data.message || 'Failed to resubmit assignment';
-              errorDiv.classList.remove('hidden');
-              resubmitBtn.disabled = false;
-              resubmitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg> Resubmit Assignment';
-            }
-          } else {
-            errorMsg.textContent = 'Server error. Please try again.';
-            errorDiv.classList.remove('hidden');
-            resubmitBtn.disabled = false;
-            resubmitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg> Resubmit Assignment';
-          }
-        });
-        
-        // Handle errors
-        xhr.addEventListener('error', () => {
-          progressDiv.classList.add('hidden');
-          errorMsg.textContent = 'Network error. Please try again.';
+          errorMsg.textContent = 'Network error';
           errorDiv.classList.remove('hidden');
-          resubmitBtn.disabled = false;
-          resubmitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg> Resubmit Assignment';
-        });
-        
-        // Send the request
-        xhr.open('POST', '/student/assignments/<%= assignment.id %>/submit');
-        xhr.send(formData);
-        
-      } catch (error) {
-        progressDiv.classList.add('hidden');
-        errorMsg.textContent = 'Network error. Please try again.';
-        errorDiv.classList.remove('hidden');
-        resubmitBtn.disabled = false;
-        resubmitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg> Resubmit Assignment';
-      }
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Resubmit';
+      });
+      
+      xhr.open('POST', '/student/assignments/<%= assignment.id %>/submit');
+      xhr.send(formData);
     }
-
-    // Reset forms
-    function resetSubmitForm() {
-      document.getElementById('submitForm').reset();
-      document.getElementById('submitError').classList.add('hidden');
-      document.getElementById('fileError').classList.add('hidden');
-      document.getElementById('textError').classList.add('hidden');
-      switchSubmissionType('file');
-    }
-
-    function resetResubmitForm() {
-      document.getElementById('resubmitForm').reset();
-      document.getElementById('resubmitError').classList.add('hidden');
-      document.getElementById('resubmitFileError').classList.add('hidden');
-      document.getElementById('resubmitTextError').classList.add('hidden');
-      switchResubmissionType('file');
-    }
-
-    // Close modal functions
+    
     function closeSubmitModal() {
-      resetSubmitForm();
-      document.getElementById('submitModal').close();
+        document.getElementById('submitModal').close();
     }
-
     function closeResubmitModal() {
-      resetResubmitForm();
-      document.getElementById('resubmitModal').close();
+        document.getElementById('resubmitModal').close();
     }
   </script>
 

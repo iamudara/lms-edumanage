@@ -261,4 +261,9 @@
   .meta-text {
     @apply text-xs text-base-content opacity-60;
   }
+
+  /* Gradient Text */
+  .text-gradient-primary {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary font-extrabold;
+  }
 }

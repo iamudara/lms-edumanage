@@ -12,30 +12,31 @@
 <body class="bg-base-200 min-h-screen">
   <%- include('../shared/navbar') %>
 
-  <div class="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-7xl">
+  <div class="page-container">
     <!-- Page Header -->
-    <div class="mb-6 sm:mb-8">
+    <div class="page-header">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-base-content mb-2">
+          <h1 class="page-title text-gradient-primary">
             <i class="fas fa-graduation-cap mr-2"></i>
             <span class="hidden xs:inline">My </span>Grades & Submissions
           </h1>
-          <p class="text-sm sm:text-base text-base-content/70">
+          <p class="page-subtitle">
             View your assignment scores, submissions, and performance by semester.
           </p>
         </div>
-        <a href="/student/dashboard" class="btn btn-ghost w-full sm:w-auto" style="border-radius: 9999px;">
-          <i class="fas fa-arrow-left mr-2"></i>
-          Back to Dashboard
+        <a href="/student/dashboard" class="btn-glass-custom w-full sm:w-auto px-6">
+          <i class="fas fa-dashboard mr-2"></i>
+          Dashboard
         </a>
       </div>
     </div>
 
     <!-- Overall Statistics -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+    <!-- Overall Statistics -->
+    <div class="stats-grid mb-8">
       <!-- Total Courses -->
-      <div class="stats shadow bg-primary text-primary-content">
+      <div class="stats-card stat-card-gradient-primary text-primary-content">
         <div class="stat">
           <div class="stat-figure text-white/80">
             <i class="fas fa-book text-3xl"></i>
@@ -46,7 +47,7 @@
       </div>
 
       <!-- Total Submissions -->
-      <div class="stats shadow bg-info text-info-content">
+      <div class="stats-card stat-card-gradient-info text-info-content">
         <div class="stat">
           <div class="stat-figure text-white/80">
             <i class="fas fa-file-alt text-3xl"></i>
@@ -57,7 +58,7 @@
       </div>
 
       <!-- Graded Assignments -->
-      <div class="stats shadow bg-success text-success-content">
+      <div class="stats-card stat-card-gradient-accent text-success-content">
         <div class="stat">
           <div class="stat-figure text-white/80">
             <i class="fas fa-check-circle text-3xl"></i>
@@ -69,7 +70,7 @@
       </div>
 
       <!-- Pending Grading -->
-      <div class="stats shadow bg-warning text-warning-content">
+      <div class="stats-card stat-card-gradient-warning text-warning-content">
         <div class="stat">
           <div class="stat-figure text-white/80">
             <i class="fas fa-clock text-3xl"></i>
@@ -83,7 +84,8 @@
 
     <% if (sortedSemesters.length === 0) { %>
       <!-- No Grades Yet -->
-      <div class="card bg-base-100 shadow-lg">
+      <!-- No Grades Yet -->
+      <div class="card-section">
         <div class="card-body text-center py-12 sm:py-16">
           <div class="text-6xl sm:text-8xl mb-4"><i class="fas fa-chart-bar text-base-content/20"></i></div>
           <h3 class="text-lg sm:text-xl font-semibold text-base-content/70 mb-2">No Grades Yet</h3>
@@ -96,7 +98,8 @@
       </div>
     <% } else { %>
       <!-- Semester Filter -->
-      <div class="card bg-base-100 shadow-xl mb-6">
+      <!-- Semester Filter -->
+      <div class="card-section mb-6">
         <div class="card-body p-4 sm:py-4">
           <div class="form-control w-full">
             <label class="label py-1">
@@ -122,7 +125,8 @@
         <div class="semester-content <%= semesterIndex === 0 ? '' : 'hidden' %>" data-semester="<%= semester %>">
           
           <!-- Semester Stats -->
-          <div class="card bg-gradient-to-r from-primary to-secondary text-primary-content mb-6">
+          <!-- Semester Stats -->
+          <div class="card stats-card stat-card-gradient-primary text-primary-content mb-6">
             <div class="card-body">
               <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
@@ -148,7 +152,7 @@
           <!-- Courses in this Semester -->
           <div class="space-y-6">
             <% semData.courses.forEach(courseData => { %>
-              <div class="card bg-base-100 shadow-lg">
+              <div class="card-section">
                 <div class="card-body">
                   <!-- Course Header -->
                   <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
@@ -410,9 +414,10 @@
     <% } %>
 
     <!-- Score Guide -->
-    <div class="card bg-base-100 shadow-lg mt-8">
+    <!-- Score Guide -->
+    <div class="card-section mt-8">
       <div class="card-body">
-        <h3 class="card-title text-lg mb-4">
+        <h3 class="section-title mb-4">
           <i class="fas fa-info-circle mr-2"></i>
           Score Guide
         </h3>
