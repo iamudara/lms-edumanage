@@ -133,12 +133,12 @@
         <p class="text-sm sm:text-base text-base-content/70">Manage assignments across all your courses</p>
       </div>
       <% if (courses.length > 0) { %>
-        <div class="dropdown dropdown-end w-full sm:w-auto">
-          <label tabindex="0" class="btn-global-primary w-full sm:w-auto flex items-center justify-center">
+        <details class="dropdown dropdown-end w-full sm:w-auto" id="createAssignmentDropdown">
+          <summary class="btn-global-primary w-full sm:w-auto flex items-center justify-center cursor-pointer list-none">
             <i class="fas fa-plus mr-2"></i>Create Assignment
             <i class="fas fa-chevron-down ml-2"></i>
-          </label>
-          <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-64 max-h-96 overflow-y-auto">
+          </summary>
+          <ul class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-64 max-h-96 overflow-y-auto mt-2">
             <li class="menu-title"><span>Select Course</span></li>
             <% courses.forEach(course => { %>
               <li>
@@ -149,21 +149,30 @@
               </li>
             <% }); %>
           </ul>
-        </div>
+        </details>
+        <script>
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                const dropdown = document.getElementById('createAssignmentDropdown');
+                if (dropdown && dropdown.hasAttribute('open') && !dropdown.contains(event.target)) {
+                    dropdown.removeAttribute('open');
+                }
+            });
+        </script>
       <% } %>
     </div>
 
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
       <!-- Total Assignments -->
-      <div class="stats-card stats-card-primary">
+      <div class="stats-card stat-card-gradient-primary">
         <div class="stat">
           <div class="stat-figure text-primary-content/50">
-            <i class="fas fa-clipboard-list text-3xl sm:text-4xl"></i>
+            <i class="fas fa-clipboard-list text-3xl sm:text-4xl" style="color: rgba(255,255,255,0.6);"></i>
           </div>
-          <div class="stat-title text-primary-content/80">Total Assignments</div>
-          <div class="stat-value"><%= stats.total %></div>
-          <div class="stat-desc text-primary-content/60">Across all courses</div>
+          <div class="stat-title text-white/80">Total Assignments</div>
+          <div class="stat-value text-white"><%= stats.total %></div>
+          <div class="stat-desc text-white/60">Across all courses</div>
         </div>
       </div>
 
@@ -406,7 +415,7 @@
                           <i class="fas fa-eye text-xs"></i>
                         </a>
                         <a href="/teacher/assignments/<%= assignment.id %>/edit" 
-                           class="btn btn-xs sm:btn-sm btn-ghost" title="Edit Assignment">
+                           class="btn-glass-custom btn-xs sm:btn-sm flex items-center justify-center" title="Edit Assignment">
                           <i class="fas fa-edit text-xs"></i>
                         </a>
                         <button onclick="deleteAssignment('<%= assignment.id %>', '<%= safeTitle %>')" 

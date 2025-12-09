@@ -39,17 +39,17 @@
     <div class="navbar-center hidden lg:flex">
         <div class="flex items-center gap-2">
             <% if (user.role === 'admin') { %>
-                <a href="/admin/dashboard" class="<%= isActive('/admin/dashboard') ? 'active-glass' : '' %> btn-glass-custom"><i class="fas fa-chart-line mr-2"></i>Dashboard</a>
-                <a href="/admin/tools" class="<%= isActive('/admin/tools') ? 'active-glass' : '' %> btn-glass-custom"><i class="fas fa-tools mr-2"></i>Bulk Operations</a>
-                <a href="/admin" class="<%= currentPath === '/admin' ? 'active-glass' : '' %> btn-glass-custom"><i class="fas fa-cog mr-2"></i>AdminJS</a>
+                <a href="/admin/dashboard" class="<%= isActive('/admin/dashboard') ? 'active-glass' : '' %> btn-glass-custom !rounded-full"><i class="fas fa-chart-line mr-2"></i>Dashboard</a>
+                <a href="/admin/tools" class="<%= isActive('/admin/tools') ? 'active-glass' : '' %> btn-glass-custom !rounded-full"><i class="fas fa-tools mr-2"></i>Bulk Operations</a>
+                <a href="/admin" class="<%= currentPath === '/admin' ? 'active-glass' : '' %> btn-glass-custom !rounded-full"><i class="fas fa-cog mr-2"></i>AdminJS</a>
             <% } else if (user.role === 'teacher') { %>
-                <a href="/teacher/dashboard" class="<%= isActive('/teacher/dashboard') ? 'active-glass' : '' %> btn-glass-custom"><i class="fas fa-chart-line mr-2"></i>Dashboard</a>
-                <a href="/teacher/courses" class="<%= isActive('/teacher/courses') ? 'active-glass' : '' %> btn-glass-custom"><i class="fas fa-book mr-2"></i>Courses</a>
-                <a href="/teacher/assignments" class="<%= isActive('/teacher/assignments') ? 'active-glass' : '' %> btn-glass-custom"><i class="fas fa-clipboard-list mr-2"></i>Assignments</a>
+                <a href="/teacher/dashboard" class="<%= isActive('/teacher/dashboard') ? 'active-glass' : '' %> btn-glass-custom !rounded-full"><i class="fas fa-chart-line mr-2"></i>Dashboard</a>
+                <a href="/teacher/courses" class="<%= isActive('/teacher/courses') ? 'active-glass' : '' %> btn-glass-custom !rounded-full"><i class="fas fa-book mr-2"></i>Courses</a>
+                <a href="/teacher/assignments" class="<%= isActive('/teacher/assignments') ? 'active-glass' : '' %> btn-glass-custom !rounded-full"><i class="fas fa-clipboard-list mr-2"></i>Assignments</a>
             <% } else if (user.role === 'student') { %>
-                <a href="/student/dashboard" class="<%= isActive('/student/dashboard') ? 'active-glass' : '' %> btn-glass-custom"><i class="fas fa-chart-line mr-2"></i>Dashboard</a>
-                <a href="/student/courses" class="<%= isActive('/student/courses') ? 'active-glass' : '' %> btn-glass-custom"><i class="fas fa-book mr-2"></i>Courses</a>
-                <a href="/student/grades" class="<%= isActive('/student/grades') ? 'active-glass' : '' %> btn-glass-custom"><i class="fas fa-graduation-cap mr-2"></i>Grades</a>
+                <a href="/student/dashboard" class="<%= isActive('/student/dashboard') ? 'active-glass' : '' %> btn-glass-custom !rounded-full"><i class="fas fa-chart-line mr-2"></i>Dashboard</a>
+                <a href="/student/courses" class="<%= isActive('/student/courses') ? 'active-glass' : '' %> btn-glass-custom !rounded-full"><i class="fas fa-book mr-2"></i>Courses</a>
+                <a href="/student/grades" class="<%= isActive('/student/grades') ? 'active-glass' : '' %> btn-glass-custom !rounded-full"><i class="fas fa-graduation-cap mr-2"></i>Grades</a>
             <% } %>
         </div>
     </div>
@@ -93,13 +93,13 @@
                 </li>
                 <div class="divider my-0"></div>
                 <li class="mb-2">
-                    <a href="/auth/change-password" class="navbar-change-password flex items-center gap-3 py-3 px-4 rounded-lg">
+                    <a href="/auth/change-password" class="navbar-change-password flex items-center gap-3 py-3 px-4 rounded-lg bg-primary text-white hover:bg-primary-focus transition-colors">
                         <i class="fas fa-key text-base w-5"></i>
                         <span>Change Password</span>
                     </a>
                 </li>
                 <li>
-                    <button type="submit" onclick="document.getElementById('logoutForm').submit(); return false;" class="navbar-logout flex items-center gap-3 py-3 px-4 rounded-lg w-full text-left bg-transparent border-0 cursor-pointer" style="font-size: inherit; font-weight: inherit; font-family: inherit;">
+                    <button type="submit" onclick="document.getElementById('logoutForm').submit(); return false;" class="navbar-logout flex items-center gap-3 py-3 px-4 rounded-lg w-full text-left bg-error text-white hover:bg-error-focus border-0 cursor-pointer transition-colors" style="font-size: inherit; font-weight: inherit; font-family: inherit;">
                         <i class="fas fa-sign-out-alt text-base w-5"></i>
                         <span>Logout</span>
                     </button>

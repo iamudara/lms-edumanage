@@ -63,7 +63,19 @@
   }
 
   .stat-card-gradient-info {
-    @apply bg-gradient-to-br from-[#34d399] to-[#059669] text-white border-none;
+    @apply bg-gradient-to-br from-[#3b82f6] to-[#2563eb] text-white border-none;
+  }
+
+  .stat-card-gradient-success {
+    @apply bg-gradient-to-br from-[#22c55e] to-[#15803d] text-white border-none;
+  }
+
+  .stat-card-gradient-warning {
+    @apply bg-gradient-to-br from-[#f59e0b] to-[#b45309] text-white border-none;
+  }
+
+  .stat-card-gradient-error {
+    @apply bg-gradient-to-br from-[#ef4444] to-[#b91c1c] text-white border-none;
   }
 
   /* Stat Content */
