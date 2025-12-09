@@ -51,19 +51,19 @@
 
   /* Gradients for Stats */
   .stat-card-gradient-primary {
-    @apply bg-gradient-to-br from-primary to-primary text-primary-content border-primary;
+    @apply bg-gradient-to-br from-[#3b82f6] to-[#1d4ed8] text-white border-none;
   }
 
   .stat-card-gradient-secondary {
-    @apply bg-gradient-to-br from-secondary to-secondary text-secondary-content border-secondary;
+    @apply bg-gradient-to-br from-[#4b5563] to-[#1f2937] text-white border-none;
   }
 
   .stat-card-gradient-accent {
-    @apply bg-gradient-to-br from-accent to-accent text-accent-content border-accent;
+    @apply bg-gradient-to-br from-[#34d399] to-[#059669] text-white border-none;
   }
 
   .stat-card-gradient-info {
-    @apply bg-gradient-to-br from-info to-info text-info-content border-info;
+    @apply bg-gradient-to-br from-[#34d399] to-[#059669] text-white border-none;
   }
 
   /* Stat Content */
@@ -89,12 +89,11 @@
   }
 
   .course-card {
-    @apply card bg-base-100 hover:shadow-lg transition-all duration-200 cursor-pointer border border-transparent h-full;
+    @apply card bg-base-200 dark:bg-base-300 hover:shadow-xl hover:scale-[1.02] transition-all duration-200 cursor-pointer border border-base-200 dark:border-none h-full;
   }
   
-  .course-card:hover {
-    @apply border-primary;
-    border-color: oklch(var(--p) / 0.5);
+  .activity-card {
+    @apply card bg-base-200 dark:bg-base-300 hover:shadow-xl hover:scale-[1.02] transition-all duration-200 border border-base-200 dark:border-none;
   }
 
   .course-card-body {
@@ -127,7 +126,7 @@
 
   /* Actions */
   .action-buttons-grid {
-    @apply grid grid-cols-3 gap-2 mt-auto;
+    @apply flex flex-wrap gap-2 mt-auto justify-start;
   }
 
   /* Badges */
@@ -149,30 +148,76 @@
   }
 
   .btn-global-primary {
-    @apply btn btn-primary text-white hover:brightness-90 border-none;
+    @apply btn btn-primary text-white hover:brightness-90 border-none px-6;
   }
 
   .btn-global-secondary {
-    @apply btn btn-secondary text-white hover:brightness-90 border-none;
+    @apply btn btn-secondary text-white hover:brightness-90 border-none px-6;
   }
 
   .btn-global-accent {
-    @apply btn btn-accent text-white hover:brightness-90 border-none;
+    @apply btn btn-accent text-white hover:brightness-90 border-none px-6;
   }
 
   .btn-global-success {
-    @apply btn btn-success text-white hover:brightness-90 border-none;
+    @apply btn btn-success text-white hover:brightness-90 border-none px-6;
   }
 
   .btn-global-danger {
-    @apply btn btn-error text-white hover:bg-red-700 border-none;
+    @apply btn btn-error text-white hover:bg-red-700 border-none px-6;
+  }
+
+  /* Liquid Glass Button */
+  .btn-glass-custom {
+    @apply btn btn-ghost normal-case text-base font-medium transition-all duration-300 relative overflow-hidden;
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    
+    /* Light Mode Adaptation (Darker tints for visibility on white) */
+    background-color: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    color: currentColor;
+  }
+
+  .btn-glass-custom:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  /* Active State */
+  .active-glass {
+    @apply font-bold shadow-md;
+    background-color: rgba(0, 0, 0, 0.1) !important;
+    border-color: rgba(0, 0, 0, 0.2) !important;
+  }
+
+  /* Dark Mode - Matching the requested snippet exactly */
+  .dark .btn-glass-custom {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+  }
+
+  .dark .btn-glass-custom:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .dark .active-glass {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
   }
 
   /* Filter Tabs */
   .filter-tabs-container {
     @apply flex gap-2 sm:gap-3 mb-6 mt-6 sm:mt-8 overflow-x-auto pb-2;
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
   .filter-tabs-container::-webkit-scrollbar {
     display: none;

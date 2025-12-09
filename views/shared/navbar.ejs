@@ -37,21 +37,21 @@
     
     <!-- Desktop Menu -->
     <div class="navbar-center hidden lg:flex">
-        <ul class="menu menu-horizontal px-1">
+        <div class="flex items-center gap-2">
             <% if (user.role === 'admin') { %>
-                <li><a href="/admin/dashboard" class="<%= isActive('/admin/dashboard') ? 'active' : '' %>"><i class="fas fa-chart-line mr-2"></i>Dashboard</a></li>
-                <li><a href="/admin/tools" class="<%= isActive('/admin/tools') ? 'active' : '' %>"><i class="fas fa-tools mr-2"></i>Bulk Operations</a></li>
-                <li><a href="/admin" class="<%= currentPath === '/admin' ? 'active' : '' %>"><i class="fas fa-cog mr-2"></i>AdminJS</a></li>
+                <a href="/admin/dashboard" class="<%= isActive('/admin/dashboard') ? 'active-glass' : '' %> btn-glass-custom"><i class="fas fa-chart-line mr-2"></i>Dashboard</a>
+                <a href="/admin/tools" class="<%= isActive('/admin/tools') ? 'active-glass' : '' %> btn-glass-custom"><i class="fas fa-tools mr-2"></i>Bulk Operations</a>
+                <a href="/admin" class="<%= currentPath === '/admin' ? 'active-glass' : '' %> btn-glass-custom"><i class="fas fa-cog mr-2"></i>AdminJS</a>
             <% } else if (user.role === 'teacher') { %>
-                <li><a href="/teacher/dashboard" class="<%= isActive('/teacher/dashboard') ? 'active' : '' %>"><i class="fas fa-chart-line mr-2"></i>Dashboard</a></li>
-                <li><a href="/teacher/courses" class="<%= isActive('/teacher/courses') ? 'active' : '' %>"><i class="fas fa-book mr-2"></i>Courses</a></li>
-                <li><a href="/teacher/assignments" class="<%= isActive('/teacher/assignments') ? 'active' : '' %>"><i class="fas fa-clipboard-list mr-2"></i>Assignments</a></li>
+                <a href="/teacher/dashboard" class="<%= isActive('/teacher/dashboard') ? 'active-glass' : '' %> btn-glass-custom"><i class="fas fa-chart-line mr-2"></i>Dashboard</a>
+                <a href="/teacher/courses" class="<%= isActive('/teacher/courses') ? 'active-glass' : '' %> btn-glass-custom"><i class="fas fa-book mr-2"></i>Courses</a>
+                <a href="/teacher/assignments" class="<%= isActive('/teacher/assignments') ? 'active-glass' : '' %> btn-glass-custom"><i class="fas fa-clipboard-list mr-2"></i>Assignments</a>
             <% } else if (user.role === 'student') { %>
-                <li><a href="/student/dashboard" class="<%= isActive('/student/dashboard') ? 'active' : '' %>"><i class="fas fa-chart-line mr-2"></i>Dashboard</a></li>
-                <li><a href="/student/courses" class="<%= isActive('/student/courses') ? 'active' : '' %>"><i class="fas fa-book mr-2"></i>Courses</a></li>
-                <li><a href="/student/grades" class="<%= isActive('/student/grades') ? 'active' : '' %>"><i class="fas fa-graduation-cap mr-2"></i>Grades</a></li>
+                <a href="/student/dashboard" class="<%= isActive('/student/dashboard') ? 'active-glass' : '' %> btn-glass-custom"><i class="fas fa-chart-line mr-2"></i>Dashboard</a>
+                <a href="/student/courses" class="<%= isActive('/student/courses') ? 'active-glass' : '' %> btn-glass-custom"><i class="fas fa-book mr-2"></i>Courses</a>
+                <a href="/student/grades" class="<%= isActive('/student/grades') ? 'active-glass' : '' %> btn-glass-custom"><i class="fas fa-graduation-cap mr-2"></i>Grades</a>
             <% } %>
-        </ul>
+        </div>
     </div>
     
     <div class="navbar-end gap-2">
@@ -67,7 +67,7 @@
         
         <!-- User Avatar -->
         <div class="dropdown dropdown-end">
-            <div tabindex="0" role="button" class="avatar cursor-pointer">
+            <div tabindex="0" role="button" class="avatar placeholder cursor-pointer">
                 <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background: linear-gradient(135deg, #4b6bfb 0%, #3b5bdb 100%);">
                     <span class="text-white text-base font-semibold">
                         <%= user.full_name.charAt(0).toUpperCase() %>

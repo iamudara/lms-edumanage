@@ -212,10 +212,10 @@
               <% } else { %>
               <div class="space-y-3">
                 <% recentSubmissions.forEach(submission => { %>
-                <div class="card bg-base-200 hover:bg-base-300 transition-colors">
+                <div class="activity-card">
                   <div class="card-body p-4">
                     <div class="flex items-start gap-3">
-                      <div class="avatar">
+                      <div class="avatar placeholder">
                         <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
                           <span class="text-primary-content text-sm font-semibold">
                             <%= submission.student.full_name.charAt(0) %>
@@ -346,13 +346,13 @@
                       <div class="flex gap-2">
                         <a
                           href="/teacher/assignments/<%= assignment.id %>/submissions"
-                          class="btn-global-primary btn-xs sm:btn-sm"
+                          class="btn-glass-custom btn-xs sm:btn-sm"
                         >
                           <i class="fas fa-eye mr-1"></i>Submissions
                         </a>
                         <a
                           href="/teacher/assignments/<%= assignment.id %>/edit"
-                          class="btn btn-xs btn-ghost"
+                          class="btn-glass-custom btn-xs sm:btn-sm"
                         >
                           <i class="fas fa-edit"></i>
                         </a>
