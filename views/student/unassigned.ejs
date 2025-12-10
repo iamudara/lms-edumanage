@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - LMS EduManage</title>
+  <link href="/css/output.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+</head>
+<body class="bg-base-200 min-h-screen">
+  
+  <%- include('../shared/navbar') %>
+
+  <div class="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[80vh]">
+    
+    <div class="text-center max-w-md">
+        <div class="mb-6">
+            <i class="fas fa-user-clock text-9xl text-base-content/20"></i>
+        </div>
+        
+        <h1 class="text-3xl font-bold mb-4">No Batch Assigned</h1>
+        
+        <p class="text-lg opacity-70 mb-8">
+            You are currently not assigned to any batch. Please contact your administrator to get assigned to a batch and access your courses.
+        </p>
+        
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+             <form id="logoutFormErr" action="/auth/logout" method="POST" class="inline">
+                <button type="submit" class="btn btn-error btn-wide">
+                    <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                </button>
+            </form>
+        </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

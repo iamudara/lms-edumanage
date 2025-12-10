@@ -104,7 +104,10 @@ export const showDashboard = async (req, res) => {
 
     // Check if student has a batch assigned
     if (!batchId) {
-      return res.status(400).send('You are not assigned to any batch. Please contact the administrator.');
+      return res.render('student/unassigned', {
+        title: 'No Batch Assigned',
+        user: req.user
+      });
     }
 
     // Get ALL enrolled courses (via batch enrollments)
@@ -318,7 +321,7 @@ export const getAllCourses = async (req, res) => {
 
     // Check if student has a batch assigned
     if (!batchId) {
-      return res.status(400).send('You are not assigned to any batch. Please contact the administrator.');
+      return res.redirect('/student/dashboard');
     }
 
     // Get enrolled courses (via batch enrollments)
@@ -386,7 +389,7 @@ export const getCourseView = async (req, res) => {
 
     // Check if student has a batch assigned
     if (!batchId) {
-      return res.status(400).send('You are not assigned to any batch. Please contact the administrator.');
+      return res.redirect('/student/dashboard');
     }
 
     // Get course with all details
@@ -517,7 +520,7 @@ export const getAssignmentDetail = async (req, res) => {
 
     // Check if student has a batch assigned
     if (!batchId) {
-      return res.status(400).send('You are not assigned to any batch. Please contact the administrator.');
+      return res.redirect('/student/dashboard');
     }
 
     // Get assignment with course and submission details
@@ -636,9 +639,10 @@ export const submitAssignment = async (req, res) => {
 
     // Check if student has a batch assigned
     if (!batchId) {
-      return res.status(400).json({
+      return res.json({
         success: false,
-        message: 'You are not assigned to any batch. Please contact the administrator.'
+        message: 'You are not assigned to any batch. Redirecting...',
+        redirectUrl: '/student/dashboard'
       });
     }
 
