@@ -282,11 +282,7 @@
                     <!-- Actions -->
                     <div class="flex flex-col gap-2">
                       <a href="/student/assignments/<%= assignment.id %>" class="btn btn-primary btn-sm btn-glass-custom">
-                        <% if (submission) { %>
-                          View Submission
-                        <% } else { %>
-                          View Details
-                        <% } %>
+                        View Details
                       </a>
                       <% if (submission && submission.marks !== null && submission.feedback) { %>
                         <button class="btn btn-ghost btn-sm" onclick="viewFeedback_<%= assignment.id %>.showModal()">

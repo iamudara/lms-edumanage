@@ -596,6 +596,9 @@ export const getAssignmentDetail = async (req, res) => {
     // Determine if student can submit
     const canSubmit = deadlineStatus.canSubmit && (!submission || submission.marks === null);
     const canResubmit = deadlineStatus.canSubmit && submission && submission.marks === null;
+    
+    // Check if submission was late
+    const isLate = submission && new Date(submission.submitted_at) > new Date(assignment.deadline);
 
     res.render('student/assignment', {
       title: assignment.title,
@@ -609,7 +612,8 @@ export const getAssignmentDetail = async (req, res) => {
         isUrgent: deadlineStatus.isUrgent
       },
       canSubmit,
-      canResubmit
+      canResubmit,
+      isLate
     });
 
   } catch (error) {

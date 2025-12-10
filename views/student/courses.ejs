@@ -123,8 +123,8 @@
                   
                   <!-- Footer -->
                   <div class="mt-4 pt-4 border-t border-base-200 flex items-center text-xs text-base-content/50">
-                    <i class="far fa-clock mr-1"></i>
-                    Created <%= new Date(course.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                    <i class="fas fa-user-tie mr-1"></i>
+                    Instructor: <%= course.courseTeachers?.find(ct => ct.is_primary)?.teacher?.full_name || 'Unknown' %>
                   </div>
                 </div>
               </div>

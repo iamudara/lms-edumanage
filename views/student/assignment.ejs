@@ -111,12 +111,17 @@
                           </span>
                         </td>
                         <td>
-                          <a href="<%= material.file_path %>" target="_blank" class="btn btn-sm btn-ghost btn-glass-custom">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                            Download
-                          </a>
+                          <% if (material.type === 'file') { %>
+                            <a href="<%= material.url %>" target="_blank" class="btn btn-sm btn-primary btn-glass-custom" download>
+                              <i class="fas fa-download mr-1"></i>
+                              Download
+                            </a>
+                          <% } else { %>
+                            <a href="<%= material.url %>" target="_blank" class="btn btn-sm btn-info btn-glass-custom">
+                              <i class="fas fa-external-link-alt mr-1"></i>
+                              Open Link
+                            </a>
+                          <% } %>
                         </td>
                       </tr>
                     <% }) %>
