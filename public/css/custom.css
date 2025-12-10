@@ -559,3 +559,25 @@ textarea.success {
 .modal {
     z-index: 999;
 }
+
+/* =========================
+   Button Width Constraints
+   ========================= */
+
+@media (min-width: 1024px) {
+    /* Prevent buttons from stretching too wide on desktop */
+    .btn:not(.btn-block):not(.w-full) {
+        max-width: 350px;
+        width: fit-content;
+    }
+}
+
+/* =========================
+   Global Badge/Tag Styling
+   ========================= */
+.badge:not(.badge-circle):not(.badge-square) {
+    height: auto !important;
+    padding-top: 0.125rem !important; /* py-0.5 */
+    padding-bottom: 0.125rem !important;
+    line-height: 1.25 !important;
+}
