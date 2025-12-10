@@ -18,11 +18,11 @@ export const showLoginPage = (req, res) => {
   }
 
   // Get flash messages
-  const error = req.session.error_msg || null;
+  // Note: error_msg is already handled/cleared by global middleware in server.js and put into res.locals
+  const error = res.locals.error_msg || null;
   const info = req.session.info_msg || null;
 
-  // Clear flash messages after retrieving
-  req.session.error_msg = null;
+  // Clear info message manualy as it's not in the global middleware
   req.session.info_msg = null;
 
   // Render login page
@@ -128,13 +128,11 @@ export const logout = (req, res, next) => {
  * GET /auth/change-password
  */
 export const showChangePasswordPage = (req, res) => {
-  // Get flash messages
-  const error = req.session.error_msg || null;
-  const success = req.session.success_msg || null;
+  // Get flash messages from res.locals (populated by server.js middleware)
+  const error = res.locals.error_msg || null;
+  const success = res.locals.success_msg || null;
 
-  // Clear flash messages after retrieving
-  req.session.error_msg = null;
-  req.session.success_msg = null;
+  // Session messages are already cleared by middleware
 
   res.render('auth/change-password', {
     title: 'Change Password - LMS EduManage',
