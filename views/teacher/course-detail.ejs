@@ -160,14 +160,14 @@
                           <% } %>
                         </div>
 
-                        <div class="flex flex-row sm:flex-col gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-                          <a href="/teacher/assignments/<%= assignment.id %>/submissions" class="btn btn-sm btn-primary rounded-full shadow-sm hover:shadow-md border-none flex-1 sm:flex-none w-full sm:w-24">
+                        <div class="flex flex-col gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                          <a href="/teacher/assignments/<%= assignment.id %>/submissions" class="btn btn-sm btn-primary rounded-full shadow-sm hover:shadow-md border-none flex-1 sm:flex-none w-full sm:w-32 whitespace-nowrap">
                             <i class="fas fa-eye"></i> View
                           </a>
-                          <a href="/teacher/assignments/<%= assignment.id %>/edit" class="btn btn-sm btn-info text-white rounded-full shadow-sm hover:shadow-md border-none flex-1 sm:flex-none w-full sm:w-24">
+                          <a href="/teacher/assignments/<%= assignment.id %>/edit" class="btn btn-sm btn-info text-white rounded-full shadow-sm hover:shadow-md border-none flex-1 sm:flex-none w-full sm:w-32 whitespace-nowrap">
                             <i class="fas fa-edit"></i> Edit
                           </a>
-                          <button onclick="deleteAssignment('<%= assignment.id %>', '<%= assignment.title %>')" class="btn btn-sm btn-error text-white rounded-full shadow-sm hover:shadow-md border-none flex-1 sm:flex-none w-full sm:w-24">
+                          <button onclick="deleteAssignment('<%= assignment.id %>', '<%= assignment.title %>')" class="btn btn-sm btn-error text-white rounded-full shadow-sm hover:shadow-md border-none flex-1 sm:flex-none w-full sm:w-32 whitespace-nowrap">
                             <i class="fas fa-trash"></i> Delete
                           </button>
                         </div>
