@@ -856,10 +856,16 @@ export const showEditAssignment = async (req, res) => {
 
     // Get assignment with course details
     const assignment = await Assignment.findByPk(assignmentId, {
-      include: [{
-        model: Course,
-        as: 'course'
-      }]
+      include: [
+        {
+          model: Course,
+          as: 'course'
+        },
+        {
+          model: AssignmentMaterial,
+          as: 'materials'
+        }
+      ]
     });
 
     // Check if assignment exists
