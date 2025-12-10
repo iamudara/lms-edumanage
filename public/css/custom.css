@@ -581,3 +581,33 @@ textarea.success {
     padding-bottom: 0.125rem !important;
     line-height: 1.25 !important;
 }
+
+/* =========================
+   Button Loading States
+   ========================= */
+.btn {
+    position: relative; /* Ensure we can position loader absolute */
+    transition: all 0.2s ease;
+}
+
+.btn-loading {
+    color: transparent !important; /* Hide text but keep spacing */
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.btn-loading .loading-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: currentColor; /* Use button text color (usually white for primary) */
+}
+
+/* Force spinner color if needed, though currentColor is usually best */
+.btn-primary.btn-loading .loading-overlay {
+    color: white;
+}

@@ -566,7 +566,26 @@
       // Show progress
       progressDiv.classList.remove('hidden');
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span class="loading loading-spinner"></span> Uploading...';
+      
+      // New CSS-based loading state
+      const originalBtnContent = submitBtn.innerHTML;
+      submitBtn.classList.add('btn-loading');
+      
+      // Ensure specific spinner format matches new CSS expectations if needed
+      // But since we are using .btn-loading class which hides text, we just need to append/ensure loader exists
+      // However, for this specific button that might not have the pre-baked HTML structure like login, 
+      // we can do a temporary structure injection or assume we updated the button HTML too.
+      // Let's UPDATE THE BUTTON HTML TO MATCH THE STYLE first in a separate View update, 
+      // OR specifically inject the overlay here.
+      
+      // Robust approach: Add overlay if missing
+      if (!submitBtn.querySelector('.loading-overlay')) {
+          const overlay = document.createElement('div');
+          overlay.className = 'loading-overlay';
+          overlay.innerHTML = '<span class="loading loading-spinner"></span>';
+          submitBtn.appendChild(overlay);
+          // Important: custom.css handles the positioning
+      }
       
       const fileSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
       totalSizeSpan.textContent = fileSizeMB + ' MB';
@@ -598,7 +617,9 @@
         } else {
           progressDiv.classList.add('hidden');
           submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Create Assignment';
+          submitBtn.classList.remove('btn-loading'); // Remove loading class
+          if(submitBtn.querySelector('.loading-overlay')) submitBtn.querySelector('.loading-overlay').remove(); // Cleanup
+          
           showToast('Error uploading files. Please try again.', 'error');
         }
       });
@@ -606,7 +627,9 @@
       xhr.addEventListener('error', () => {
         progressDiv.classList.add('hidden');
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Create Assignment';
+        submitBtn.classList.remove('btn-loading'); // Remove loading class
+        if(submitBtn.querySelector('.loading-overlay')) submitBtn.querySelector('.loading-overlay').remove(); // Cleanup
+        
         showToast('Network error. Please check your connection and try again.', 'error');
       });
       

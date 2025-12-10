@@ -87,11 +87,30 @@
                     </div>
 
                     <!-- Submit Button -->
-                    <button type="submit" class="btn btn-primary w-full" onclick="this.disabled=true; this.innerHTML='<span class=\'loading loading-spinner\'></span> Signing In...'; this.form.submit();">
-                        <i class="fas fa-sign-in-alt"></i>
-                        Sign In
+                    <button type="submit" class="btn btn-primary w-full transition-all duration-200" id="loginBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Sign In
+                        </span>
+                        <div class="loading-overlay hidden">
+                            <span class="loading loading-spinner loading-md"></span>
+                        </div>
                     </button>
                 </form>
+
+                <script>
+                    document.querySelector('form').addEventListener('submit', function(e) {
+                        const btn = document.getElementById('loginBtn');
+                        const btnText = btn.querySelector('.btn-text');
+                        const loader = btn.querySelector('.loading-overlay');
+                        
+                        // Add loading state
+                        btn.classList.add('btn-loading');
+                        btn.disabled = true;
+                        
+                        // Explicitly toggle visibility classes if CSS opacity trick isn't enough for clean UI
+                        loader.classList.remove('hidden');
+                    });
+                </script>
 
                 <!-- Test Credentials (Development Only) -->
                 <% if (process.env.NODE_ENV === 'development') { %>
