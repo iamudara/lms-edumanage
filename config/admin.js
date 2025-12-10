@@ -57,8 +57,10 @@ const adminJs = new AdminJS({
   },
   branding: {
     companyName: 'LMS EduManage',
-    logo: false,
     softwareBrothers: false,
+  },
+  assets: {
+    scripts: ['/js/admin-custom.js']
   },
   locale: {
     language: 'en',

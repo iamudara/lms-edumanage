@@ -1,5 +1,6 @@
 import { Assignment, AssignmentMaterial, Submission } from '../models/index.js';
 import { deleteCloudinaryFile } from '../config/cloudinary.js';
+import { ValidationError } from 'adminjs';
 
 export const AssignmentResource = {
   resource: Assignment,
@@ -11,6 +12,21 @@ export const AssignmentResource = {
         before: async (request, context) => {
           if (request.method === 'post') {
             const assignmentId = context.record.id();
+
+            // Check for submissions
+            const submissionCount = await Submission.count({ where: { assignment_id: assignmentId } });
+            if (submissionCount > 0) {
+              throw new ValidationError(
+                {
+                  base: {
+                    message: 'validation error'
+                  }
+                },
+                {
+                  message: 'You cant delete this assignment because it has submissions associated with it'
+                }
+              );
+            }
             
             // Get all assignment materials to delete from Cloudinary
             const materials = await AssignmentMaterial.findAll({
@@ -49,7 +65,7 @@ export const AssignmentResource = {
           
           return request;
         },
-        guard: 'Are you sure you want to delete this assignment? This will also delete all assignment materials and their files from Cloudinary. This action cannot be undone!           IF have any submissions associated with this assignment, this action will fail!',
+        guard: 'Are you sure you want to delete this assignment? This will also delete all assignment materials and their files from Cloudinary. This action cannot be undone! ',
       }
     }
   }
