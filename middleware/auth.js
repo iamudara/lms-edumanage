@@ -47,11 +47,20 @@ export const isAuthenticated = async (req, res, next) => {
  * Check if user has admin role
  * Used to protect admin-only routes (AdminJS, user management, bulk operations)
  */
+// ... (isAuthenticated function remains unchanged)
+
+/**
+ * Check if user has admin role
+ * Used to protect admin-only routes (AdminJS, user management, bulk operations)
+ */
 export const isAdmin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     return next();
   }
-  res.status(403).send('Access denied: Admin privileges required');
+  res.status(403).render('error/403', {
+    message: 'Access denied: Admin privileges required',
+    user: req.user // Pass user for navbar logic
+  });
 };
 
 /**
@@ -62,7 +71,10 @@ export const isTeacher = (req, res, next) => {
   if (req.user && req.user.role === 'teacher') {
     return next();
   }
-  res.status(403).send('Access denied: Teacher privileges required');
+  res.status(403).render('error/403', {
+    message: 'Access denied: Teacher privileges required',
+    user: req.user
+  });
 };
 
 /**
@@ -73,7 +85,10 @@ export const isStudent = (req, res, next) => {
   if (req.user && req.user.role === 'student') {
     return next();
   }
-  res.status(403).send('Access denied: Student privileges required');
+  res.status(403).render('error/403', {
+    message: 'Access denied: Student privileges required',
+    user: req.user
+  });
 };
 
 /**
@@ -84,7 +99,10 @@ export const isTeacherOrAdmin = (req, res, next) => {
   if (req.user && (req.user.role === 'teacher' || req.user.role === 'admin')) {
     return next();
   }
-  res.status(403).send('Access denied: Teacher or Admin privileges required');
+  res.status(403).render('error/403', {
+    message: 'Access denied: Teacher or Admin privileges required',
+    user: req.user
+  });
 };
 
 /**
@@ -95,5 +113,8 @@ export const isNotStudent = (req, res, next) => {
   if (req.user && req.user.role !== 'student') {
     return next();
   }
-  res.status(403).send('Access denied: This action is not available for students');
+  res.status(403).render('error/403', {
+    message: 'Access denied: This action is not available for students',
+    user: req.user
+  });
 };
