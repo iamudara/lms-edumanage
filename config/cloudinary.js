@@ -72,9 +72,27 @@ export function generateSignedUrl(url, options = {}) {
     
     const publicId = filteredParts.join('/');
     
-    // Determine resource type (raw for documents, image for images, video for videos)
-    const resourceType = url.includes('/raw/') ? 'raw' : 
-                         url.includes('/video/') ? 'video' : 'image';
+    // Determine resource type based on file extension or URL content
+    let resourceType = 'image'; // Default
+
+    // List of extensions that are always 'raw' resource type in Cloudinary
+    const rawExtensions = [
+      'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 
+      'zip', 'rar', 'txt', 'csv'
+    ];
+
+    // Check for extension in the URL
+    // URL typically ends with the filename.ext
+    const extensionMatch = url.match(/\.([a-z0-9]+)$/i);
+    const extension = extensionMatch ? extensionMatch[1].toLowerCase() : '';
+
+    if (extension && rawExtensions.includes(extension)) {
+      resourceType = 'raw';
+    } else if (url.includes('/raw/')) {
+      resourceType = 'raw';
+    } else if (url.includes('/video/')) {
+      resourceType = 'video';
+    }
     
     // Generate signed URL with expiration
     const signedUrl = cloudinary.url(publicId, {
