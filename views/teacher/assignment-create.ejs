@@ -608,11 +608,12 @@
       xhr.addEventListener('load', () => {
         if (xhr.status === 200 || xhr.status === 302) {
           // Success - follow redirect or reload
-          const response = xhr.responseText;
-          if (response.includes('Redirecting') || xhr.status === 302) {
-            window.location.href = '/teacher/courses/<%= course.id %>';
+          // Check if we were redirected back to the create page (indicates error)
+          if (xhr.responseURL && xhr.responseURL.includes('/assignments/create')) {
+            window.location.href = xhr.responseURL;
           } else {
-            window.location.reload();
+            // Success - redirected to course page or otherwise
+            window.location.href = '/teacher/courses/<%= course.id %>?success=Assignment created successfully';
           }
         } else {
           progressDiv.classList.add('hidden');

@@ -834,7 +834,7 @@ export const createAssignment = async (req, res) => {
       }
     }
 
-    res.redirect(`/teacher/courses/${courseId}?success=Assignment created successfully with materials`);
+    res.redirect(`/teacher/courses/${courseId}?success=Assignment created successfully`);
 
   } catch (error) {
     console.error('Create Assignment Error:', error);
