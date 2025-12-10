@@ -446,14 +446,14 @@
                data-status="<%= isOverdue ? 'overdue' : 'active' %>"
                data-pending="<%= pendingCount > 0 ? 'pending' : 'complete' %>">
             <input type="checkbox" id="assignment-mobile-<%= assignment.id %>-<%= idx %>" />
-            <div class="collapse-title p-4">
+            <div class="collapse-title p-4 pr-12">
               <div class="flex items-start gap-3">
                 <div class="avatar placeholder flex-shrink-0">
                   <div class="<%= isOverdue ? 'stat-card-gradient-error' : 'stat-card-gradient-success' %> rounded-lg w-12 h-12 flex items-center justify-center text-white">
                     <i class="fas fa-clipboard-list text-lg"></i>
                   </div>
                 </div>
-                <div class="flex-1 min-w-0">
+                <div class="flex-1 min-w-0 pr-8">
                   <div class="font-bold text-sm truncate"><%= assignment.title %></div>
                   <div class="flex flex-wrap items-center gap-2 mt-1">
                     <span class="badge badge-ghost badge-sm"><%= assignment.course.code %></span>
@@ -462,25 +462,25 @@
                     <% } else { %>
                       <span class="badge badge-success badge-xs">Active</span>
                     <% } %>
+                    
+                    <!-- Moved Submission Stats Here -->
+                    <div class="flex items-center gap-1 text-xs text-base-content/70 ml-1">
+                      <i class="fas fa-file-alt text-info"></i>
+                      <span class="font-semibold"><%= submissionCount %></span>
+                    </div>
+                    <% if (submissionCount > 0 && pendingCount > 0) { %>
+                      <span class="badge badge-warning badge-xs"><%= pendingCount %> pending</span>
+                    <% } else if (submissionCount > 0 && pendingCount === 0) { %>
+                      <span class="badge badge-success badge-xs">All graded</span>
+                    <% } %>
                   </div>
                   <div class="text-xs text-base-content/60 mt-1">
                     <i class="fas fa-calendar-alt mr-1"></i>
                     Due: <%= new Date(assignment.deadline).toLocaleDateString('en-US', { 
                       month: 'short', day: 'numeric', year: 'numeric',
-                      hour: '2-digit', minute: '2-digit'
+                      hour: '2-digit', minute: '2-digit' 
                     }) %>
                   </div>
-                </div>
-                <div class="flex flex-col items-end gap-1 flex-shrink-0">
-                  <div class="flex items-center gap-1 text-sm">
-                    <i class="fas fa-file-alt text-info text-xs"></i>
-                    <span class="font-semibold"><%= submissionCount %></span>
-                  </div>
-                  <% if (submissionCount > 0 && pendingCount > 0) { %>
-                    <span class="badge badge-warning badge-xs"><%= pendingCount %> pending</span>
-                  <% } else if (submissionCount > 0 && pendingCount === 0) { %>
-                    <span class="badge badge-success badge-xs">All graded</span>
-                  <% } %>
                 </div>
               </div>
             </div>
