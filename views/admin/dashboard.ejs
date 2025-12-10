@@ -24,92 +24,61 @@
     </div>
 
     <!-- Statistics Cards Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="stats-grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       
-      <!-- Total Users Card (Students + Teachers) -->
-      <div class="card bg-primary text-primary-content shadow-lg">
-        <div class="card-body">
-          <h2 class="card-title text-lg">👥 Total Users</h2>
-          <p class="text-4xl font-bold"><%= stats.userCountDisplay %></p>
-          <div class="text-sm opacity-80 mt-2">
-            <div>Teachers: <%= stats.teacherCount %></div>
-            <div>Students: <%= stats.studentCount %></div>
+      <!-- Total Users Card -->
+      <div class="stats-card stat-card-gradient-primary">
+        <div class="stat">
+          <div class="stat-figure text-white/80">
+            <i class="fas fa-users text-3xl"></i>
+          </div>
+          <div class="stat-title text-white/80">Total Users</div>
+          <div class="stat-value text-white"><%= stats.userCountDisplay %></div>
+          <div class="stat-desc text-white/70">
+            Teachers: <%= stats.teacherCount %> • Students: <%= stats.studentCount %>
           </div>
         </div>
       </div>
 
-      <!-- Platform Usage - Active Users This Week -->
-      <div class="card bg-secondary text-secondary-content shadow-lg">
-        <div class="card-body">
-          <h2 class="card-title text-lg">📈 Platform Usage</h2>
-          <p class="text-4xl font-bold"><%= stats.activeUsersThisWeek %></p>
-          <div class="text-sm opacity-80 mt-2">
-            Active users this week
+      <!-- Platform Usage -->
+      <div class="stats-card stat-card-gradient-secondary">
+        <div class="stat">
+          <div class="stat-figure text-white/80">
+            <i class="fas fa-chart-line text-3xl"></i>
           </div>
+          <div class="stat-title text-white/80">Platform Usage</div>
+          <div class="stat-value text-white"><%= stats.activeUsersThisWeek %></div>
+          <div class="stat-desc text-white/70">Active users this week</div>
         </div>
       </div>
 
-      <!-- System Activity - Submissions This Week -->
-      <div class="card bg-accent text-accent-content shadow-lg">
-        <div class="card-body">
-          <h2 class="card-title text-lg">⚡ System Activity</h2>
-          <p class="text-4xl font-bold"><%= stats.submissionsThisWeek %></p>
-          <div class="text-sm opacity-80 mt-2">
-            Submissions this week
+      <!-- System Activity -->
+      <div class="stats-card stat-card-gradient-info">
+        <div class="stat">
+          <div class="stat-figure text-white/80">
+            <i class="fas fa-bolt text-3xl"></i>
           </div>
+          <div class="stat-title text-white/80">System Activity</div>
+          <div class="stat-value text-white"><%= stats.submissionsThisWeek %></div>
+          <div class="stat-desc text-white/70">Submissions this week</div>
         </div>
       </div>
 
-      <!-- New Enrollments - This Year -->
-      <div class="card bg-info text-info-content shadow-lg">
-        <div class="card-body">
-          <h2 class="card-title text-lg">✨ New Enrollments</h2>
-          <p class="text-4xl font-bold"><%= stats.enrollmentsThisYear %></p>
-          <div class="text-sm opacity-80 mt-2">
-            Enrolled this year
+      <!-- New Enrollments -->
+      <div class="stats-card stat-card-gradient-accent">
+        <div class="stat">
+          <div class="stat-figure text-white/80">
+            <i class="fas fa-user-plus text-3xl"></i>
           </div>
+          <div class="stat-title text-white/80">New Enrollments</div>
+          <div class="stat-value text-white"><%= stats.enrollmentsThisYear %></div>
+          <div class="stat-desc text-white/70">Enrolled this year</div>
         </div>
       </div>
 
     </div>
 
-    <!-- Additional Stats Row -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      
-      <!-- Assignments Card -->
-      <div class="card bg-base-100 shadow-lg">
-        <div class="card-body">
-          <h2 class="card-title text-lg">📝 Assignments</h2>
-          <p class="text-3xl font-bold text-primary"><%= stats.totalAssignments %></p>
-          <div class="text-sm text-base-content/70">
-            Total assignments created
-          </div>
-        </div>
-      </div>
 
-      <!-- Submissions Card -->
-      <div class="card bg-base-100 shadow-lg">
-        <div class="card-body">
-          <h2 class="card-title text-lg">📤 Submissions</h2>
-          <p class="text-3xl font-bold text-secondary"><%= stats.totalSubmissions %></p>
-          <div class="text-sm text-base-content/70">
-            Graded: <%= stats.gradedSubmissions %>
-          </div>
-        </div>
-      </div>
-
-      <!-- Grades Card -->
-      <div class="card bg-base-100 shadow-lg">
-        <div class="card-body">
-          <h2 class="card-title text-lg">🎯 Final Grades</h2>
-          <p class="text-3xl font-bold text-accent"><%= stats.totalGrades %></p>
-          <div class="text-sm text-base-content/70">
-            Students graded
-          </div>
-        </div>
-      </div>
-
-    </div>
 
     <!-- Charts Row -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -118,8 +87,8 @@
       <div class="card bg-base-100 shadow-lg">
         <div class="card-body">
           <h2 class="card-title text-xl mb-4">📊 Activity Trends (Last 30 Days)</h2>
-          <div>
-            <canvas id="activityTrendsChart" style="max-height: 300px;"></canvas>
+          <div class="relative h-[300px] w-full">
+            <canvas id="activityTrendsChart"></canvas>
           </div>
         </div>
       </div>
@@ -128,8 +97,8 @@
       <div class="card bg-base-100 shadow-lg">
         <div class="card-body">
           <h2 class="card-title text-xl mb-4">👨‍🏫 Teacher Workload Distribution</h2>
-          <div>
-            <canvas id="teacherWorkloadChart" style="max-height: 300px;"></canvas>
+          <div class="relative h-[300px] w-full">
+            <canvas id="teacherWorkloadChart"></canvas>
           </div>
         </div>
       </div>
@@ -400,7 +369,7 @@
       },
       options: {
         responsive: true,
-        maintainAspectRatio: true,
+        maintainAspectRatio: false,
         interaction: {
           mode: 'index',
           intersect: false,
@@ -466,7 +435,7 @@
       options: {
         indexAxis: 'y',
         responsive: true,
-        maintainAspectRatio: true,
+        maintainAspectRatio: false,
         plugins: {
           legend: {
             position: 'bottom'

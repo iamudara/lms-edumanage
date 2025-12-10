@@ -99,7 +99,7 @@ a[style*="background-color: #ef4444"]:hover {
 button.navbar-logout[type="submit"] {
     background-color: #ef4444 !important;
     border-color: #ef4444 !important;
-    color: white !important;2hm 
+    color: white !important; 
 }
 
 button.navbar-logout[type="submit"]:hover {
