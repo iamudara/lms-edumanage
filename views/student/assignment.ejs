@@ -290,7 +290,16 @@
             <div class="space-y-3">
               <div>
                 <p class="text-sm text-base-content/70">Assignment Created:</p>
-                <p class="font-medium"><%= new Date(assignment.created_at).toLocaleDateString() %></p>
+                <p class="font-medium">
+                  <% 
+                    const createdDate = assignment.createdAt || assignment.created_at;
+                    if (createdDate) { 
+                  %>
+                    <%= new Date(createdDate).toLocaleDateString() %>
+                  <% } else { %>
+                    N/A
+                  <% } %>
+                </p>
               </div>
               <div>
                 <p class="text-sm text-base-content/70">Due Date:</p>
