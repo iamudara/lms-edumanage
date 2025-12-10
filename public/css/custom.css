@@ -84,7 +84,6 @@ a[style*="background-color: #ef4444"]:hover {
 .navbar-change-password {
     background-color: #4b6bfb !important;
     color: white !important;
-    border-radius: 9999px !important;
 }
 
 .navbar-change-password:hover {
@@ -100,8 +99,7 @@ a[style*="background-color: #ef4444"]:hover {
 button.navbar-logout[type="submit"] {
     background-color: #ef4444 !important;
     border-color: #ef4444 !important;
-    color: white !important;
-    border-radius: 9999px !important;
+    color: white !important;2hm 
 }
 
 button.navbar-logout[type="submit"]:hover {

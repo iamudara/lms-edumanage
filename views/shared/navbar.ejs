@@ -74,7 +74,7 @@
                     </span>
                 </div>
             </div>
-            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-lg bg-base-100 rounded-box w-64 border border-base-300">
+            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-lg bg-base-100 rounded-box w-72 border border-base-300">
                 <!-- User Info Header -->
                 <li class="menu-title">
                     <div class="flex items-center gap-3 px-2 py-3">
@@ -93,13 +93,13 @@
                 </li>
                 <div class="divider my-0"></div>
                 <li class="mb-2">
-                    <a href="/auth/change-password" class="navbar-change-password flex items-center gap-3 py-3 px-4 rounded-lg bg-primary text-white hover:bg-primary-focus transition-colors">
+                    <a href="/auth/change-password" id="nav-btn-pass" class="navbar-change-password flex items-center gap-3 py-4 px-4 !rounded-full bg-[#4b6bfb] text-white transition-colors">
                         <i class="fas fa-key text-base w-5"></i>
                         <span>Change Password</span>
                     </a>
                 </li>
                 <li>
-                    <button type="submit" onclick="document.getElementById('logoutForm').submit(); return false;" class="navbar-logout flex items-center gap-3 py-3 px-4 rounded-lg w-full text-left bg-error text-white hover:bg-error-focus border-0 cursor-pointer transition-colors" style="font-size: inherit; font-weight: inherit; font-family: inherit;">
+                    <button type="submit" onclick="document.getElementById('logoutForm').submit(); return false;" id="nav-btn-logout" class="navbar-logout flex items-center gap-3 py-4 px-4 !rounded-full w-full text-left bg-[#ef4444] text-white border-0 cursor-pointer transition-colors" style="font-size: inherit; font-weight: inherit; font-family: inherit;">
                         <i class="fas fa-sign-out-alt text-base w-5"></i>
                         <span>Logout</span>
                     </button>
@@ -145,5 +145,14 @@
         updateThemeIcons(savedTheme);
     });
 </script>
+
+<style>
+    /* Specificity Overrides for Navbar Buttons */
+    #nav-btn-pass { background-color: #4b6bfb !important; color: white !important; }
+    #nav-btn-pass:hover { background-color: #3b5bdb !important; }
+    
+    #nav-btn-logout { background-color: #ef4444 !important; color: white !important; }
+    #nav-btn-logout:hover { background-color: #dc2626 !important; }
+</style>
 
 
