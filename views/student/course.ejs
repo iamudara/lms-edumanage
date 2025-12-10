@@ -24,56 +24,43 @@
     </div>
 
     <!-- Course Header -->
-    <div class="page-header">
-      <div class="flex flex-col gap-4">
-        <div>
-          <h1 class="page-title text-gradient-primary flex items-center gap-3 flex-wrap">
-            <span class="text-3xl sm:text-4xl">📚</span>
-            <%= course.title %>
-            <span class="course-badge text-lg align-middle"><%= course.code %></span>
-          </h1>
-          
-          <p class="page-subtitle mt-2 max-w-3xl">
-            <%= course.description || 'No description available.' %>
-          </p>
-          
-          <div class="flex items-center gap-2 text-base-content/60 mt-4">
-            <div class="avatar placeholder">
-              <div class="bg-neutral-focus text-neutral-content rounded-full w-8">
-                <span class="text-xs">
-                 <% const primaryTeacher = course.courseTeachers?.find(ct => ct.is_primary)?.teacher; %>
-                 <%= primaryTeacher ? primaryTeacher.full_name.charAt(0) : '?' %>
-                </span>
-              </div>
+    <!-- Course Header Card -->
+    <div class="card bg-gradient-to-r from-[#1e40af] to-[#3b82f6] text-white shadow-xl mb-6">
+      <div class="card-body p-4 sm:p-6">
+        <div class="flex justify-between items-start gap-2">
+          <div class="flex-1">
+            <div class="badge badge-outline text-white/90 border-white/40 mb-2 sm:mb-3"><%= course.code %></div>
+            <h1 class="text-xl sm:text-3xl lg:text-4xl font-bold mb-2 text-white"><%= course.title %></h1>
+            <p class="text-white/80 text-sm sm:text-base lg:text-lg max-w-3xl">
+              <%= course.description || 'No description available.' %>
+            </p>
+            
+            <div class="flex items-center gap-2 text-white/80 mt-4 text-lg">
+              <span class="font-semibold">Instructor:</span>
+              <span><%= course.courseTeachers?.find(ct => ct.is_primary)?.teacher?.full_name || 'Unknown' %></span>
             </div>
-            <span class="font-medium">Instructor:</span>
-            <span><%= primaryTeacher ? primaryTeacher.full_name : 'Unknown' %></span>
           </div>
         </div>
 
-        <!-- Statistics Grid -->
-        <div class="stats-grid mt-6">
-          <div class="stats-card stat-card-gradient-primary">
-            <div class="stat place-items-center">
-              <div class="stat-title text-primary-content/80">Materials</div>
-              <div class="stat-value text-white"><%= stats.totalMaterials %></div>
-            </div>
+        <!-- Stats -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 mt-6">
+          <div class="stat bg-white/10 rounded-lg p-2 sm:p-4 border border-white/10 backdrop-blur-sm place-items-center sm:place-items-start">
+            <div class="stat-title text-white/70 text-xs sm:text-sm">Materials</div>
+            <div class="stat-value text-white text-lg sm:text-2xl lg:text-3xl"><%= stats.totalMaterials %></div>
           </div>
-          <div class="stats-card stat-card-gradient-secondary">
-            <div class="stat place-items-center">
-              <div class="stat-title text-secondary-content/80">Assignments</div>
-              <div class="stat-value text-white"><%= stats.submittedAssignments %>/<%= stats.totalAssignments %></div>
-              <div class="stat-desc text-secondary-content/70">Submitted</div>
-            </div>
+          
+          <div class="stat bg-white/10 rounded-lg p-2 sm:p-4 border border-white/10 backdrop-blur-sm place-items-center sm:place-items-start">
+            <div class="stat-title text-white/70 text-xs sm:text-sm">Assignments</div>
+            <div class="stat-value text-white text-lg sm:text-2xl lg:text-3xl"><%= stats.submittedAssignments %>/<%= stats.totalAssignments %></div>
+            <div class="stat-desc text-white/60 text-xs mt-1">Submitted</div>
           </div>
-          <div class="stats-card stat-card-gradient-accent">
-            <div class="stat place-items-center">
-              <div class="stat-title text-accent-content/80">Avg Score</div>
-              <div class="stat-value text-white"><%= stats.averageScore || 'N/A' %></div>
-              <% if (stats.averageScore) { %>
-                <div class="stat-desc text-accent-content/70"><%= stats.gradedAssignments %> graded</div>
-              <% } %>
-            </div>
+          
+          <div class="stat bg-white/10 rounded-lg p-2 sm:p-4 border border-white/10 backdrop-blur-sm place-items-center sm:place-items-start">
+            <div class="stat-title text-white/70 text-xs sm:text-sm">Avg Score</div>
+            <div class="stat-value text-white text-lg sm:text-2xl lg:text-3xl"><%= stats.averageScore || 'N/A' %></div>
+            <% if (stats.averageScore) { %>
+              <div class="stat-desc text-white/60 text-xs mt-1"><%= stats.gradedAssignments %> graded</div>
+            <% } %>
           </div>
         </div>
       </div>
