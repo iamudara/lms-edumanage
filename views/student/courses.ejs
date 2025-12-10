@@ -72,7 +72,7 @@
           
           <div class="course-grid">
             <% coursesBySemester[semester].forEach(course => { %>
-              <div class="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-shadow duration-200" onclick="window.location.href='/student/courses/<%= course.id %>'">
+              <a href="/student/courses/<%= course.id %>" class="card bg-base-100 shadow-sm border border-base-200 hover:shadow-md hover:scale-[1.01] transition-all duration-200 no-underline text-current block">
                 <div class="card-body p-5">
                   <!-- Header: Code Badge + Title -->
                   <div class="flex items-start justify-between gap-3 mb-2">
@@ -107,27 +107,14 @@
                       <div class="text-xs text-base-content/60 font-medium">Semester</div>
                     </div>
                   </div>
-
-                  <!-- Action Buttons -->
-                  <div class="grid grid-cols-3 gap-2">
-                    <button class="btn btn-primary btn-sm w-full" style="border-radius: 9999px;">
-                      <i class="fas fa-plus"></i>
-                    </button>
-                    <button class="btn btn-neutral btn-sm w-full" style="border-radius: 9999px;">
-                      <i class="fas fa-file-alt"></i>
-                    </button>
-                    <button class="btn btn-info btn-sm w-full text-white" style="border-radius: 9999px;">
-                      <i class="fas fa-align-left"></i>
-                    </button>
-                  </div>
                   
                   <!-- Footer -->
-                  <div class="mt-4 pt-4 border-t border-base-200 flex items-center text-xs text-base-content/50">
+                  <div class="mt-2 pt-4 border-t border-base-200 flex items-center text-xs text-base-content/50">
                     <i class="fas fa-user-tie mr-1"></i>
                     Instructor: <%= course.courseTeachers?.find(ct => ct.is_primary)?.teacher?.full_name || 'Unknown' %>
                   </div>
                 </div>
-              </div>
+              </a>
             <% }) %>
           </div>
         </div>

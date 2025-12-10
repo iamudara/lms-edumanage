@@ -24,38 +24,34 @@
     </div>
 
     <!-- Assignment Header -->
-    <div class="page-header">
-      <div class="flex flex-col gap-4">
-        <div>
-          <h1 class="page-title text-gradient-primary flex items-center gap-3 flex-wrap">
-            <span class="text-3xl sm:text-4xl">📝</span>
-            <%= assignment.title %>
-            <span class="course-badge text-lg align-middle"><%= assignment.course.code %></span>
-          </h1>
-          
-          <div class="flex items-center gap-2 text-base-content/60 mt-4">
-            <div class="avatar placeholder">
-              <div class="bg-neutral-focus text-neutral-content rounded-full w-8">
-                <span class="text-xs">
-                 <% const primaryTeacher = assignment.course.courseTeachers?.find(ct => ct.is_primary)?.teacher; %>
-                 <%= primaryTeacher ? primaryTeacher.full_name.charAt(0) : '?' %>
-                </span>
-              </div>
+    <!-- Assignment Header -->
+    <div class="card bg-gradient-to-r from-[#1e40af] to-[#3b82f6] text-white shadow-xl mb-8">
+      <div class="card-body p-4 sm:p-6">
+        <div class="flex flex-col gap-4">
+          <div>
+            <h1 class="text-xl sm:text-3xl lg:text-4xl font-bold mb-2 text-white flex items-center gap-3 flex-wrap">
+              <span class="text-3xl sm:text-4xl">📝</span>
+              <%= assignment.title %>
+              <div class="badge badge-outline text-white/90 border-white/40"><%= assignment.course.code %></div>
+            </h1>
+            
+            <div class="flex items-center gap-2 text-white/80 mt-2">
+              <span class="font-medium">Instructor:</span>
+              <% const primaryTeacher = assignment.course.courseTeachers?.find(ct => ct.is_primary)?.teacher; %>
+              <span><%= primaryTeacher ? primaryTeacher.full_name : 'Unknown' %></span>
             </div>
-            <span class="font-medium">Instructor:</span>
-            <span><%= primaryTeacher ? primaryTeacher.full_name : 'Unknown' %></span>
           </div>
-        </div>
 
-        <!-- Deadline Badge -->
-        <div class="stats-card mt-6 <%= deadline.isPastDeadline ? 'stat-card-gradient-warning' : 'stat-card-gradient-primary' %> max-w-md">
-          <div class="stat place-items-center">
-            <div class="stat-title text-primary-content/80">Deadline</div>
-            <div class="stat-value text-white text-2xl">
-              <%= deadline.date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
-            </div>
-            <div class="stat-desc text-primary-content/70">
-              <%= deadline.isPastDeadline ? 'Deadline Passed' : deadline.daysUntil + ' days remaining' %>
+          <!-- Deadline Badge -->
+          <div class="stats-card mt-4 bg-white/10 border border-white/10 backdrop-blur-sm shadow-none max-w-md">
+            <div class="stat place-items-center py-2">
+              <div class="stat-title text-white/70">Deadline</div>
+              <div class="stat-value text-white text-2xl">
+                <%= deadline.date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+              </div>
+              <div class="stat-desc text-white/60">
+                <%= deadline.isPastDeadline ? 'Deadline Passed' : deadline.daysUntil + ' days remaining' %>
+              </div>
             </div>
           </div>
         </div>
@@ -203,8 +199,8 @@
               <!-- Resubmit Button -->
               <% if (canResubmit) { %>
                 <div class="divider"></div>
-                <div class="flex items-center justify-between bg-warning/10 p-4 rounded-lg border border-warning/20">
-                  <div class="flex items-center gap-2 text-warning-content">
+                <div class="flex flex-col items-center gap-4 text-center bg-warning/10 p-4 rounded-lg border border-warning/20">
+                  <div class="flex items-center gap-2 text-warning-content justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
