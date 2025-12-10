@@ -117,10 +117,11 @@ app.use(session({
   store: sessionStore,
   resave: false,
   saveUninitialized: false,
+  rolling: true, // Reset maxAge on every response (keep session alive if active)
   cookie: {
     secure: process.env.NODE_ENV === 'production',  // HTTPS only in production
     httpOnly: true,
-    maxAge: 1000 * 60 * 30  // 30 minutes (for tighter security)
+    maxAge: 1000 * 60 * 30  // 30 minutes (idle timeout)
   }
 }));
 

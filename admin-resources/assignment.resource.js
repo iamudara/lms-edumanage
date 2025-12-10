@@ -49,7 +49,7 @@ export const AssignmentResource = {
           
           return request;
         },
-        guard: 'Are you sure you want to delete this assignment? This will also delete all assignment materials, submissions, and their files from Cloudinary. This action cannot be undone!',
+        guard: 'Are you sure you want to delete this assignment? This will also delete all assignment materials and their files from Cloudinary. This action cannot be undone!           IF have any submissions associated with this assignment, this action will fail!',
       }
     }
   }

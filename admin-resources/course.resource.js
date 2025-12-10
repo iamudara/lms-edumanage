@@ -37,7 +37,7 @@ export const CourseResource = {
           return request;
         },
         component: false, // Ensure no custom component covers the native confirm
-        guard: 'Are you sure you want to delete this course? This will also delete all assignments, materials, submissions, and batch enrollments associated with it. This action cannot be undone!',
+        guard: 'You cant delete this course if you have any assignments, course materials, folders, teacher enrollement or batch enrollments associated with this!',
       }
     }
   }
