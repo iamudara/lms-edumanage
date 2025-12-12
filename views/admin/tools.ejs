@@ -25,7 +25,7 @@
     
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-base-content mb-2">🛠️ Bulk Operations Tools</h1>
+      <h1 class="text-2xl sm:text-3xl font-bold text-base-content mb-2">🛠️ Bulk Operations Tools</h1>
       <p class="text-base-content/70">Upload CSV files to perform bulk operations on users, enrollments, and grades</p>
     </div>
 
@@ -33,11 +33,11 @@
     <div id="alertContainer" class="mb-6"></div>
 
     <!-- Tabs Navigation -->
-    <div role="tablist" class="tabs tabs-boxed tabs-lg justify-center gap-4 bg-base-100 mb-6 p-2 shadow-md">
-      <a role="tab" class="tab tab-active" data-tab="users">Bulk Users</a>
-      <a role="tab" class="tab" data-tab="enrollments">Bulk Enrollments</a>
-
-      <a role="tab" class="tab" data-tab="delete">Bulk Delete</a>
+    <!-- Tabs Navigation (Pill Style) -->
+    <div class="flex flex-wrap justify-center gap-2 mb-6">
+      <button class="btn btn-primary btn-sm rounded-full px-6 tab-btn" data-tab="users">Bulk Users</button>
+      <button class="btn btn-ghost btn-sm rounded-full px-6 tab-btn bg-base-200/50" data-tab="enrollments">Bulk Enrollments</button>
+      <button class="btn btn-ghost btn-sm rounded-full px-6 tab-btn bg-base-200/50" data-tab="delete">Bulk Delete</button>
     </div>
 
     <!-- Tab Content: Bulk Users -->
@@ -73,7 +73,7 @@
                            class="file-input file-input-bordered file-input-primary w-full" />
                 </div>
 
-                <div class="flex gap-4">
+                <div class="flex flex-col sm:flex-row gap-4">
                     <button type="submit" class="btn btn-primary">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -145,7 +145,7 @@
                            class="file-input file-input-bordered file-input-primary w-full" />
                 </div>
 
-                <div class="flex gap-4">
+                <div class="flex flex-col sm:flex-row gap-4">
                     <button type="submit" class="btn btn-primary">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -258,14 +258,19 @@
 <!-- Custom JavaScript -->
 <script>
     // Tab Switching
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', function(e) {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
             e.preventDefault();
             
-            // Remove active class from all tabs
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('tab-active'));
-            // Add active class to clicked tab
-            this.classList.add('tab-active');
+            // Reset all buttons
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('btn-primary');
+                b.classList.add('btn-ghost', 'bg-base-200/50');
+            });
+            
+            // Activate clicked button
+            this.classList.remove('btn-ghost', 'bg-base-200/50');
+            this.classList.add('btn-primary');
             
             // Hide all tab contents
             document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
