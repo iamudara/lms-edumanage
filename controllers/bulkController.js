@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
-import { parseCsv, validateUserCsv, validateEnrollmentCsv, validateGradeCsv, formatErrors } from '../services/csvService.js';
-import { User, Batch, Course, BatchEnrollment, Grade, sequelize } from '../models/index.js';
+import { parseCsv, validateUserCsv, validateEnrollmentCsv, formatErrors } from '../services/csvService.js';
+import { User, Batch, Course, BatchEnrollment, sequelize } from '../models/index.js';
 
 /**
  * Bulk User Upload Controller
@@ -415,186 +415,14 @@ export const bulkCreateEnrollments = async (req, res) => {
  * Bulk upload grades from CSV
  * @route POST /admin/tools/bulk-grades
  */
+/**
+ * Bulk upload grades - DEPRECATED (Model Removed)
+ */
 export const bulkUploadGrades = async (req, res) => {
-  const transaction = await sequelize.transaction();
-  
-  try {
-    // Check if file is uploaded
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: 'No CSV file uploaded',
-        results: []
-      });
-    }
-
-    // Parse CSV
-    const parseResult = parseCsv(req.file.buffer);
-    
-    if (!parseResult.success) {
-      return res.status(400).json({
-        success: false,
-        message: 'CSV parsing failed',
-        errors: formatErrors(parseResult.errors),
-        results: []
-      });
-    }
-
-    // Validate CSV data
-    const validationResult = validateGradeCsv(parseResult.data);
-    
-    if (!validationResult.valid) {
-      return res.status(400).json({
-        success: false,
-        message: 'CSV validation failed',
-        errors: formatErrors(validationResult.errors),
-        results: []
-      });
-    }
-
-    const rows = parseResult.data;
-    const results = {
-      success: [],
-      errors: [],
-      updated: []
-    };
-
-    // Process each grade
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
-      const rowNum = i + 2;
-      
-      try {
-        // Find student by username or email
-        const whereClause = row.student_username 
-          ? { username: row.student_username.toLowerCase() }
-          : { email: row.student_email.toLowerCase() };
-
-        const student = await User.findOne({
-          where: whereClause,
-          transaction
-        });
-
-        if (!student) {
-          results.errors.push({
-            row: rowNum,
-            student: row.student_username || row.student_email,
-            course_code: row.course_code,
-            reason: 'Student not found'
-          });
-          continue;
-        }
-
-        // Find course
-        const course = await Course.findOne({
-          where: { code: row.course_code },
-          transaction
-        });
-
-        if (!course) {
-          results.errors.push({
-            row: rowNum,
-            student: student.username,
-            course_code: row.course_code,
-            reason: `Course with code '${row.course_code}' not found`
-          });
-          continue;
-        }
-
-        // Check if grade already exists
-        const existingGrade = await Grade.findOne({
-          where: {
-            student_id: student.id,
-            course_id: course.id
-          },
-          transaction
-        });
-
-        if (existingGrade) {
-          // Update existing grade
-          await existingGrade.update({
-            grade: row.grade.toUpperCase(),
-            remarks: row.remarks || existingGrade.remarks
-          }, { transaction });
-
-          results.updated.push({
-            row: rowNum,
-            student: student.username,
-            course_code: row.course_code,
-            grade: row.grade.toUpperCase(),
-            action: 'updated'
-          });
-        } else {
-          // Create new grade
-          await Grade.create({
-            student_id: student.id,
-            course_id: course.id,
-            grade: row.grade.toUpperCase(),
-            remarks: row.remarks || null
-          }, { transaction });
-
-          results.success.push({
-            row: rowNum,
-            student: student.username,
-            course_code: row.course_code,
-            grade: row.grade.toUpperCase(),
-            action: 'created'
-          });
-        }
-
-      } catch (error) {
-        results.errors.push({
-          row: rowNum,
-          student: row.student_username || row.student_email || 'N/A',
-          course_code: row.course_code || 'N/A',
-          reason: error.message
-        });
-      }
-    }
-
-    // Commit transaction if at least one grade was created/updated
-    if (results.success.length > 0 || results.updated.length > 0) {
-      await transaction.commit();
-      
-      return res.status(200).json({
-        success: true,
-        message: `Successfully processed ${results.success.length + results.updated.length} grade(s)`,
-        summary: {
-          total: rows.length,
-          created: results.success.length,
-          updated: results.updated.length,
-          errors: results.errors.length
-        },
-        results: results
-      });
-    } else {
-      await transaction.rollback();
-      
-      return res.status(400).json({
-        success: false,
-        message: 'No grades were processed',
-        summary: {
-          total: rows.length,
-          created: 0,
-          updated: 0,
-          errors: results.errors.length
-        },
-        results: results
-      });
-    }
-
-  } catch (error) {
-    await transaction.rollback();
-    
-    console.error('Bulk grade upload error:', error);
-    
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error during bulk grade upload',
-      error: error.message,
-      results: []
-    });
-  }
+  return res.status(410).json({
+    success: false,
+    message: 'Grade feature has been removed.'
+  });
 };
 
 /**

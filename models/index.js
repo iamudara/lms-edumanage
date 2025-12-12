@@ -12,7 +12,6 @@ import MaterialModel from './Material.js';
 import AssignmentModel from './Assignment.js';
 import AssignmentMaterialModel from './AssignmentMaterial.js';
 import SubmissionModel from './Submission.js';
-import GradeModel from './Grade.js';
 
 // Initialize models
 const User = UserModel(sequelize);
@@ -26,7 +25,6 @@ const Material = MaterialModel(sequelize);
 const Assignment = AssignmentModel(sequelize);
 const AssignmentMaterial = AssignmentMaterialModel(sequelize);
 const Submission = SubmissionModel(sequelize);
-const Grade = GradeModel(sequelize);
 
 // Define associations
 
@@ -52,10 +50,6 @@ User.hasMany(Submission, {
   as: 'submissions'
 });
 
-User.hasMany(Grade, {
-  foreignKey: 'student_id',
-  as: 'grades'
-});
 
 User.hasMany(Assignment, {
   foreignKey: 'created_by',
@@ -91,10 +85,6 @@ Course.hasMany(Material, {
   onDelete: 'CASCADE'  // Changed from RESTRICT - allows deleting course with materials
 });
 
-Course.hasMany(Grade, {
-  foreignKey: 'course_id',
-  onDelete: 'CASCADE'  // Changed from RESTRICT - allows deleting course with grades
-});
 
 // CourseTeacher associations
 CourseTeacher.belongsTo(Course, {
@@ -233,16 +223,6 @@ Submission.belongsTo(User, {
   as: 'grader'
 });
 
-// Grade associations
-Grade.belongsTo(Course, {
-  foreignKey: 'course_id',
-  as: 'course'
-});
-
-Grade.belongsTo(User, {
-  foreignKey: 'student_id',
-  as: 'student'
-});
 
 // Sync function
 const syncDatabase = async () => {
@@ -272,7 +252,6 @@ export {
   Assignment,
   AssignmentMaterial,
   Submission,
-  Grade,
   syncDatabase
 };
 

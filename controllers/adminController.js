@@ -3,7 +3,7 @@
  * Handles admin dashboard and statistics
  */
 
-import { User, Batch, Course, BatchEnrollment, Grade, Submission, Assignment, Material, CourseTeacher } from '../models/index.js';
+import { User, Batch, Course, BatchEnrollment, Submission, Assignment, Material, CourseTeacher } from '../models/index.js';
 import { Op } from 'sequelize';
 import sequelize from '../config/database.js';
 
@@ -84,7 +84,7 @@ export const showDashboard = async (req, res) => {
     // ============================================
     // 9. GRADE STATISTICS
     // ============================================
-    const totalGrades = await Grade.count();
+    const totalGrades = 0; // Grade model removed
 
     // ============================================
     // 10. ACTIVITY TRENDS - Last 30 days
@@ -101,11 +101,8 @@ export const showDashboard = async (req, res) => {
             submitted_at: { [Op.between]: [startOfDay, endOfDay] }
           }
         }),
-        Grade.count({
-          where: {
-            created_at: { [Op.between]: [startOfDay, endOfDay] }
-          }
-        }),
+        0, // Grade model removed
+        0, // Grade model removed
         User.count({
           where: {
             updated_at: { [Op.between]: [startOfDay, endOfDay] }

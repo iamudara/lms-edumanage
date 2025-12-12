@@ -13,6 +13,7 @@
     "seed": "node utils/seed.js",
     "seed:safe": "node utils/seed.js || echo 'Seed already completed'",
     "seed:full:once": "node seed-once.js",
+    "seed:force": "node utils/seed.js force",
     "check:db": "node check-railway-database.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -40,7 +40,7 @@ import {
   Assignment,
   AssignmentMaterial,
   Submission,
-  Grade,
+
   syncDatabase
 } from './models/index.js';
 

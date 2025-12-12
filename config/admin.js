@@ -17,7 +17,7 @@ import { MaterialResource } from '../admin-resources/material.resource.js';
 import { AssignmentResource } from '../admin-resources/assignment.resource.js';
 import { AssignmentMaterialResource } from '../admin-resources/assignmentMaterial.resource.js';
 import { SubmissionResource } from '../admin-resources/submission.resource.js';
-import { GradeResource } from '../admin-resources/grade.resource.js';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -49,7 +49,7 @@ const adminJs = new AdminJS({
     AssignmentResource,
     AssignmentMaterialResource,
     SubmissionResource,
-    GradeResource
+
   ],
   rootPath: '/admin',
   dashboard: {
