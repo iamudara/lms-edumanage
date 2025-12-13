@@ -4,6 +4,10 @@ import { ValidationError } from 'adminjs';
 export const UserResource = {
   resource: User,
   options: {
+    navigation: {
+      name: 'User Management',
+      icon: 'Users'
+    },
     listProperties: ['id', 'username', 'email', 'full_name', 'role', 'batch_id'],
     editProperties: ['username', 'email', 'password', 'full_name', 'role', 'batch_id'],
     filterProperties: ['username', 'email', 'role', 'batch_id'],

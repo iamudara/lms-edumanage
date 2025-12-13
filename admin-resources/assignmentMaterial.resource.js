@@ -4,6 +4,10 @@ import { deleteCloudinaryFile } from '../config/cloudinary.js';
 export const AssignmentMaterialResource = {
   resource: AssignmentMaterial,
   options: {
+    navigation: {
+      name: 'Content Management',
+      icon: 'Paperclip'
+    },
     listProperties: ['id', 'assignment_id', 'title', 'type', 'url'],
     editProperties: ['assignment_id', 'title', 'type', 'url', 'file_type', 'description'],
     actions: {

@@ -5,6 +5,10 @@ import { ValidationError } from 'adminjs';
 export const AssignmentResource = {
   resource: Assignment,
   options: {
+    navigation: {
+      name: 'Content Management',
+      icon: 'Clipboard'
+    },
     listProperties: ['id', 'course_id', 'title', 'deadline', 'created_by'],
     editProperties: ['course_id', 'title', 'description', 'deadline', 'created_by'],
     actions: {

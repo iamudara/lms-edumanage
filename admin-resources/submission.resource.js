@@ -4,6 +4,10 @@ import { deleteCloudinaryFile } from '../config/cloudinary.js';
 export const SubmissionResource = {
   resource: Submission,
   options: {
+    navigation: {
+      name: 'Content Management',
+      icon: 'Inbox'
+    },
     listProperties: ['id', 'assignment_id', 'student_id', 'submitted_at', 'marks'],
     editProperties: ['assignment_id', 'student_id', 'file_url', 'submission_text', 'marks', 'feedback', 'graded_by'],
     actions: {

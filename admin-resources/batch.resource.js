@@ -4,6 +4,10 @@ import { ValidationError } from 'adminjs';
 export const BatchResource = {
   resource: Batch,
   options: {
+    navigation: {
+      name: 'Academic Management',
+      icon: 'Layers'
+    },
     listProperties: ['id', 'name', 'code', 'year'],
     editProperties: ['name', 'code', 'description', 'year'],
     actions: {

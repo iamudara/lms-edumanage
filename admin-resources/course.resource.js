@@ -4,6 +4,10 @@ import { ValidationError } from 'adminjs';
 export const CourseResource = {
   resource: Course,
   options: {
+    navigation: {
+      name: 'Course Management',
+      icon: 'Book'
+    },
     listProperties: ['id', 'title', 'code', 'semester'],
     editProperties: ['title', 'code', 'description', 'semester'],
     properties: {
