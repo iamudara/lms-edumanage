@@ -77,7 +77,8 @@
           <div class="card-section">
             <div class="card-body">
               <h2 class="section-title mb-4">📎 Assignment Materials</h2>
-              <div class="overflow-x-auto">
+              <!-- Desktop View -->
+              <div class="hidden lg:block overflow-x-auto">
                 <table class="table table-zebra table-custom">
                   <thead>
                     <tr>
@@ -123,6 +124,51 @@
                     <% }) %>
                   </tbody>
                 </table>
+              </div>
+
+              <!-- Mobile View -->
+              <div class="lg:hidden space-y-3">
+                <% assignment.materials.forEach((material, idx) => { %>
+                  <div class="collapse collapse-arrow bg-base-200">
+                    <input type="checkbox" name="assign-material-accordion-<%= material.id %>" />
+                    <div class="collapse-title">
+                      <div class="flex items-center gap-3 font-medium">
+                        <div class="text-xl">
+                          <% if (material.type === 'file') { %>
+                            <% if (material.file_path && material.file_path.endsWith('.pdf')) { %>📄<% } 
+                               else if (material.file_path && material.file_path.match(/\.(jpg|jpeg|png|gif)$/)) { %>🖼️<% }
+                               else { %>📁<% } %>
+                          <% } else { %>🔗<% } %>
+                        </div>
+                        <%= material.title %>
+                      </div>
+                    </div>
+                    <div class="collapse-content">
+                      <div class="pt-2 space-y-3">
+                        <div class="flex items-center justify-between">
+                          <span class="text-sm text-base-content/70">Type:</span>
+                          <span class="badge <%= material.type === 'file' ? 'badge-ghost' : 'badge-info' %> badge-sm">
+                            <%= material.type === 'file' ? 'File' : 'Link' %>
+                          </span>
+                        </div>
+                        
+                        <div class="flex">
+                           <% if (material.type === 'file') { %>
+                            <a href="/student/assignments/materials/<%= material.id %>/download" class="btn btn-sm btn-primary btn-glass-custom w-full" download>
+                              <i class="fas fa-download mr-1"></i>
+                              Download
+                            </a>
+                          <% } else { %>
+                            <a href="<%= material.url %>" target="_blank" class="btn btn-sm btn-info btn-glass-custom w-full">
+                              <i class="fas fa-external-link-alt mr-1"></i>
+                              Open Link
+                            </a>
+                          <% } %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% }) %>
               </div>
             </div>
           </div>
