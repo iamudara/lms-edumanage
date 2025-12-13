@@ -20,6 +20,7 @@ import {
 import { Op, QueryTypes } from 'sequelize';
 import cloudinary, { generateSignedUrl, signUrlsInArray, deleteCloudinaryFile } from '../config/cloudinary.js';
 import { checkDeadline, isDeadlinePassed } from '../services/deadlineService.js';
+import https from 'https';
 
 /**
  * Get all folders accessible by a course (including inherited subfolders)
@@ -1050,5 +1051,92 @@ export const getGrades = async (req, res) => {
   } catch (error) {
     console.error('Error loading grades:', error);
     res.status(500).send('Error loading grades: ' + error.message);
+  }
+};
+
+/**
+ * Download Assignment Material (Proxy)
+ * GET /student/assignments/materials/:id/download
+ * Proxies the file from Cloudinary to force download with correct Content-Disposition
+ */
+export const downloadAssignmentMaterial = async (req, res) => {
+  try {
+    const materialId = req.params.id;
+    const studentId = req.user.id;
+    const batchId = req.user.batch_id;
+
+    if (!batchId) {
+      return res.status(403).send('Access denied');
+    }
+
+    // Get material with course check
+    const material = await AssignmentMaterial.findByPk(materialId, {
+      include: [{
+        model: Assignment,
+        as: 'assignment',
+        include: [{
+          model: Course,
+          as: 'course',
+          include: [{
+            model: BatchEnrollment,
+            where: { batch_id: batchId },
+            required: true
+          }]
+        }]
+      }]
+    });
+
+    if (!material || !material.assignment || !material.assignment.course) {
+      return res.status(404).send('Material not found or access denied');
+    }
+
+    // Determine filename
+    let filename = material.title || 'download';
+    // Clean filename (keep basic chars)
+    filename = filename.replace(/[^a-z0-9-_ ]/gi, '_').toLowerCase();
+    
+    // Get extension: Prioritize URL as it preserves the uploaded extension
+    let ext = '';
+    if (material.url) {
+      // Get everything after the last dot, and before query params
+      const urlParts = material.url.split(/[?#]/)[0];
+      const items = urlParts.split('.');
+      if (items.length > 1) {
+        ext = items.pop().toLowerCase();
+      }
+    }
+    
+    // Clean filename logic:
+    // 1. Check if filename title ALREADY contains the extension (e.g. "file.pdf" or "file_pdf")
+    // 2. Remove it to avoid "file_pdf.pdf"
+    if (ext) {
+        // Regex to match .ext or _ext at the end
+        const suffixRegex = new RegExp(`[._]${ext}$`, 'i');
+        filename = filename.replace(suffixRegex, '');
+    }
+
+    // Ensure filename ends with extension
+    if (ext) {
+      filename += '.' + ext;
+    }
+
+    // Set headers for forced download
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    
+    // Handle Cloudinary URLs (redirect or proxy)
+    // IMPORTANT: Since Cloudinary Signed URLs are fragile to manipulation,
+    // we just fetch the original URL and pipe it.
+    
+    https.get(material.url, (stream) => {
+      stream.pipe(res);
+    }).on('error', (err) => {
+      console.error('Error fetching file for proxy:', err);
+      res.status(500).send('Error downloading file');
+    });
+
+  } catch (error) {
+    console.error('Error in download proxy:', error);
+    res.status(500).send('Server error');
   }
 };

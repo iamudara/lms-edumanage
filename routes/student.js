@@ -11,7 +11,8 @@ import {
   getCourseView,
   getAssignmentDetail,
   submitAssignment,
-  getGrades
+  getGrades,
+  downloadAssignmentMaterial
 } from '../controllers/studentController.js';
 import { uploadSubmission } from '../middleware/upload.js';
 
@@ -61,5 +62,11 @@ router.post('/assignments/:id/submit', uploadSubmission, submitAssignment);
  * Display: all course grades, assignment scores breakdown, submissions, organized by semester
  */
 router.get('/grades', getGrades);
+
+/**
+ * Download Assignment Material
+ * GET /student/assignments/materials/:id/download
+ */
+router.get('/assignments/materials/:id/download', downloadAssignmentMaterial);
 
 export default router;

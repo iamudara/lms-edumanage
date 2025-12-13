@@ -108,7 +108,7 @@
                         </td>
                         <td>
                           <% if (material.type === 'file') { %>
-                            <a href="<%= material.url %>" target="_blank" class="btn btn-sm btn-primary btn-glass-custom" download>
+                            <a href="/student/assignments/materials/<%= material.id %>/download" class="btn btn-sm btn-primary btn-glass-custom" download>
                               <i class="fas fa-download mr-1"></i>
                               Download
                             </a>
