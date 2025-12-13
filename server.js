@@ -105,9 +105,7 @@ if (databaseUrl) {
   };
 }
 
-    }
-  };
-}
+
 
 let sessionStore;
 try {
