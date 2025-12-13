@@ -320,7 +320,7 @@
         <!-- File Upload Section -->
         <div id="fileUploadSection">
           <div class="form-control mb-3">
-            <input type="file" name="material" id="materialFileInput" class="file-input file-input-bordered file-input-sm w-full">
+            <input type="file" name="material" id="materialFileInput" class="file-input file-input-bordered file-input-primary file-input-sm w-full">
             <label class="label">
               <span class="label-text-alt">Supported: PDF, DOC, PPT, ZIP, etc.</span>
             </label>
@@ -644,9 +644,15 @@
       const urlInput = document.getElementById('materialUrlInput');
       
       if (mode === 'file') {
-        // Activate File Tab
-        tabFile.classList.add('tab-active');
-        tabUrl.classList.remove('tab-active');
+        // Activate File Tab (Dark Style per user request for "Choose File" color match)
+        // Actually user said: "upload file selected toogle should take choose file button color" which is DARK.
+        // So ACTIVE tab should be DARK.
+        tabFile.classList.add('bg-neutral', 'text-neutral-content');
+        tabFile.classList.remove('tab-active'); // Remove default primary
+        
+        tabUrl.classList.remove('bg-neutral', 'text-neutral-content');
+        tabUrl.classList.remove('tab-active'); // Ensure inactive tab is plain
+        
         sectionFile.classList.remove('hidden');
         sectionUrl.classList.add('hidden');
         
@@ -654,8 +660,11 @@
         if (urlInput) urlInput.value = '';
       } else {
         // Activate URL Tab
-        tabUrl.classList.add('tab-active');
-        tabFile.classList.remove('tab-active');
+        tabUrl.classList.add('bg-neutral', 'text-neutral-content');
+        tabUrl.classList.remove('tab-active');
+        
+        tabFile.classList.remove('bg-neutral', 'text-neutral-content');
+        
         sectionUrl.classList.remove('hidden');
         sectionFile.classList.add('hidden');
         
