@@ -371,7 +371,7 @@
           <input type="text" name="name" class="input input-bordered input-sm" required>
         </div>
         <div class="modal-action">
-          <button type="button" class="btn btn-primary btn-sm" onclick="createModal.close()">Cancel</button>
+          <button type="button" class="btn btn-error btn-sm text-white" onclick="createModal.close()">Cancel</button>
           <button type="submit" class="btn btn-warning btn-sm" onclick="this.disabled=true; this.innerHTML='<span class=\'loading loading-spinner loading-xs\'></span> Creating...'; this.form.submit();">Create</button>
         </div>
       </form>
@@ -452,7 +452,7 @@
   <!-- Delete Confirmation Modal -->
   <dialog id="deleteModal" class="modal">
     <div class="modal-box">
-      <h3 class="font-bold text-lg text-error"><i class="fas fa-exclamation-triangle mr-2"></i>Delete Material</h3>
+      <h3 id="deleteModalTitle" class="font-bold text-lg text-error"><i class="fas fa-exclamation-triangle mr-2"></i>Delete Material</h3>
       <p class="py-4" id="deleteModalMessage">Are you sure you want to delete this material?</p>
       <div class="modal-action">
         <form method="dialog">
@@ -732,19 +732,50 @@
       } catch(e) { alert('Error'); }
     }
 
-    async function deleteFolder(id, name, sharedCount) {
-      let msg = 'Delete "' + name + '" and all contents?';
+    let folderToDelete = null;
+
+    function deleteFolder(id, name, sharedCount) {
+      folderToDelete = { id, name };
+      
+      let msg = 'Delete "<b>' + name + '</b>" and all contents?';
       if (sharedCount > 1) {
-        msg = '⚠️ WARNING: This folder is shared with ' + sharedCount + ' courses!\n\n' +
-              'Deleting will remove it from ALL shared courses.\n\n' +
-              'Are you sure you want to delete "' + name + '"?';
+        msg = '⚠️ <b>WARNING</b>: This folder is shared with ' + sharedCount + ' courses!<br><br>' +
+              'Deleting will remove it from ALL shared courses.<br><br>' +
+              'Are you sure you want to delete "<b>' + name + '</b>"?';
       }
-      if (!confirm(msg)) return;
+      
+      document.getElementById('deleteModalTitle').innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Delete Folder';
+      document.getElementById('deleteModalMessage').innerHTML = msg;
+      
+      const confirmBtn = document.getElementById('confirmDeleteBtn');
+      confirmBtn.disabled = false;
+      confirmBtn.innerHTML = 'Delete';
+      confirmBtn.onclick = executeDeleteFolder;
+      
+      deleteModal.showModal();
+    }
+
+    async function executeDeleteFolder() {
+      if (!folderToDelete) return;
+      const { id } = folderToDelete;
+      
+      const confirmBtn = document.getElementById('confirmDeleteBtn');
+      confirmBtn.disabled = true;
+      confirmBtn.innerHTML = 'Deleting...';
+      
       try {
         const res = await fetch('/teacher/folders/' + id, { method: 'DELETE' });
         if ((await res.json()).success) location.reload();
-        else alert('Error');
-      } catch(e) { alert('Error'); }
+        else {
+          alert('Error deleting folder');
+          confirmBtn.disabled = false;
+          confirmBtn.innerHTML = 'Delete';
+        }
+      } catch(e) { 
+        alert('Error');
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = 'Delete';
+      }
     }
 
     let materialToDelete = null;
@@ -755,6 +786,7 @@
         ? `This material is in a shared folder (${currentFolderSharedCount} courses). Deleting it will remove it from ALL shared courses.` 
         : `Are you sure you want to delete "<b>${name}</b>"?`;
       
+      document.getElementById('deleteModalTitle').innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Delete Material';
       document.getElementById('deleteModalMessage').innerHTML = msg;
       
       // Reset confirm button state
