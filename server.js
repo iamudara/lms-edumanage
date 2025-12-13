@@ -1,6 +1,11 @@
 // CRITICAL: dotenv MUST be first (before any other imports)
 import 'dotenv/config';
 
+console.log('🚀 Starting Application...');
+console.log('📌 Node Environment:', process.env.NODE_ENV);
+console.log('📌 Port:', process.env.PORT || 3000);
+
+
 // 2. Import dependencies
 import express from 'express';
 import path from 'path';
@@ -100,7 +105,20 @@ if (databaseUrl) {
   };
 }
 
-const sessionStore = new MySQLStore(sessionStoreConfig);
+    }
+  };
+}
+
+let sessionStore;
+try {
+  sessionStore = new MySQLStore(sessionStoreConfig);
+  console.log('✅ Session store initialized');
+} catch (error) {
+  console.error('❌ Failed to initialize session store:', error);
+  // Fallback to memory store if crucial, or exit
+  // For now, let's log and rethrow or handle graceful failure
+  console.error('Check your DATABASE_URL or MYSQL_URL format.');
+}
 
 // 8. Setup middleware (ORDER CRITICAL)
 app.use(bodyParser.json({ limit: '10mb' }));
