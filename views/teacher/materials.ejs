@@ -311,14 +311,30 @@
           <label class="label py-1"><span class="label-text">Description</span></label>
           <textarea name="description" class="textarea textarea-bordered textarea-sm" rows="2"></textarea>
         </div>
-        <div class="form-control mb-3">
-          <label class="label py-1"><span class="label-text">File</span></label>
-          <input type="file" name="material" class="file-input file-input-bordered file-input-sm w-full">
-          <label class="label py-0"><span class="label-text-alt">OR provide URL below</span></label>
+        <!-- Upload Method Tabs -->
+        <div class="tabs tabs-boxed mb-4 bg-base-200">
+          <a class="tab tab-active flex-1" id="tabUploadFile" onclick="switchUploadTab('file')"><i class="fas fa-file-upload mr-2"></i>Upload File</a>
+          <a class="tab flex-1" id="tabShareLink" onclick="switchUploadTab('url')"><i class="fas fa-link mr-2"></i>Share Link</a>
         </div>
-        <div class="form-control mb-4">
-          <label class="label py-1"><span class="label-text">Material URL</span></label>
-          <input type="url" name="material_url" class="input input-bordered input-sm" placeholder="https://...">
+
+        <!-- File Upload Section -->
+        <div id="fileUploadSection">
+          <div class="form-control mb-3">
+            <input type="file" name="material" id="materialFileInput" class="file-input file-input-bordered file-input-sm w-full">
+            <label class="label">
+              <span class="label-text-alt">Supported: PDF, DOC, PPT, ZIP, etc.</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- URL Upload Section -->
+        <div id="urlUploadSection" class="hidden">
+          <div class="form-control mb-4">
+            <input type="url" name="material_url" id="materialUrlInput" class="input input-bordered input-sm w-full" placeholder="https://example.com/resource">
+            <label class="label">
+              <span class="label-text-alt">Link to external resources</span>
+            </label>
+          </div>
         </div>
         
         <!-- Upload Progress Bar -->
@@ -598,6 +614,10 @@
         shareBtn.classList.toggle('hidden', !id);
       }
       
+      // Default to file tab on folder select
+      // Default to file tab on folder select
+      switchUploadTab('file');
+      
       // Update icon (home for Course Materials, folder-open for folders)
       const folderIcon = document.getElementById('folderIcon');
       if (folderIcon) {
@@ -612,6 +632,36 @@
       document.querySelectorAll('.folder-content').forEach(c => c.classList.add('hidden'));
       var content = document.getElementById('content-' + (id || 'root'));
       if (content) content.classList.remove('hidden');
+    }
+
+    // Toggle Upload Tabs
+    function switchUploadTab(mode) {
+      const tabFile = document.getElementById('tabUploadFile');
+      const tabUrl = document.getElementById('tabShareLink');
+      const sectionFile = document.getElementById('fileUploadSection');
+      const sectionUrl = document.getElementById('urlUploadSection');
+      const fileInput = document.getElementById('materialFileInput');
+      const urlInput = document.getElementById('materialUrlInput');
+      
+      if (mode === 'file') {
+        // Activate File Tab
+        tabFile.classList.add('tab-active');
+        tabUrl.classList.remove('tab-active');
+        sectionFile.classList.remove('hidden');
+        sectionUrl.classList.add('hidden');
+        
+        // Clear URL input
+        if (urlInput) urlInput.value = '';
+      } else {
+        // Activate URL Tab
+        tabUrl.classList.add('tab-active');
+        tabFile.classList.remove('tab-active');
+        sectionUrl.classList.remove('hidden');
+        sectionFile.classList.add('hidden');
+        
+        // Clear File input
+        if (fileInput) fileInput.value = '';
+      }
     }
 
     function toggleExpand(el) {
