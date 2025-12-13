@@ -12,7 +12,8 @@ import {
   getAssignmentDetail,
   submitAssignment,
   getGrades,
-  downloadAssignmentMaterial
+  downloadAssignmentMaterial,
+  downloadCourseMaterial
 } from '../controllers/studentController.js';
 import { uploadSubmission } from '../middleware/upload.js';
 
@@ -68,5 +69,11 @@ router.get('/grades', getGrades);
  * GET /student/assignments/materials/:id/download
  */
 router.get('/assignments/materials/:id/download', downloadAssignmentMaterial);
+
+/**
+ * Download Course Material
+ * GET /student/courses/materials/:id/download
+ */
+router.get('/courses/materials/:id/download', downloadCourseMaterial);
 
 export default router;

@@ -1140,3 +1140,115 @@ export const downloadAssignmentMaterial = async (req, res) => {
     res.status(500).send('Server error');
   }
 };
+
+/**
+ * Download Course Material (Proxy)
+ * GET /student/courses/materials/:id/download
+ * Proxies the file from Cloudinary to force download with correct Content-Disposition
+ */
+export const downloadCourseMaterial = async (req, res) => {
+  try {
+    const materialId = req.params.id;
+    const studentId = req.user.id;
+    const batchId = req.user.batch_id;
+
+    if (!batchId) {
+      return res.status(403).send('Access denied');
+    }
+
+    // Get material with course check via batch
+    // We need to verify if the student is in a batch that is enrolled in the course
+    // Material -> Course -> BatchEnrollment (where batch_id = student's batch)
+    const material = await Material.findByPk(materialId, {
+      include: [{
+        model: Course,
+        as: 'course',
+        include: [{
+          model: BatchEnrollment,
+          where: { batch_id: batchId },
+          required: true
+        }]
+      }]
+    });
+    
+    // Also check if it's in a folder that is shared with the course
+    // Material -> Folder -> FolderCourse -> Course -> BatchEnrollment
+    // Note: The above is a simplification; handling folder permissions strictly might need more queries
+    // IF the direct check fails, we check for folder access.
+    
+    let validMaterial = material;
+    
+    if (!validMaterial) {
+       // Try finding via Folder
+       // This is more complex because specific material isn't directly linked to course but via Folder
+       validMaterial = await Material.findByPk(materialId, {
+         include: [{
+           model: Folder,
+           as: 'folder',
+           include: [{
+             model: FolderCourse,
+             include: [{
+               model: Course,
+               include: [{
+                  model: BatchEnrollment,
+                  where: { batch_id: batchId },
+                  required: true
+               }]
+             }]
+           }]
+         }]
+       });
+       
+       // Verify the folder path actually links to a course the student has access to
+       // The include above forces the join, so if result is found, it's valid.
+       if (validMaterial && (!validMaterial.folder || !validMaterial.folder.FolderCourses || validMaterial.folder.FolderCourses.length === 0)) {
+           validMaterial = null; 
+       }
+    }
+
+    if (!validMaterial) {
+      return res.status(404).send('Material not found or access denied');
+    }
+
+    // Determine filename
+    let filename = validMaterial.title || 'download';
+    // Clean filename (keep basic chars)
+    filename = filename.replace(/[^a-z0-9-_ ]/gi, '_').toLowerCase();
+    
+    // Get extension: Prioritize URL
+    let ext = '';
+    if (validMaterial.file_url) { // uses file_url not url
+      const urlParts = validMaterial.file_url.split(/[?#]/)[0];
+      const items = urlParts.split('.');
+      if (items.length > 1) {
+        ext = items.pop().toLowerCase();
+      }
+    }
+    
+    // Clean filename logic
+    if (ext) {
+        const suffixRegex = new RegExp(`[._]${ext}$`, 'i');
+        filename = filename.replace(suffixRegex, '');
+    }
+
+    // Ensure filename ends with extension
+    if (ext) {
+      filename += '.' + ext;
+    }
+
+    // Set headers for forced download
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    
+    https.get(validMaterial.file_url, (stream) => {
+      stream.pipe(res);
+    }).on('error', (err) => {
+      console.error('Error fetching file for proxy:', err);
+      res.status(500).send('Error downloading file');
+    });
+
+  } catch (error) {
+    console.error('Error in course material proxy:', error);
+    res.status(500).send('Server error');
+  }
+};
