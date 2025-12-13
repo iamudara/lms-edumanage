@@ -332,7 +332,8 @@
               </svg>
               Course Files
             </h3>
-            <div class="overflow-x-auto">
+            <!-- Desktop View --> 
+            <div class="hidden lg:block overflow-x-auto">
               <table class="table table-zebra table-custom">
                 <thead>
                   <tr>
@@ -375,22 +376,107 @@
                     <td>
                       <% 
                         var ext = material.file_type || 'link';
+                        var isLink = ext === 'link' || ext === 'url';
                       %>
-                      <a 
-                        href="/student/courses/materials/<%= material.id %>/download" 
-                        class="btn btn-primary btn-sm btn-glass-custom ml-1"
-                        download
-                      >
-                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                         </svg>
-                         Download
-                      </a>
+                      <% if (isLink) { %>
+                        <a 
+                          href="<%= material.file_url %>" 
+                          target="_blank"
+                          class="btn btn-primary btn-sm btn-glass-custom ml-1"
+                        >
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                           </svg>
+                           Open
+                        </a>
+                      <% } else { %>
+                        <a 
+                          href="/student/courses/materials/<%= material.id %>/download" 
+                          class="btn btn-primary btn-sm btn-glass-custom ml-1"
+                          download
+                        >
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                           </svg>
+                           Download
+                        </a>
+                      <% } %>
                     </td>
                   </tr>
                   <% }) %>
                 </tbody>
               </table>
+            </div>
+
+            <!-- Mobile View -->
+            <div class="lg:hidden space-y-3">
+              <% course.Materials.forEach((material, idx) => { %>
+                <div class="collapse collapse-arrow bg-base-200">
+                  <input type="checkbox" name="material-accordion-<%= material.id %>" />
+                  <div class="collapse-title">
+                    <div class="flex items-center gap-2 font-medium">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-5 w-5 text-primary"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                      <%= material.title %>
+                    </div>
+                  </div>
+                  <div class="collapse-content">
+                    <div class="pt-2 space-y-3">
+                       <div class="text-sm text-base-content/70">
+                         <%= material.description || 'No description' %>
+                       </div>
+                       <div class="text-xs text-base-content/50 flex items-center gap-1">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                         </svg>
+                         <%= new Date(material.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                       </div>
+                       
+                       <% 
+                         var ext = material.file_type || 'link';
+                         var isLink = ext === 'link' || ext === 'url';
+                       %>
+                       <div class="flex">
+                         <% if (isLink) { %>
+                           <a 
+                             href="<%= material.file_url %>" 
+                             target="_blank"
+                             class="btn btn-primary btn-sm btn-glass-custom w-full"
+                           >
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                              Open Link
+                           </a>
+                         <% } else { %>
+                           <a 
+                             href="/student/courses/materials/<%= material.id %>/download" 
+                             class="btn btn-primary btn-sm btn-glass-custom w-full"
+                             download
+                           >
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                              </svg>
+                              Download File
+                           </a>
+                         <% } %>
+                       </div>
+                    </div>
+                  </div>
+                </div>
+              <% }) %>
             </div>
           </div>
           <% } %>
@@ -454,7 +540,8 @@
 
                     <!-- Folder Materials -->
                     <% if (folder.materials && folder.materials.length > 0) { %>
-                    <div class="overflow-x-auto">
+                    <!-- Desktop View -->
+                    <div class="hidden lg:block overflow-x-auto">
                       <table class="table table-zebra table-custom table-sm">
                         <tbody>
                           <% folder.materials.forEach(material => { %>
@@ -487,19 +574,101 @@
                             <td>
                               <% 
                                 var ext = material.file_type || 'link';
+                                var isLink = ext === 'link' || ext === 'url';
                               %>
-                              <a 
-                                href="/student/courses/materials/<%= material.id %>/download" 
-                                class="btn btn-primary btn-sm btn-glass-custom"
-                                download
-                              >
-                                 Download
-                              </a>
+                              <% if (isLink) { %>
+                                <a 
+                                  href="<%= material.file_url %>" 
+                                  target="_blank"
+                                  class="btn btn-primary btn-sm btn-glass-custom"
+                                >
+                                   Open
+                                </a>
+                              <% } else { %>
+                                <a 
+                                  href="/student/courses/materials/<%= material.id %>/download" 
+                                  class="btn btn-primary btn-sm btn-glass-custom ml-1"
+                                  download
+                                >
+                                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                   </svg>
+                                   Download
+                                </a>
+                              <% } %>
                             </td>
                           </tr>
                           <% }) %>
                         </tbody>
                       </table>
+                    </div>
+
+                    <!-- Mobile View -->
+                    <div class="lg:hidden space-y-3">
+                      <% folder.materials.forEach((material, idx) => { %>
+                        <div class="collapse collapse-arrow bg-base-200">
+                          <input type="checkbox" name="folder-material-accordion-<%= material.id %>" />
+                          <div class="collapse-title">
+                            <div class="flex items-center gap-2 font-medium">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="h-4 w-4 text-primary"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                />
+                              </svg>
+                              <%= material.title %>
+                            </div>
+                          </div>
+                          <div class="collapse-content">
+                            <div class="pt-2 space-y-3">
+                               <div class="text-sm text-base-content/70">
+                                 <%= material.description || '' %>
+                               </div>
+                               <div class="text-xs text-base-content/50 flex items-center gap-1">
+                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                 </svg>
+                                 <%= material.created_at ? new Date(material.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-' %>
+                               </div>
+                               
+                               <% 
+                                 var ext = material.file_type || 'link';
+                                 var isLink = ext === 'link' || ext === 'url';
+                               %>
+                               <div class="flex">
+                                 <% if (isLink) { %>
+                                   <a 
+                                     href="<%= material.file_url %>" 
+                                     target="_blank"
+                                     class="btn btn-primary btn-sm btn-glass-custom w-full"
+                                   >
+                                      Open Link
+                                   </a>
+                                 <% } else { %>
+                                   <a 
+                                     href="/student/courses/materials/<%= material.id %>/download" 
+                                     class="btn btn-primary btn-sm btn-glass-custom w-full"
+                                     download
+                                   >
+                                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                      </svg>
+                                      Download File
+                                   </a>
+                                 <% } %>
+                               </div>
+                            </div>
+                          </div>
+                        </div>
+                      <% }) %>
                     </div>
                     <% } else { %>
                     <p class="text-sm text-base-content/50 italic">
