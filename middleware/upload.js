@@ -31,7 +31,7 @@ const materialStorage = new CloudinaryStorage({
       public_id: uniqueName,
       format: fileExtension,
       use_filename: false,
-      type: 'authenticated'
+      type: 'upload' // Public upload
     };
   }
 });
@@ -58,7 +58,7 @@ const assignmentMaterialStorage = new CloudinaryStorage({
       public_id: uniqueName,
       format: fileExtension,
       use_filename: false,
-      type: 'authenticated'
+      type: 'upload' // Public upload
     };
   }
 });
@@ -83,7 +83,7 @@ const submissionStorage = new CloudinaryStorage({
       public_id: uniqueName,
       format: fileExtension,
       use_filename: false,
-      type: 'authenticated'
+      type: 'upload' // Public upload
     };
   }
 });

@@ -4,6 +4,7 @@ cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true
 });
 
 /**
@@ -17,96 +18,8 @@ cloudinary.config({
  * @returns {string} - Signed URL with expiration
  */
 export function generateSignedUrl(url, options = {}) {
-  if (!url) return null;
-  
-  // If it's an external URL (not Cloudinary), return as-is
-  if (!url.includes('cloudinary.com')) {
-    return url;
-  }
-  
-  // If URL is already authenticated (signed by multer-storage-cloudinary), return as-is
-  // These URLs already have expiration built-in from Cloudinary
-  if (url.includes('/authenticated/')) {
-    return url;
-  }
-  
-  // Only sign URLs that are public (older uploads before security implementation)
-  if (!url.includes('/upload/')) {
-    return url; // Not a standard upload URL, return as-is
-  }
-  
-  // Default expiration times based on resource type
-  const expirationTimes = {
-    material: 21600,      // 6 hours for course materials
-    assignment: 10800,    // 3 hours for assignment materials  
-    submission: 1800      // 30 minutes for student submissions (most sensitive)
-  };
-  
-  const expiresIn = options.expiresIn || expirationTimes[options.type] || 86400;
-  
-  // Calculate expiration timestamp
-  const expiresAt = Math.floor(Date.now() / 1000) + expiresIn;
-  
-  try {
-    // Extract the public_id from the URL
-    // URL format: https://res.cloudinary.com/{cloud_name}/raw/upload/v{version}/{folder}/{filename}
-    
-    const urlParts = url.split('/');
-    const uploadIndex = urlParts.findIndex(part => part === 'upload');
-    
-    if (uploadIndex === -1) {
-      return url; // Return original if not a standard Cloudinary URL
-    }
-    
-    // Get everything after 'upload/' as public_id
-    // Skip the version number (v1234567890)
-    const afterUpload = urlParts.slice(uploadIndex + 1);
-    
-    // Remove version number if present (starts with 'v' followed by digits)
-    const filteredParts = afterUpload.filter((part, index) => {
-      if (index === 0 && /^v\d+$/.test(part)) {
-        return false; // Skip version number
-      }
-      return true;
-    });
-    
-    const publicId = filteredParts.join('/');
-    
-    // Determine resource type based on file extension or URL content
-    let resourceType = 'image'; // Default
-
-    // List of extensions that are always 'raw' resource type in Cloudinary
-    const rawExtensions = [
-      'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 
-      'zip', 'rar', 'txt', 'csv'
-    ];
-
-    // Check for extension in the URL
-    // URL typically ends with the filename.ext
-    const extensionMatch = url.match(/\.([a-z0-9]+)$/i);
-    const extension = extensionMatch ? extensionMatch[1].toLowerCase() : '';
-
-    if (extension && rawExtensions.includes(extension)) {
-      resourceType = 'raw';
-    } else if (url.includes('/raw/')) {
-      resourceType = 'raw';
-    } else if (url.includes('/video/')) {
-      resourceType = 'video';
-    }
-    
-    // Generate signed URL with expiration
-    const signedUrl = cloudinary.url(publicId, {
-      type: 'authenticated',
-      resource_type: resourceType,
-      sign_url: true,
-      expires_at: expiresAt
-    });
-    
-    return signedUrl;
-  } catch (error) {
-    console.error('Error generating signed URL:', error);
-    return url; // Return original URL if signing fails
-  }
+  // SECURITY BYPASS: Return raw URL as is
+  return url;
 }
 
 /**

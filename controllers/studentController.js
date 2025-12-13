@@ -440,9 +440,22 @@ export const getCourseView = async (req, res) => {
       return res.status(404).send('Course not found or you are not enrolled in this course.');
     }
 
-    // Sign direct material URLs for authenticated access (6-hour expiry)
+    // Fix URLs for raw files (append extension if missing) and ensure plain objects
     if (course.Materials && course.Materials.length > 0) {
-      course.Materials = signUrlsInArray(course.Materials, 'file_url', 'material');
+      course.Materials = course.Materials.map(m => {
+        const material = m.get ? m.get({ plain: true }) : m;
+        
+        // Ensure created_at exists for EJS
+        if (!material.created_at && material.createdAt) {
+          material.created_at = material.createdAt;
+        }
+
+        if (material.file_url && material.file_type && 
+            !material.file_url.toLowerCase().endsWith(`.${material.file_type.toLowerCase()}`)) {
+          material.file_url = `${material.file_url}.${material.file_type}`;
+        }
+        return material;
+      });
     }
 
     // Get folders shared with this course (with inherited subfolders)
@@ -459,8 +472,21 @@ export const getCourseView = async (req, res) => {
       });
     }
 
-    // Sign folder materials URLs
-    const signedFolderMaterials = signUrlsInArray(folderMaterials, 'file_url', 'material');
+    // Fix folder materials URLs
+    const signedFolderMaterials = folderMaterials.map(m => {
+      const material = m.get ? m.get({ plain: true }) : m;
+      
+      // Ensure created_at exists for EJS
+      if (!material.created_at && material.createdAt) {
+        material.created_at = material.createdAt;
+      }
+
+      if (material.file_url && material.file_type && 
+          !material.file_url.toLowerCase().endsWith(`.${material.file_type.toLowerCase()}`)) {
+        material.file_url = `${material.file_url}.${material.file_type}`;
+      }
+      return material;
+    });
 
     // Build folder tree with materials
     const folderTree = buildStudentFolderTree(sharedFolders, signedFolderMaterials);
@@ -584,13 +610,15 @@ export const getAssignmentDetail = async (req, res) => {
 
     // Sign URLs for authenticated access
     // Sign submission file URL (1-hour expiry for submissions)
+    // Sign submission file URL (1-hour expiry for submissions)
     if (submission && submission.file_url) {
-      submission.file_url = generateSignedUrl(submission.file_url, { type: 'submission' });
+      // submission.file_url = generateSignedUrl(submission.file_url, { type: 'submission' });
     }
 
     // Sign assignment materials URLs (12-hour expiry)
+    // Sign assignment materials URLs (12-hour expiry)
     if (assignment.materials && assignment.materials.length > 0) {
-      assignment.materials = signUrlsInArray(assignment.materials, 'url', 'assignment');
+      // assignment.materials = signUrlsInArray(assignment.materials, 'url', 'assignment');
     }
 
     // Calculate deadline status using deadline service

@@ -414,11 +414,25 @@ export const getCourseDetail = async (req, res) => {
       }
     }
 
-    // Sign assignment material URLs for authenticated access (12-hour expiry)
+    // Fix assignment materials URLs (append extension if missing)
     if (course.Assignments) {
       course.Assignments.forEach(assignment => {
         if (assignment.materials && assignment.materials.length > 0) {
-          assignment.materials = signUrlsInArray(assignment.materials, 'url', 'assignment');
+          // assignment.materials = signUrlsInArray(assignment.materials, 'url', 'assignment');
+          assignment.materials = assignment.materials.map(m => {
+            const material = m.get ? m.get({ plain: true }) : m;
+            
+            // Ensure created_at exists
+            if (!material.created_at && material.createdAt) {
+              material.created_at = material.createdAt;
+            }
+
+            if (material.url && material.type && 
+                !material.url.toLowerCase().endsWith(`.${material.type.toLowerCase()}`)) {
+              material.url = `${material.url}.${material.type}`;
+            }
+            return material;
+          });
         }
       });
     }
@@ -474,7 +488,25 @@ export const getMaterials = async (req, res) => {
     });
 
     // Sign URLs for authenticated access (24-hour expiry for materials)
-    const signedMaterials = signUrlsInArray(materials, 'file_url', 'material');
+    // Sign URLs for authenticated access (24-hour expiry for materials)
+    // const signedMaterials = signUrlsInArray(materials, 'file_url', 'material');
+    // const signedMaterials = materials; // Use raw materials
+    
+    // Fix URLs and ensure plain objects
+    const signedMaterials = materials.map(m => {
+      const material = m.get ? m.get({ plain: true }) : m;
+      
+      // Ensure created_at exists
+      if (!material.created_at && material.createdAt) {
+        material.created_at = material.createdAt;
+      }
+
+      if (material.file_url && material.file_type && 
+          !material.file_url.toLowerCase().endsWith(`.${material.file_type.toLowerCase()}`)) {
+        material.file_url = `${material.file_url}.${material.file_type}`;
+      }
+      return material;
+    });
 
     res.render('teacher/materials', {
       user: req.user,

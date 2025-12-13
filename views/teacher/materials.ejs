@@ -210,6 +210,13 @@
                     <% materials.forEach(function(m) { 
                       var ext = m.file_type || 'link';
                       var ico = 'fas fa-link text-info';
+                      var viewUrl = m.file_url;
+                      var isOffice = ['ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx'].includes(ext.toLowerCase());
+                      
+                      if (isOffice) {
+                        viewUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(m.file_url)}`;
+                      }
+
                       if (ext === 'pdf') ico = 'fas fa-file-pdf text-error';
                       else if (ext === 'doc' || ext === 'docx') ico = 'fas fa-file-word text-primary';
                       else if (ext === 'ppt' || ext === 'pptx') ico = 'fas fa-file-powerpoint text-warning';
@@ -222,7 +229,7 @@
                           <p class="font-medium text-sm sm:text-base truncate"><%= m.title %></p>
                           <p class="text-xs text-base-content/50"><%= ext.toUpperCase() %></p>
                         </div>
-                        <a href="<%= m.file_url %>" target="_blank" class="btn btn-primary btn-xs sm:btn-sm min-w-[2rem] sm:min-w-[2.5rem]"><i class="fas fa-external-link-alt"></i></a>
+                        <a href="<%= viewUrl %>" target="_blank" class="btn btn-primary btn-xs sm:btn-sm min-w-[2rem] sm:min-w-[2.5rem]"><i class="fas fa-external-link-alt"></i></a>
                         <button onclick="deleteMaterial(<%= m.id %>, '<%= m.title.replace(/'/g, "\\'") %>')" class="btn btn-xs sm:btn-sm min-w-[2rem] sm:min-w-[2.5rem]" style="background-color: #ef4444; border-color: #ef4444; color: white;"><i class="fas fa-trash"></i></button>
                       </div>
                     <% }); %>
@@ -250,6 +257,13 @@
                       <% mats.forEach(function(m) { 
                         var ext = m.file_type || 'link';
                         var ico = 'fas fa-link text-info';
+                        var viewUrl = m.file_url;
+                        var isOffice = ['ppt', 'pptx', 'doc', 'docx', 'xls', 'xlsx'].includes(ext.toLowerCase());
+                        
+                        if (isOffice) {
+                          viewUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(m.file_url)}`;
+                        }
+
                         if (ext === 'pdf') ico = 'fas fa-file-pdf text-error';
                         else if (ext === 'doc' || ext === 'docx') ico = 'fas fa-file-word text-primary';
                         else if (ext === 'ppt' || ext === 'pptx') ico = 'fas fa-file-powerpoint text-warning';
@@ -262,7 +276,7 @@
                             <p class="font-medium text-sm sm:text-base truncate"><%= m.title %></p>
                             <p class="text-xs text-base-content/50"><%= ext.toUpperCase() %></p>
                           </div>
-                          <a href="<%= m.file_url %>" target="_blank" class="btn btn-primary btn-xs sm:btn-sm min-w-[2rem] sm:min-w-[2.5rem]"><i class="fas fa-external-link-alt"></i></a>
+                          <a href="<%= viewUrl %>" target="_blank" class="btn btn-primary btn-xs sm:btn-sm min-w-[2rem] sm:min-w-[2.5rem]"><i class="fas fa-external-link-alt"></i></a>
                           <button onclick="deleteMaterial(<%= m.id %>, '<%= m.title.replace(/'/g, "\\'") %>')" class="btn btn-xs sm:btn-sm min-w-[2rem] sm:min-w-[2.5rem]" style="background-color: #ef4444; border-color: #ef4444; color: white;"><i class="fas fa-trash"></i></button>
                         </div>
                       <% }); %>
