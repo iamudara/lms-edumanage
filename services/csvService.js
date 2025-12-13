@@ -548,6 +548,67 @@ export const validateTeacherGradeCsv = (rows) => {
 };
 
 /**
+ * Validate Batch Update CSV data
+ * Required headers: student_email, new_batch_code
+ * @param {Array} rows - Parsed CSV data
+ * @returns {Object} - { valid: boolean, errors: array }
+ */
+export const validateBatchUpdateCsv = (rows) => {
+  const errors = [];
+  const requiredHeaders = ['student_email', 'new_batch_code'];
+
+  // Check if data exists
+  if (!rows || rows.length === 0) {
+    return {
+      valid: false,
+      errors: [{ row: 0, message: 'No data rows found in CSV' }]
+    };
+  }
+
+  // Check headers
+  const headers = Object.keys(rows[0]);
+  const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+  
+  if (missingHeaders.length > 0) {
+    return {
+      valid: false,
+      errors: [{
+        row: 0,
+        message: `Missing required headers: ${missingHeaders.join(', ')}`
+      }]
+    };
+  }
+
+  // Validate each row
+  rows.forEach((row, index) => {
+    const rowNum = index + 2;
+
+    // Validate student_email
+    if (!row.student_email || !validator.isEmail(row.student_email)) {
+      errors.push({
+        row: rowNum,
+        field: 'student_email',
+        message: 'Valid student email is required'
+      });
+    }
+
+    // Validate new_batch_code
+    if (!row.new_batch_code || row.new_batch_code.length === 0) {
+      errors.push({
+        row: rowNum,
+        field: 'new_batch_code',
+        message: 'New batch code is required'
+      });
+    }
+  });
+
+  return {
+    valid: errors.length === 0,
+    errors: errors
+  };
+};
+
+/**
  * Generate CSV error report for display
  * @param {Array} errors - Array of error objects
  * @returns {String} - Formatted error message

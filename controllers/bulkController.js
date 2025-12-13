@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { parseCsv, validateUserCsv, validateEnrollmentCsv, formatErrors } from '../services/csvService.js';
+import { parseCsv, validateUserCsv, validateEnrollmentCsv, validateGradeCsv, validateBatchUpdateCsv, formatErrors } from '../services/csvService.js';
 import { User, Batch, Course, BatchEnrollment, sequelize } from '../models/index.js';
 
 /**
@@ -528,6 +528,150 @@ export const bulkDeleteUsers = async (req, res) => {
       message: 'Internal server error during bulk delete',
       error: error.message,
       results: []
+    });
+  }
+};
+/**
+ * Bulk Batch Update
+ * @route POST /admin/tools/bulk-batch-update
+ */
+export const bulkBatchUpdate = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No CSV file uploaded',
+        summary: { total: 0, updated: 0, skipped: 0, errors: 0 },
+        results: { success: [], errors: [], skipped: [] }
+      });
+    }
+
+    const parseResult = parseCsv(req.file.buffer);
+    if (!parseResult.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'CSV parsing failed',
+        summary: { total: 0, updated: 0, skipped: 0, errors: parseResult.errors.length },
+        results: { success: [], errors: parseResult.errors, skipped: [] }
+      });
+    }
+
+    const validationResult = validateBatchUpdateCsv(parseResult.data);
+    if (validationResult.errors.length > 0 && validationResult.errors[0].row === 0) {
+       await transaction.rollback();
+       return res.status(400).json({
+         success: false,
+         message: validationResult.errors[0].message,
+         summary: { total: 0, updated: 0, skipped: 0, errors: 1 },
+         results: { success: [], errors: validationResult.errors, skipped: [] }
+       });
+    }
+
+    const results = {
+      success: [],
+      errors: validationResult.errors,
+      skipped: []
+    };
+
+    // Process valid rows
+    // Filter out rows that failed row-level validation
+    const errorRows = new Set(validationResult.errors.map(e => e.row));
+    const validRows = parseResult.data.map((row, index) => ({ rowNum: index + 2, data: row }))
+                                    .filter(row => !errorRows.has(row.rowNum));
+
+    for (const { rowNum, data } of validRows) {
+      try {
+        const student = await User.findOne({ 
+          where: { email: data.student_email, role: 'student' },
+          transaction
+        });
+
+        if (!student) {
+          results.errors.push({
+            row: rowNum,
+            student_email: data.student_email,
+            new_batch_code: data.new_batch_code,
+            status: 'error',
+            message: 'Student not found or not a student role'
+          });
+          continue;
+        }
+
+        const batch = await Batch.findOne({
+          where: { code: data.new_batch_code },
+          transaction
+        });
+
+        if (!batch) {
+          results.errors.push({
+            row: rowNum,
+            student_email: data.student_email,
+            new_batch_code: data.new_batch_code,
+            status: 'error',
+            message: `Batch code '${data.new_batch_code}' not found`
+          });
+          continue;
+        }
+
+        // Check if already in this batch
+        if (student.batch_id === batch.id) {
+          results.skipped.push({
+            row: rowNum,
+            student_email: data.student_email,
+            new_batch_code: data.new_batch_code,
+            status: 'skipped',
+            message: 'Student already in this batch'
+          });
+          continue;
+        }
+
+        // Update student batch
+        await student.update({ batch_id: batch.id }, { transaction });
+
+        results.success.push({
+          row: rowNum,
+          student_email: data.student_email,
+          new_batch_code: data.new_batch_code,
+          status: 'success',
+          message: 'Batch updated successfully'
+        });
+
+      } catch (error) {
+        results.errors.push({
+          row: rowNum,
+          student_email: data.student_email,
+          new_batch_code: data.new_batch_code,
+          status: 'error',
+          message: error.message
+        });
+      }
+    }
+
+    await transaction.commit();
+
+    const summary = {
+      total: parseResult.data.length,
+      updated: results.success.length,
+      skipped: results.skipped.length,
+      errors: results.errors.length
+    };
+
+    res.json({
+      success: true,
+      message: 'Batch update process completed',
+      summary,
+      results
+    });
+
+  } catch (error) {
+    await transaction.rollback();
+    console.error('Bulk batch update error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error during bulk update',
+      error: error.message
     });
   }
 };

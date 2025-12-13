@@ -82,12 +82,6 @@ router.post('/tools/bulk-delete', bulkController.bulkDeleteUsers);
  * Process bulk batch change from CSV
  * CSV Format: student_email, new_batch_code
  */
-router.post('/tools/bulk-batch-change', (req, res) => {
-  // Placeholder - will be implemented later
-  res.json({ 
-    success: false,
-    message: 'Bulk batch change endpoint - to be implemented' 
-  });
-});
+router.post('/tools/bulk-batch-update', upload.single('csvFile'), bulkController.bulkBatchUpdate);
 
 export default router;
